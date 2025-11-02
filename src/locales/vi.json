@@ -1,0 +1,93 @@
+{
+  "common": {
+    "home": "Trang chủ",
+    "signIn": "Đăng nhập",
+    "signUp": "Đăng ký"
+  },
+  "RootLayout": {
+    "home_link": "Trang chủ",
+    "about_link": "Giới thiệu",
+    "counter_link": "Bộ đếm",
+    "portfolio_link": "Portfolio",
+    "sign_in_link": "Đăng nhập",
+    "sign_up_link": "Đăng ký"
+  },
+  "BaseTemplate": {
+    "description": "Code mẫu cho Nextjs Boilerplate với Tailwind CSS",
+    "made_with": "Được tạo bởi <author></author>."
+  },
+  "Index": {
+    "meta_title": "Giới thiệu Next.js Boilerplate",
+    "meta_description": "Next js Boilerplate là code mẫu hoàn hảo cho dự án của bạn. Xây dựng ứng dụng React của bạn với framework Next.js.",
+    "sponsors_title": "Nhà tài trợ"
+  },
+  "Counter": {
+    "meta_title": "Bộ đếm",
+    "meta_description": "Một ví dụ về thao tác database"
+  },
+  "CounterForm": {
+    "presentation": "Bộ đếm được lưu trong cơ sở dữ liệu và tăng theo giá trị mà bạn cung cấp.",
+    "label_increment": "Tăng thêm",
+    "button_increment": "Tăng",
+    "error_increment_range": "Giá trị phải từ 1 đến 3"
+  },
+  "CurrentCount": {
+    "count": "Số đếm: {count}"
+  },
+  "About": {
+    "meta_title": "Giới thiệu",
+    "meta_description": "Mô tả trang giới thiệu",
+    "about_paragraph": "Chào mừng đến với trang Giới thiệu của chúng tôi! Chúng tôi là một đội ngũ những cá nhân đam mê, chuyên tâm tạo ra những phần mềm tuyệt vời.",
+    "translation_powered_by": "Dịch thuật được hỗ trợ bởi"
+  },
+  "Portfolio": {
+    "meta_title": "Portfolio",
+    "meta_description": "Chào mừng đến với trang portfolio của tôi!",
+    "presentation": "Chào mừng đến với trang portfolio của tôi! Tại đây bạn sẽ tìm thấy một bộ sưu tập được tuyển chọn cẩn thận về công việc và thành tựu của tôi. Thông qua portfolio này, tôi muốn thể hiện chuyên môn, sự sáng tạo và giá trị mà tôi có thể mang lại cho các dự án của bạn.",
+    "portfolio_name": "Portfolio {name}",
+    "error_reporting_powered_by": "Báo cáo lỗi được hỗ trợ bởi",
+    "coverage_powered_by": "Bao phủ code được hỗ trợ bởi"
+  },
+  "PortfolioSlug": {
+    "meta_title": "Portfolio {slug}",
+    "meta_description": "Mô tả Portfolio {slug}",
+    "header": "Portfolio {slug}",
+    "content": "Đã tạo một bộ tài liệu quảng cáo và các yếu tố nhận diện thương hiệu cho một sự kiện doanh nghiệp. Thiết kế một chủ đề thống nhất về mặt hình ảnh, bao gồm logo, poster, banner và tài sản kỹ thuật số. Tích hợp bản sắc thương hiệu của khách hàng trong khi truyền tải một cách tiếp cận hiện đại và sáng tạo.",
+    "code_review_powered_by": "Đánh giá code được hỗ trợ bởi"
+  },
+  "SignIn": {
+    "meta_title": "Đăng nhập",
+    "meta_description": "Đăng nhập vào tài khoản của bạn một cách dễ dàng với quy trình đăng nhập thân thiện người dùng của chúng tôi.",
+    "email_label": "Email",
+    "password_label": "Mật khẩu",
+    "sign_in_button": "Đăng nhập",
+    "success_title": "Đăng nhập thành công",
+    "success_message": "Chào mừng bạn trở lại!",
+    "error_title": "Đăng nhập thất bại",
+    "error_message": "Đăng nhập thất bại. Vui lòng thử lại."
+  },
+  "SignUp": {
+    "meta_title": "Đăng ký",
+    "meta_description": "Tạo tài khoản dễ dàng thông qua quy trình đăng ký trực quan của chúng tôi.",
+    "email_label": "Email",
+    "password_label": "Mật khẩu",
+    "sign_up_button": "Đăng ký",
+    "success_title": "Đăng ký thành công",
+    "success_message": "Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác minh tài khoản.",
+    "error_title": "Đăng ký thất bại",
+    "error_message": "Đăng ký thất bại. Vui lòng thử lại."
+  },
+  "Dashboard": {
+    "meta_title": "Bảng điều khiển",
+    "hello_message": "Xin chào {email}!",
+    "alternative_message": "Cần các tính năng nâng cao? Multi-tenancy & Teams, Roles & Permissions, Shadcn UI, End-to-End Typesafety với oRPC, Thanh toán Stripe, Chế độ sáng / tối. Thử <url></url>."
+  },
+  "UserProfile": {
+    "meta_title": "Hồ sơ người dùng"
+  },
+  "DashboardLayout": {
+    "dashboard_link": "Bảng điều khiển",
+    "user_profile_link": "Quản lý tài khoản",
+    "sign_out": "Đăng xuất"
+  }
+}
