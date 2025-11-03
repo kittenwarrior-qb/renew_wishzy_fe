@@ -3,9 +3,59 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { buildApiUrl } from '@/utils/ApiClient';
 
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+const refreshAccessToken = async (): Promise<string | null> => {
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const { user } = useAuthStore.getState();
+      if (!user) {
+        return null;
+      }
+
+      const refreshUrl = buildApiUrl('auth/refresh-token');
+      const response = await fetch(refreshUrl, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        useAuthStore.getState().logout();
+        return null;
+      }
+
+      const data = await response.json();
+      if (data.accessToken) {
+        useAuthStore.getState().login(user, data.accessToken);
+        return data.accessToken;
+      }
+
+      return null;
+    } catch {
+      useAuthStore.getState().logout();
+      return null;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+};
+
 export const apiRequest = async <TData = unknown>(
   endpoint: string,
   options?: RequestInit & { queryParams?: Record<string, string> },
+  retryCount = 0,
 ): Promise<TData> => {
   const { token } = useAuthStore.getState();
   let url = buildApiUrl(endpoint);
@@ -16,18 +66,35 @@ export const apiRequest = async <TData = unknown>(
   }
 
   const { queryParams, ...fetchOptions } = options || {};
+  let currentToken = useAuthStore.getState().token;
+
+  // If retrying after refresh, get the new token
+  if (retryCount > 0) {
+    currentToken = useAuthStore.getState().token;
+  }
 
   const response = await fetch(url, {
     ...fetchOptions,
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(currentToken && { Authorization: `Bearer ${currentToken}` }),
       ...fetchOptions?.headers,
     },
   });
 
   if (!response.ok) {
+    // Handle 401 Unauthorized - try to refresh token
+    if (response.status === 401 && retryCount === 0) {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        // Retry the request with new token
+        return apiRequest<TData>(endpoint, options, 1);
+      }
+      // If refresh fails, logout and throw error
+      useAuthStore.getState().logout();
+    }
+
     const error = await response.json().catch(() => ({ message: response.statusText }));
     throw new Error(error.message || `HTTP error! status: ${response.status}`);
   }

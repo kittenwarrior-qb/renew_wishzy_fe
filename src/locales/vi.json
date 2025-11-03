@@ -64,7 +64,10 @@
     "success_title": "Đăng nhập thành công",
     "success_message": "Chào mừng bạn trở lại!",
     "error_title": "Đăng nhập thất bại",
-    "error_message": "Đăng nhập thất bại. Vui lòng thử lại."
+    "error_message": "Đăng nhập thất bại. Vui lòng thử lại.",
+    "email_or_username_placeholder": "email hoặc tên người dùng",
+    "password_placeholder": "mật khẩu",
+    "forgot_password": "Quên mật khẩu?"
   },
   "SignUp": {
     "meta_title": "Đăng ký",
@@ -75,7 +78,44 @@
     "success_title": "Đăng ký thành công",
     "success_message": "Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác minh tài khoản.",
     "error_title": "Đăng ký thất bại",
-    "error_message": "Đăng ký thất bại. Vui lòng thử lại."
+    "error_message": "Đăng ký thất bại. Vui lòng thử lại.",
+    "full_name_placeholder": "Họ và tên",
+    "confirm_password_placeholder": "Xác nhận mật khẩu",
+    "password_placeholder": "mật khẩu"
+  },
+  "Auth": {
+    "express_login_via_google": "Đăng nhập nhanh qua Google",
+    "log_in_tab": "Đăng nhập",
+    "sign_up_tab": "Đăng ký",
+    "show_password": "Hiện",
+    "hide_password": "Ẩn"
+  },
+  "VerifyEmail": {
+    "title": "Xác Minh Email Của Bạn",
+    "description": "Chúng tôi đã gửi email xác minh đến hộp thư của bạn. Vui lòng kiểm tra email và nhấp vào liên kết xác minh.",
+    "resend_button": "Gửi Lại Email Xác Minh",
+    "back_to_login": "Quay Lại Đăng Nhập",
+    "email_sent": "Email xác minh đã được gửi thành công",
+    "verify_success": "Xác minh email thành công. Bạn có thể đăng nhập ngay bây giờ.",
+    "verify_error": "Xác minh email thất bại"
+  },
+  "ForgotPassword": {
+    "title": "Quên Mật Khẩu?",
+    "description": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn liên kết để đặt lại mật khẩu.",
+    "email_placeholder": "Nhập email của bạn",
+    "send_button": "Gửi Liên Kết Đặt Lại",
+    "back_to_login": "Quay Lại Đăng Nhập",
+    "success_message": "Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi.",
+    "error_message": "Gửi email đặt lại mật khẩu thất bại"
+  },
+  "ResetPassword": {
+    "title": "Đặt Lại Mật Khẩu",
+    "description": "Nhập mật khẩu mới của bạn bên dưới.",
+    "password_placeholder": "Mật khẩu mới",
+    "confirm_password_placeholder": "Xác nhận mật khẩu mới",
+    "reset_button": "Đặt Lại Mật Khẩu",
+    "success_message": "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.",
+    "error_message": "Đặt lại mật khẩu thất bại"
   },
   "Dashboard": {
     "meta_title": "Bảng điều khiển",
@@ -89,5 +129,10 @@
     "dashboard_link": "Bảng điều khiển",
     "user_profile_link": "Quản lý tài khoản",
     "sign_out": "Đăng xuất"
+  },
+  "NotFound": {
+    "title": "404 - Không Tìm Thấy Trang",
+    "description": "Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.",
+    "back_home": "Quay Về Trang Chủ"
   }
 }

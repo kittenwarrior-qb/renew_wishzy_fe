@@ -64,7 +64,10 @@
     "success_title": "Sign in successful",
     "success_message": "Welcome back!",
     "error_title": "Sign in failed",
-    "error_message": "Sign in failed. Please try again."
+    "error_message": "Sign in failed. Please try again.",
+    "email_or_username_placeholder": "email or username",
+    "password_placeholder": "password",
+    "forgot_password": "Forgot password?"
   },
   "SignUp": {
     "meta_title": "Sign up",
@@ -75,7 +78,44 @@
     "success_title": "Registration successful",
     "success_message": "Registration successful! Please check your email to verify your account.",
     "error_title": "Registration failed",
-    "error_message": "Registration failed. Please try again."
+    "error_message": "Registration failed. Please try again.",
+    "full_name_placeholder": "Full Name",
+    "confirm_password_placeholder": "Confirm Password",
+    "password_placeholder": "password"
+  },
+  "Auth": {
+    "express_login_via_google": "Express login via Google",
+    "log_in_tab": "Log in",
+    "sign_up_tab": "Sign up",
+    "show_password": "Show",
+    "hide_password": "Hide"
+  },
+  "VerifyEmail": {
+    "title": "Verify Your Email",
+    "description": "We've sent a verification email to your inbox. Please check your email and click the verification link.",
+    "resend_button": "Resend Verification Email",
+    "back_to_login": "Back to Login",
+    "email_sent": "Verification email sent successfully",
+    "verify_success": "Email verified successfully. You can now login.",
+    "verify_error": "Email verification failed"
+  },
+  "ForgotPassword": {
+    "title": "Forgot Password?",
+    "description": "Enter your email address and we'll send you a link to reset your password.",
+    "email_placeholder": "Enter your email",
+    "send_button": "Send Reset Link",
+    "back_to_login": "Back to Login",
+    "success_message": "If the email exists, a password reset link has been sent.",
+    "error_message": "Failed to send password reset email"
+  },
+  "ResetPassword": {
+    "title": "Reset Password",
+    "description": "Enter your new password below.",
+    "password_placeholder": "New password",
+    "confirm_password_placeholder": "Confirm new password",
+    "reset_button": "Reset Password",
+    "success_message": "Password reset successfully. You can now login with your new password.",
+    "error_message": "Password reset failed"
   },
   "Dashboard": {
     "meta_title": "Dashboard",
@@ -89,5 +129,10 @@
     "dashboard_link": "Dashboard",
     "user_profile_link": "Manage your account",
     "sign_out": "Sign out"
+  },
+  "NotFound": {
+    "title": "404 - Page Not Found",
+    "description": "The page you are looking for does not exist or has been moved.",
+    "back_home": "Back to Home"
   }
 }

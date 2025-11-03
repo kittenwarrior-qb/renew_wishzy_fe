@@ -4,7 +4,28 @@ import { createTheme, MantineProvider as MantineProviderLib } from '@mantine/cor
 import { Notifications } from '@mantine/notifications';
 
 const theme = createTheme({
-  /** Put your mantine theme override here */
+  components: {
+    TextInput: {
+      defaultProps: {
+        radius: 'md',
+      },
+    },
+    Button: {
+      defaultProps: {
+        radius: 'md',
+      },
+    },
+    Paper: {
+      defaultProps: {
+        radius: 'md',
+      },
+    },
+    Tabs: {
+      defaultProps: {
+        radius: 'md',
+      },
+    },
+  },
 });
 
 export function MantineProvider({ children }: { children: React.ReactNode }) {

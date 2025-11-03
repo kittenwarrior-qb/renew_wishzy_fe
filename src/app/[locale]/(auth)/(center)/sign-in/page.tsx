@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { SignInForm } from '@/shared/components/auth/SignInForm';
+import { AuthForm } from '@/components/auth/AuthForm';
+import Footer from '@/components/layout/footer';
 
 type ISignInPageProps = {
   params: Promise<{ locale: string }>;
@@ -23,5 +24,10 @@ export default async function SignInPage(props: ISignInPageProps) {
   const { locale } = await props.params;
   setRequestLocale(locale);
 
-  return <SignInForm />;
+  return (
+    <>
+      <AuthForm />
+      <Footer />
+    </>
+  );
 }

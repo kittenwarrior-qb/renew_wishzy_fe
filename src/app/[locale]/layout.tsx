@@ -4,10 +4,11 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { LocaleInitializer } from '@/app/[locale]/LocaleInitializer';
+import SubheaderCategories from '@/components/category/Subheader';
+import { ConditionalHeader } from '@/components/layout/ConditionalHeader';
 import { routing } from '@/libs/I18nRouting';
 import { MantineProvider } from '@/providers/MantineProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
-import Header from '@/shared/layout/header';
 import '@/styles/global.css';
 
 export const metadata: Metadata = {
@@ -61,7 +62,8 @@ export default async function RootLayout(props: {
           <QueryProvider>
             <NextIntlClientProvider>
               <LocaleInitializer />
-              <Header></Header>
+              <ConditionalHeader />
+              <SubheaderCategories />
               {props.children}
             </NextIntlClientProvider>
           </QueryProvider>

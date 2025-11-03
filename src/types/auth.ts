@@ -1,7 +1,3 @@
-/**
- * Authentication Types - Các kiểu dữ liệu xác thực
- */
-
 export type User = {
   id: string;
   email: string;
@@ -44,7 +40,6 @@ export type ForgotPasswordRequest = EmailRequest;
 export type ResetPasswordRequest = {
   password: string;
   confirmPassword: string;
-  token: string;
 };
 
 export type LoginResponse = {

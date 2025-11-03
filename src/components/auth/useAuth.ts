@@ -1,6 +1,7 @@
 import type * as AuthTypes from '@/types/auth';
+import { useMutation } from '@tanstack/react-query';
 import { useLocale } from 'next-intl';
-import { useApiMutation } from '@/hooks/useApi';
+import { apiRequest, useApiMutation } from '@/hooks/useApi';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuthStore } from '@/stores/useAuthStore';
 
@@ -310,32 +311,37 @@ export const useAuth = () => {
   const useResetPassword = () => {
     const locale = useLocale();
     const notifications = useNotifications();
-    return useApiMutation<
+
+    return useMutation<
       AuthTypes.ResetPasswordResponse,
+      Error,
       AuthTypes.ResetPasswordRequest & { token: string }
-    >(
-      authEndpoints.resetPassword.url,
-      authEndpoints.resetPassword.method,
-      {
-        queryParams: variables => ({ token: variables.token }),
-        onSuccess: (data) => {
-          notifications.show({
-            title: getNotificationTitle('resetPassword', locale),
-            message: translateMessage(data.message, locale),
-            color: 'green',
-            autoClose: 5000,
-          });
-        },
-        onError: (error) => {
-          notifications.show({
-            title: getNotificationTitle('resetPasswordError', locale),
-            message: error instanceof Error ? error.message : getNotificationTitle('resetPasswordError', locale),
-            color: 'red',
-            autoClose: 5000,
-          });
-        },
+    >({
+      mutationFn: async (variables: AuthTypes.ResetPasswordRequest & { token: string }) => {
+        const { token, ...payload } = variables;
+        return apiRequest<AuthTypes.ResetPasswordResponse>(authEndpoints.resetPassword.url, {
+          method: authEndpoints.resetPassword.method,
+          body: JSON.stringify(payload),
+          queryParams: { token },
+        });
       },
-    );
+      onSuccess: (data) => {
+        notifications.show({
+          title: getNotificationTitle('resetPassword', locale),
+          message: translateMessage(data.message, locale),
+          color: 'green',
+          autoClose: 5000,
+        });
+      },
+      onError: (error) => {
+        notifications.show({
+          title: getNotificationTitle('resetPasswordError', locale),
+          message: error instanceof Error ? error.message : getNotificationTitle('resetPasswordError', locale),
+          color: 'red',
+          autoClose: 5000,
+        });
+      },
+    });
   };
 
   return {

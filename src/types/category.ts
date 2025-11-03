@@ -1,6 +1,4 @@
-/**
- * Category Types - Các kiểu dữ liệu danh mục
- */
+import type { ApiResponse, PaginatedResponse } from '@/types/common';
 
 export type Category = {
   id: string;
@@ -18,27 +16,6 @@ export type CategoryFilter = {
   name?: string;
   parentId?: string;
   isSubCategory?: boolean;
-};
-
-export type PaginationMeta = {
-  totalPage: number;
-  totalItems: number;
-  currentPage: number;
-  itemsPerPage: number;
-};
-
-export type PaginatedResponse<T> = {
-  message?: string;
-  items: T[];
-  pagination: PaginationMeta;
-};
-
-// API Response wrapper format
-export type ApiResponse<T> = {
-  success: boolean;
-  data: T;
-  message?: string;
-  url?: string;
 };
 
 export type CategoryListResponse = ApiResponse<PaginatedResponse<Category>>;
