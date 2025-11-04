@@ -2,13 +2,13 @@
 
 import type { LoginRequest, RegisterRequest } from '@/types/auth';
 import { Box, Container, Stack, Text } from '@mantine/core';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useForgotPassword, useLogin, useRegister } from '@/components/auth/useAuth';
 import { LittleBoyAnimation } from '@/components/rive-animation/LittleBoyAnimation';
 import { useRouter } from '@/libs/I18nNavigation';
-import { AuthTabs } from './AuthTabs';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { ForgotPasswordForm } from './ForgotPasswordForm';
 import { GoogleLoginButton } from './GoogleLoginButton';
 import { LoginForm } from './LoginForm';
@@ -27,6 +27,7 @@ export function AuthForm() {
   const loginMutation = useLogin();
   const registerMutation = useRegister();
   const forgotPasswordMutation = useForgotPassword();
+  // Keep theme lookup inside content to avoid passing props around
 
   const handleLogin = async (values: LoginRequest) => {
     try {
@@ -163,6 +164,8 @@ function AuthFormContent({
   setRegisteredEmail,
 }: AuthFormContentProps) {
   const tSignIn = useTranslations('SignIn');
+  const locale = useLocale();
+  const { colorScheme } = useThemeStore();
 
   if (view === 'verify-email') {
     return (
@@ -184,32 +187,37 @@ function AuthFormContent({
     );
   }
 
+  const formNode = activeTab === 'signup'
+    ? (
+        <RegisterForm
+          onSubmit={handleRegister}
+          onSuccess={(email) => {
+            setRegisteredEmail(email);
+            setView('verify-email');
+          }}
+          isLoading={registerMutation.isPending}
+          error={registerMutation.error || null}
+        />
+      )
+    : (
+        <LoginForm
+          onSubmit={handleLogin}
+          isLoading={loginMutation.isPending}
+          error={loginMutation.error || null}
+        />
+      );
+
   return (
     <Stack gap="lg">
-      <GoogleLoginButton onClick={handleGoogleLogin} />
+      <Box className="w-full flex items-center justify-center pb-2">
+        <img
+          src={colorScheme === 'dark' ? '/assets/images/white-logo.png' : '/assets/images/black-logo.png'}
+          alt="Wishzy logo"
+          className="h-8"
+        />
+      </Box>
 
-      <AuthTabs
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        loginPanel={(
-          <LoginForm
-            onSubmit={handleLogin}
-            isLoading={loginMutation.isPending}
-            error={loginMutation.error || null}
-          />
-        )}
-        signupPanel={(
-          <RegisterForm
-            onSubmit={handleRegister}
-            onSuccess={(email) => {
-              setRegisteredEmail(email);
-              setView('verify-email');
-            }}
-            isLoading={registerMutation.isPending}
-            error={registerMutation.error || null}
-          />
-        )}
-      />
+      {formNode}
 
       <Text
         component="a"
@@ -224,6 +232,24 @@ function AuthFormContent({
       >
         {tSignIn('forgot_password')}
       </Text>
+
+      <Text
+        component="a"
+        href="#"
+        size="sm"
+        ta="center"
+        style={{ textDecoration: 'none', cursor: 'pointer' }}
+        onClick={(e) => {
+          e.preventDefault();
+          setActiveTab(activeTab === 'signup' ? 'login' : 'signup');
+        }}
+      >
+        {activeTab === 'signup'
+          ? (locale === 'vi' ? 'Đã có tài khoản? Đăng nhập' : 'Already have an account? Sign in')
+          : (locale === 'vi' ? 'Chưa có tài khoản? Đăng ký' : 'Don\'t have an account? Sign up')}
+      </Text>
+
+      <GoogleLoginButton onClick={handleGoogleLogin} />
     </Stack>
   );
 }

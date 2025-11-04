@@ -1,6 +1,6 @@
 'use client';
 
-import { Anchor, Button, Container, Group, Text } from '@mantine/core';
+import { Anchor, Button, Container, Group, Text, Avatar, Menu } from '@mantine/core';
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -68,18 +68,26 @@ const Header = () => {
           <Group gap="md">
             {isHydrated && isAuthenticated
               ? (
-                  <>
-                    <Text size="sm" c="dimmed">
-                      {user?.email}
-                    </Text>
-                    <Button
-                      variant="subtle"
-                      onClick={handleLogout}
-                      loading={logoutMutation.isPending}
-                    >
-                      {t('DashboardLayout.sign_out')}
-                    </Button>
-                  </>
+                  <Menu withinPortal position="bottom-end" shadow="sm" zIndex={2000}>
+                    <Menu.Target>
+                      <Avatar
+                        radius="xl"
+                        variant="filled"
+                        color="brand"
+                        className="cursor-pointer select-none"
+                      >
+                        {(user?.email?.[0] || '?').toUpperCase()}
+                      </Avatar>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      {user?.email && (
+                        <Menu.Label>{user.email}</Menu.Label>
+                      )}
+                      <Menu.Item onClick={handleLogout} disabled={logoutMutation.isPending}>
+                        {t('DashboardLayout.sign_out')}
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
                 )
               : (
                   isHydrated && (

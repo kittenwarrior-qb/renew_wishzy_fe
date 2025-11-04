@@ -155,12 +155,20 @@ export const useAuth = () => {
   const useLogin = () => {
     const locale = useLocale();
     const notifications = useNotifications();
-    return useApiMutation<AuthTypes.LoginResponse, AuthTypes.LoginRequest>(
+    return useApiMutation<AuthTypes.LoginResponse | any, AuthTypes.LoginRequest>(
       authEndpoints.login.url,
       authEndpoints.login.method,
       {
         onSuccess: (data) => {
-          setAuth(data.user, data.accessToken);
+          const user = data?.user || data?.data?.user || data?.payload?.user;
+          const accessToken = data?.accessToken || data?.token || data?.data?.accessToken || data?.payload?.accessToken;
+          if (user && accessToken) {
+            setAuth(user, accessToken);
+          } else {
+            // Fallback: try refresh immediately if backend set cookie only
+            // or at least keep notification while warning in console
+            console.warn('Login success, but missing user/token shape:', data);
+          }
           if (data.message) {
             notifications.show({
               title: getNotificationTitle('login', locale),

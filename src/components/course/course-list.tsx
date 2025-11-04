@@ -22,7 +22,6 @@ type CourseListProps = {
 
 export function CourseList({ filter }: CourseListProps = {}) {
   const { data, isLoading, isError, error } = useCourseList(filter);
-
   if (isLoading) {
     return (
       <Container size="xl" py="xl">

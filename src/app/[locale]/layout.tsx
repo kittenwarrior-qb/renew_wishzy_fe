@@ -9,6 +9,7 @@ import { ConditionalSubheader } from '@/components/layout/ConditionalSubheader';
 import { routing } from '@/libs/I18nRouting';
 import { MantineProvider } from '@/providers/MantineProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
+import { AuthInitializer } from '@/app/[locale]/AuthInitializer';
 import '@/styles/global.css';
 
 export const metadata: Metadata = {
@@ -62,6 +63,7 @@ export default async function RootLayout(props: {
           <QueryProvider>
             <NextIntlClientProvider>
               <LocaleInitializer />
+              <AuthInitializer />
               <ConditionalHeader />
               <ConditionalSubheader />
               {props.children}

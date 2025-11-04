@@ -5,7 +5,8 @@ import { Env } from '@/libs/Env';
  * Falls back to relative path if NEXT_PUBLIC_API_URL is not set
  */
 export const getApiUrl = (): string => {
-  return Env.NEXT_PUBLIC_API_URL || '/api';
+  // Default to REST v1 prefix to match backend cookie path
+  return Env.NEXT_PUBLIC_API_URL || '/api/v1';
 };
 
 /**

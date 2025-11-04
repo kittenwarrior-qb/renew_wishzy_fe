@@ -26,21 +26,6 @@ export function GoogleLoginButton({ onClick }: GoogleLoginButtonProps) {
         }}
       >
         <Text>Google</Text>
-        <Box
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '24px',
-            height: '24px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--mantine-color-gray-1)',
-          }}
-        >
-          <Text size="sm" fw={700}>
-            G
-          </Text>
-        </Box>
       </Button>
     </Stack>
   );

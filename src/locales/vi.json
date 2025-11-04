@@ -84,7 +84,7 @@
     "password_placeholder": "mật khẩu"
   },
   "Auth": {
-    "express_login_via_google": "Đăng nhập nhanh qua Google",
+    "express_login_via_google": "Hoặc",
     "log_in_tab": "Đăng nhập",
     "sign_up_tab": "Đăng ký",
     "show_password": "Hiện",

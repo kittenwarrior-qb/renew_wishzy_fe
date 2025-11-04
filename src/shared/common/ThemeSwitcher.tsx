@@ -1,6 +1,6 @@
 'use client';
 
-import { ActionIcon, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Tooltip, useMantineColorScheme } from '@mantine/core';
 import { IconMoon, IconSun } from '@tabler/icons-react';
 import { useThemeStore } from '@/stores/useThemeStore';
 
@@ -17,8 +17,10 @@ export const ThemeSwitcher = () => {
   const isDark = colorScheme === 'dark';
 
   return (
-    <ActionIcon variant="subtle" size="lg" onClick={handleCycle} title="Toggle theme" aria-label="Toggle theme">
-      {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
-    </ActionIcon>
+    <Tooltip label={colorScheme} withinPortal zIndex={2000} position="bottom" offset={6}>
+      <ActionIcon variant="subtle" size="lg" onClick={handleCycle} aria-label="Toggle theme">
+        {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
+      </ActionIcon>
+    </Tooltip>
   );
 };

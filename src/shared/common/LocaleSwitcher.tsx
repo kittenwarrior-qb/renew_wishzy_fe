@@ -53,7 +53,7 @@ export const LocaleSwitcher = () => {
   };
 
   return (
-    <Tooltip label={locale.toUpperCase()}>
+    <Tooltip label={locale.toUpperCase()} withinPortal zIndex={2000} position="bottom" offset={6}>
       <ActionIcon variant="subtle" size="lg" onClick={toggleLocale} aria-label="Toggle locale">
         <IconLanguage size={18} />
       </ActionIcon>

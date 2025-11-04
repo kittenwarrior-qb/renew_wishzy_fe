@@ -25,7 +25,7 @@ export default async function RootNotFoundPage() {
               <Text size="lg" c="dimmed" ta="center">
                 {t('description')}
               </Text>
-              <Button component="a" href={homeHref} variant="light" size="md">
+              <Button component="a" href={homeHref} variant="light" size="md" className="flex justify-center w-full mx-auto">
                 {t('back_home')}
               </Button>
             </Stack>

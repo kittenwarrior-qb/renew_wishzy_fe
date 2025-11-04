@@ -6,6 +6,35 @@ import { buildApiUrl } from '@/utils/ApiClient';
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
 
+const getJwtExpiry = (token?: string | null): number | null => {
+  if (!token) {
+    return null;
+  }
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) {
+      return null;
+    }
+    const payloadB64: string = parts[1] ?? '';
+    if (!payloadB64) {
+      return null;
+    }
+    const json = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof json.exp === 'number' ? json.exp : null;
+  } catch {
+    return null;
+  }
+};
+
+const isTokenExpiredOrNear = (token?: string | null, skewSeconds = 30): boolean => {
+  const exp = getJwtExpiry(token || null);
+  if (!exp) {
+    return false;
+  }
+  const now = Math.floor(Date.now() / 1000);
+  return now >= exp - skewSeconds;
+};
+
 const refreshAccessToken = async (): Promise<string | null> => {
   if (isRefreshing && refreshPromise) {
     return refreshPromise;
@@ -14,11 +43,6 @@ const refreshAccessToken = async (): Promise<string | null> => {
   isRefreshing = true;
   refreshPromise = (async () => {
     try {
-      const { user } = useAuthStore.getState();
-      if (!user) {
-        return null;
-      }
-
       const refreshUrl = buildApiUrl('auth/refresh-token');
       const response = await fetch(refreshUrl, {
         method: 'POST',
@@ -35,7 +59,18 @@ const refreshAccessToken = async (): Promise<string | null> => {
 
       const data = await response.json();
       if (data.accessToken) {
-        useAuthStore.getState().login(user, data.accessToken);
+        // Update only the token if user is not present; keep user as-is
+        const { user: existingUser } = useAuthStore.getState();
+        if (existingUser) {
+          useAuthStore.getState().login(existingUser, data.accessToken);
+        } else {
+          // No user profile yet; just write token directly
+          // The next authorized request can fetch user info if needed
+          useAuthStore.setState((state: { user: unknown }) => ({
+            token: data.accessToken,
+            isAuthenticated: Boolean(data.accessToken && state.user != null),
+          }));
+        }
         return data.accessToken;
       }
 
@@ -57,7 +92,6 @@ export const apiRequest = async <TData = unknown>(
   options?: RequestInit & { queryParams?: Record<string, string> },
   retryCount = 0,
 ): Promise<TData> => {
-  const { token } = useAuthStore.getState();
   let url = buildApiUrl(endpoint);
 
   if (options?.queryParams) {
@@ -68,30 +102,43 @@ export const apiRequest = async <TData = unknown>(
   const { queryParams, ...fetchOptions } = options || {};
   let currentToken = useAuthStore.getState().token;
 
-  // If retrying after refresh, get the new token
+  // Proactively refresh if token missing or expired (once per request)
+  if (!currentToken || isTokenExpiredOrNear(currentToken)) {
+    await refreshAccessToken();
+    currentToken = useAuthStore.getState().token;
+  }
+
   if (retryCount > 0) {
     currentToken = useAuthStore.getState().token;
   }
 
+  const hasBody = typeof fetchOptions.body !== 'undefined';
+  const baseHeaders: Record<string, string> = {
+    ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+    ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+  };
+
+  const isCrossOrigin = /^https?:\/\//i.test(url)
+    && typeof window !== 'undefined'
+    && !url.startsWith(window.location.origin);
+
   const response = await fetch(url, {
     ...fetchOptions,
     credentials: 'include',
+    ...(isCrossOrigin ? { mode: 'cors' as const } : {}),
     headers: {
-      'Content-Type': 'application/json',
-      ...(currentToken && { Authorization: `Bearer ${currentToken}` }),
+      ...baseHeaders,
       ...fetchOptions?.headers,
     },
+    cache: 'no-store',
   });
 
   if (!response.ok) {
-    // Handle 401 Unauthorized - try to refresh token
     if (response.status === 401 && retryCount === 0) {
       const newToken = await refreshAccessToken();
       if (newToken) {
-        // Retry the request with new token
         return apiRequest<TData>(endpoint, options, 1);
       }
-      // If refresh fails, logout and throw error
       useAuthStore.getState().logout();
     }
 
