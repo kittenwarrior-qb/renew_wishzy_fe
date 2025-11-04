@@ -1,7 +1,7 @@
 'use client';
 
 import type { LoginRequest, RegisterRequest } from '@/types/auth';
-import { Box, Container, Paper, Stack, Text } from '@mantine/core';
+import { Box, Container, Stack, Text } from '@mantine/core';
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -65,37 +65,17 @@ export function AuthForm() {
   };
 
   return (
-    <Box style={{ display: 'flex', minHeight: '100vh', flexDirection: 'column' }}>
+    <Box className="flex min-h-screen flex-col">
       {/* Mobile: Canvas on top, Form below */}
-      <Box
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          width: '100%',
-          flex: 1,
-        }}
-        hiddenFrom="md"
-      >
-        <Box
-          bg="orange.2"
-          style={{ width: '100%', minHeight: '300px', flexShrink: 0, minWidth: 0 }}
-        >
+      <Box className="flex w-full flex-1 flex-col md:hidden">
+        <Box bg="orange.2" className="min-h-[300px] w-full min-w-0 shrink-0">
           <LittleBoyAnimation
             width="100%"
             height="100%"
           />
         </Box>
-        <Box
-          style={{
-            width: '100%',
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-          }}
-        >
-          <Container size="xs" style={{ width: '100%' }}>
+        <Box className="flex w-full flex-1 items-center justify-center p-4">
+          <Container size="xs" className="w-full">
             <AuthFormContent
               view={view}
               activeTab={activeTab}
@@ -116,30 +96,16 @@ export function AuthForm() {
         </Box>
       </Box>
 
-      {/* Desktop: Canvas 60%, Form 40% side by side */}
-      <Box
-        style={{ display: 'flex', width: '100%', flex: 1 }}
-        visibleFrom="md"
-      >
-        <Box
-          bg="orange.2"
-          style={{ width: '60%', flexShrink: 0, minWidth: 0 }}
-        >
+      {/* Desktop: Canvas 50%, Form 50% side by side */}
+      <Box className="hidden w-full flex-1 md:flex">
+        <Box bg="orange.2" className="w-1/2 min-w-0 shrink-0">
           <LittleBoyAnimation
             width="100%"
             height="100%"
           />
         </Box>
-        <Box
-          style={{
-            width: '40%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem',
-          }}
-        >
-          <Container size="xs" style={{ width: '100%' }}>
+        <Box className="flex w-1/2 items-center justify-center p-10">
+          <Container size="sm" className="w-full max-w-[480px]">
             <AuthFormContent
               view={view}
               activeTab={activeTab}
@@ -200,70 +166,64 @@ function AuthFormContent({
 
   if (view === 'verify-email') {
     return (
-      <Paper shadow="sm" p="xl" radius="md" withBorder>
-        <VerifyEmailUI
-          email={registeredEmail}
-          onBackToLogin={handleBackToLogin}
-        />
-      </Paper>
+      <VerifyEmailUI
+        email={registeredEmail}
+        onBackToLogin={handleBackToLogin}
+      />
     );
   }
 
   if (view === 'forgot-password') {
     return (
-      <Paper shadow="sm" p="xl" radius="md" withBorder>
-        <ForgotPasswordForm
-          onSubmit={handleForgotPassword}
-          onBackToLogin={handleBackToLogin}
-          isLoading={forgotPasswordMutation.isPending}
-          error={forgotPasswordMutation.error || null}
-        />
-      </Paper>
+      <ForgotPasswordForm
+        onSubmit={handleForgotPassword}
+        onBackToLogin={handleBackToLogin}
+        isLoading={forgotPasswordMutation.isPending}
+        error={forgotPasswordMutation.error || null}
+      />
     );
   }
 
   return (
-    <Paper shadow="sm" p="xl" radius="md" withBorder>
-      <Stack gap="lg">
-        <GoogleLoginButton onClick={handleGoogleLogin} />
+    <Stack gap="lg">
+      <GoogleLoginButton onClick={handleGoogleLogin} />
 
-        <AuthTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          loginPanel={(
-            <LoginForm
-              onSubmit={handleLogin}
-              isLoading={loginMutation.isPending}
-              error={loginMutation.error || null}
-            />
-          )}
-          signupPanel={(
-            <RegisterForm
-              onSubmit={handleRegister}
-              onSuccess={(email) => {
-                setRegisteredEmail(email);
-                setView('verify-email');
-              }}
-              isLoading={registerMutation.isPending}
-              error={registerMutation.error || null}
-            />
-          )}
-        />
+      <AuthTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        loginPanel={(
+          <LoginForm
+            onSubmit={handleLogin}
+            isLoading={loginMutation.isPending}
+            error={loginMutation.error || null}
+          />
+        )}
+        signupPanel={(
+          <RegisterForm
+            onSubmit={handleRegister}
+            onSuccess={(email) => {
+              setRegisteredEmail(email);
+              setView('verify-email');
+            }}
+            isLoading={registerMutation.isPending}
+            error={registerMutation.error || null}
+          />
+        )}
+      />
 
-        <Text
-          component="a"
-          href="#"
-          size="sm"
-          ta="center"
-          style={{ textDecoration: 'none', cursor: 'pointer' }}
-          onClick={(e) => {
-            e.preventDefault();
-            setView('forgot-password');
-          }}
-        >
-          {tSignIn('forgot_password')}
-        </Text>
-      </Stack>
-    </Paper>
+      <Text
+        component="a"
+        href="#"
+        size="sm"
+        ta="center"
+        style={{ textDecoration: 'none', cursor: 'pointer' }}
+        onClick={(e) => {
+          e.preventDefault();
+          setView('forgot-password');
+        }}
+      >
+        {tSignIn('forgot_password')}
+      </Text>
+    </Stack>
   );
 }

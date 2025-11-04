@@ -1,6 +1,7 @@
 'use client';
 
-import { Button } from '@mantine/core';
+import { ActionIcon, Tooltip } from '@mantine/core';
+import { IconLanguage } from '@tabler/icons-react';
 import { useLocale } from 'next-intl';
 import { useRouter } from '@/libs/I18nNavigation';
 import { routing } from '@/libs/I18nRouting';
@@ -52,12 +53,10 @@ export const LocaleSwitcher = () => {
   };
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={toggleLocale}
-    >
-      {locale.toUpperCase()}
-    </Button>
+    <Tooltip label={locale.toUpperCase()}>
+      <ActionIcon variant="subtle" size="lg" onClick={toggleLocale} aria-label="Toggle locale">
+        <IconLanguage size={18} />
+      </ActionIcon>
+    </Tooltip>
   );
 };

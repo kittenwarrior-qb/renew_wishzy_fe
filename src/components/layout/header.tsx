@@ -2,11 +2,14 @@
 
 import { Anchor, Button, Container, Group, Text } from '@mantine/core';
 import { useTranslations } from 'next-intl';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLogout } from '@/components/auth/useAuth';
 import { Link, useRouter } from '@/libs/I18nNavigation';
 import { LocaleSwitcher } from '@/shared/common/LocaleSwitcher';
+import { ThemeSwitcher } from '@/shared/common/ThemeSwitcher';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useThemeStore } from '@/stores/useThemeStore';
 
 const Header = () => {
   const t = useTranslations();
@@ -14,6 +17,8 @@ const Header = () => {
   const { isAuthenticated, user } = useAuthStore();
   const logoutMutation = useLogout();
   const [isHydrated, setIsHydrated] = useState(false);
+  const { colorScheme } = useThemeStore();
+  const pathname = usePathname();
 
   useEffect(() => {
     // Use setTimeout to avoid calling setState synchronously
@@ -32,14 +37,16 @@ const Header = () => {
     }
   };
 
+  const normalizedPath = (pathname?.replace(/\/$/, '') || '');
+  const _isHomeRoute = normalizedPath === ''
+    || /^\/[a-z]{2}$/.test(normalizedPath);
+
+  // Use subtle bottom shadow + hairline for separation in both themes
+  const headerBorderClass = 'shadow-[0_1px_0_0_rgba(0,0,0,0.06),0_8px_16px_-14px_rgba(0,0,0,0.18)] dark:shadow-[0_1px_0_0_rgba(0,0,0,0.35),0_8px_16px_-14px_rgba(0,0,0,0.6)]';
+
   return (
-    <header
-      style={{
-        borderBottom: '1px solid var(--mantine-color-gray-3)',
-        height: '60px',
-      }}
-    >
-      <Container size="xl" style={{ height: '100%' }}>
+    <header className={`sticky top-0 z-101 h-[60px] bg-(--mantine-color-body) ${headerBorderClass}`}>
+      <Container size="xl" className="h-full">
         <Group justify="space-between" h="100%">
           <Group gap="lg">
             <Anchor
@@ -47,9 +54,14 @@ const Header = () => {
               href="/"
               fw={600}
               size="lg"
-              style={{ textDecoration: 'none' }}
+              className="inline-flex items-center no-underline"
+              aria-label={t('RootLayout.home_link')}
             >
-              {t('RootLayout.home_link')}
+              <img
+                src={colorScheme === 'dark' ? '/assets/images/white-logo.png' : '/assets/images/black-logo.png'}
+                alt="Wishzy logo"
+                className="h-7"
+              />
             </Anchor>
           </Group>
 
@@ -77,6 +89,7 @@ const Header = () => {
                   )
                 )}
             <LocaleSwitcher />
+            <ThemeSwitcher />
           </Group>
         </Group>
       </Container>

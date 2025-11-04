@@ -129,7 +129,6 @@ export function CourseCard({ course, index, purchased }: CourseCardProps) {
                   )
                 : (
                     <Text size="sm" fw={500}>
-                      $
                       {' '}
                       {formatPrice(finalPrice)}
                     </Text>
