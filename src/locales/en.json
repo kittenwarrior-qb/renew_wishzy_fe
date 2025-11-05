@@ -134,5 +134,10 @@
     "title": "404 - Page Not Found",
     "description": "The page you are looking for does not exist or has been moved.",
     "back_home": "Back to Home"
+  },
+  "Banner": {
+    "title": "Discover Amazing Courses",
+    "description": "Learning has never been easier. Explore thousands of high-quality courses from top experts.",
+    "buttonText": "Browse Courses"
   }
 }

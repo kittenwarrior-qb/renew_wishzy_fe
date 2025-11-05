@@ -134,5 +134,10 @@
     "title": "404 - Không Tìm Thấy Trang",
     "description": "Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.",
     "back_home": "Quay Về Trang Chủ"
+  },
+  "Banner": {
+    "title": "Khám Phá Khóa Học Tuyệt Vời",
+    "description": "Học tập không bao giờ dễ dàng hơn. Khám phá hàng ngàn khóa học chất lượng cao từ các chuyên gia hàng đầu.",
+    "buttonText": "Xem Khóa Học"
   }
 }

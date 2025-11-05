@@ -3,13 +3,12 @@ import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { AuthInitializer } from '@/app/[locale]/AuthInitializer';
 import { LocaleInitializer } from '@/app/[locale]/LocaleInitializer';
 import { ConditionalHeader } from '@/components/layout/ConditionalHeader';
-import { ConditionalSubheader } from '@/components/layout/ConditionalSubheader';
 import { routing } from '@/libs/I18nRouting';
 import { MantineProvider } from '@/providers/MantineProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
-import { AuthInitializer } from '@/app/[locale]/AuthInitializer';
 import '@/styles/global.css';
 
 export const metadata: Metadata = {
@@ -65,7 +64,6 @@ export default async function RootLayout(props: {
               <LocaleInitializer />
               <AuthInitializer />
               <ConditionalHeader />
-              <ConditionalSubheader />
               {props.children}
             </NextIntlClientProvider>
           </QueryProvider>

@@ -1,7 +1,7 @@
 'use client';
 
 import type { LoginRequest, RegisterRequest } from '@/types/auth';
-import { Box, Container, Stack, Text } from '@mantine/core';
+import { Box, Container, Image, Stack, Text } from '@mantine/core';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -209,11 +209,12 @@ function AuthFormContent({
 
   return (
     <Stack gap="lg">
-      <Box className="w-full flex items-center justify-center pb-2">
-        <img
+      <Box className="flex w-full items-center justify-center pb-2">
+        <Image
           src={colorScheme === 'dark' ? '/assets/images/white-logo.png' : '/assets/images/black-logo.png'}
           alt="Wishzy logo"
-          className="h-8"
+          h={32}
+          fit="contain"
         />
       </Box>
 

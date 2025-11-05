@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Button, Stack, Text } from '@mantine/core';
+import { Button, Stack, Text } from '@mantine/core';
 import { useTranslations } from 'next-intl';
 
 type GoogleLoginButtonProps = {

@@ -17,11 +17,11 @@ export type Course = {
   description?: string;
   notes?: string;
   thumbnail?: string;
-  price: number;
-  saleInfo?: SaleInfo;
+  price: number | string;
+  saleInfo?: SaleInfo | null;
   rating: number;
   status?: boolean;
-  averageRating: number;
+  averageRating: number | string;
   numberOfStudents: number;
   level: CourseLevel;
   totalDuration: number;
@@ -29,15 +29,21 @@ export type Course = {
   category?: {
     id: string;
     name: string;
-  };
+  } | null;
   createdBy: string;
   creator?: {
     id: string;
+    fullName: string;
+    email?: string;
+  } | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  deletedAt?: Date | string | null;
+  chapters?: Array<{
+    id: string;
     name: string;
-  };
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt?: Date;
+    duration: number;
+  }>;
 };
 
 export type CourseFilter = {

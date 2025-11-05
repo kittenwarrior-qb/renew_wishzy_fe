@@ -1,7 +1,8 @@
 'use client';
 
 import type { Course } from '@/types/course';
-import { Center, Container, Flex, Paper, Text } from '@mantine/core';
+import { Button, Center, Container, Group, Text } from '@mantine/core';
+import { useState } from 'react';
 import { CourseCard } from './course-card';
 import { useCourseList } from './useCourse';
 
@@ -20,58 +21,103 @@ type CourseListProps = {
   };
 };
 
+const INITIAL_LIMIT = 4; // Ban đầu chỉ hiển thị 4 khóa học (1 hàng)
+const DEFAULT_SHOW_MORE_COUNT = 4; // Mặc định hiển thị thêm 4 khóa học
+
 export function CourseList({ filter }: CourseListProps = {}) {
-  const { data, isLoading, isError, error } = useCourseList(filter);
-  if (isLoading) {
+  const [displayCount, setDisplayCount] = useState(INITIAL_LIMIT);
+
+  // Fetch toàn bộ dữ liệu, không giới hạn limit
+  const filterWithMinPrice = {
+    ...filter,
+    minPrice: 1, // Chỉ lấy các khóa học có giá > 0
+    // Không set limit để fetch toàn bộ
+  };
+
+  const { data, isError, error } = useCourseList(filterWithMinPrice);
+
+  const allCourses = data?.data?.items ?? [];
+  const displayedCourses = allCourses.slice(0, displayCount);
+  const remainingCount = allCourses.length - displayCount;
+  const hasMore = remainingCount > 0;
+  const showAll = displayCount >= allCourses.length;
+
+  // Tính số lượng sẽ hiển thị khi click "Xem thêm"
+  const nextShowCount = remainingCount >= DEFAULT_SHOW_MORE_COUNT
+    ? DEFAULT_SHOW_MORE_COUNT
+    : remainingCount;
+
+  const handleShowMore = () => {
+    setDisplayCount(prev => prev + nextShowCount);
+  };
+
+  const handleShowFewer = () => {
+    setDisplayCount(INITIAL_LIMIT);
+  };
+
+  if (isError) {
     return (
       <Container size="xl" py="xl">
         <Center>
-          Đang tải khóa học...
+          <Text c="red" size="lg" ta="center">
+            {error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải danh sách khóa học'}
+          </Text>
         </Center>
       </Container>
     );
   }
 
-  if (isError) {
+  if (allCourses.length === 0) {
     return (
       <Container size="xl" py="xl">
-        <Paper shadow="md" p="xl" radius="md" withBorder>
-          <Text c="red" size="lg" ta="center">
-            {error instanceof Error ? error.message : 'Đã xảy ra lỗi khi tải danh sách khóa học'}
+        <Center>
+          <Text c="dimmed" size="lg">
+            Không có khóa học nào
           </Text>
-        </Paper>
+        </Center>
       </Container>
     );
   }
 
-  const courses = data?.data?.items ?? [];
-
   return (
     <Container size="xl" py="xl">
-      {courses.length === 0
-        ? (
-            <Paper shadow="md" p="xl" radius="md" withBorder>
-              <Text c="dimmed" ta="center" size="lg">
-                Không có khóa học nào
-              </Text>
-            </Paper>
-          )
-        : (
-            <Flex
-              gap="lg"
-              wrap="wrap"
-              justify="flex-start"
-              align="flex-start"
-            >
-              {courses.map((course: Course, index: number) => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  index={index}
-                />
-              ))}
-            </Flex>
-          )}
+      <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {displayedCourses.map((course: Course) => (
+          <CourseCard
+            key={course.id}
+            course={course}
+          />
+        ))}
+      </div>
+
+      {/* Action Buttons */}
+      <Group mt="xl" gap="md">
+        {hasMore && (
+          <Button
+            onClick={handleShowMore}
+            variant="outline"
+            size="sm"
+            className="text-sm"
+          >
+            Xem thêm
+            {' '}
+            {nextShowCount}
+            {' '}
+            khóa học
+          </Button>
+        )}
+
+        {showAll && displayCount > INITIAL_LIMIT && (
+          <Button
+            onClick={handleShowFewer}
+            variant="subtle"
+            size="sm"
+            className="text-sm"
+          >
+            Hiển thị ít hơn
+          </Button>
+        )}
+      </Group>
     </Container>
   );
 }

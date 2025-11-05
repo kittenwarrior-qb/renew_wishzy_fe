@@ -1,10 +1,12 @@
+import { Banner } from '@/components/banner/banner';
 import { CourseList } from '@/components/course/course-list';
 
 const page = () => {
   return (
-    <div style={{ padding: '2rem' }}>
+    <>
+      <Banner />
       <CourseList />
-    </div>
+    </>
   );
 };
 

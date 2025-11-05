@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAuthStore } from '@/stores/useAuthStore';
 import { useRefreshToken } from '@/components/auth/useAuth';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export function AuthInitializer() {
   const { isAuthenticated, token, hadAuthenticatedSession } = useAuthStore();
@@ -21,5 +21,3 @@ export function AuthInitializer() {
 
   return null;
 }
-
-
