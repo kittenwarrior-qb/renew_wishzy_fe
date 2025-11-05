@@ -1,3 +1,4 @@
+import type { Chapter } from '@/types/chapter';
 import type { ApiResponse, PaginatedResponse } from '@/types/common';
 
 export type CourseLevel = 'beginner' | 'intermediate' | 'advanced';
@@ -5,10 +6,10 @@ export type CourseLevel = 'beginner' | 'intermediate' | 'advanced';
 export type SaleType = 'percent' | 'fixed';
 
 export type SaleInfo = {
-  saleType?: SaleType;
-  value?: number;
-  saleStartDate?: Date;
-  saleEndDate?: Date;
+  saleType: SaleType;
+  value: number;
+  saleStartDate: string;
+  saleEndDate: string;
 };
 
 export type Course = {
@@ -29,21 +30,24 @@ export type Course = {
   category?: {
     id: string;
     name: string;
+    notes?: string | null;
+    parentId?: string | null;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string | null;
   } | null;
   createdBy: string;
   creator?: {
     id: string;
+    email: string;
     fullName: string;
-    email?: string;
+    avatar?: string | null;
+    passwordModified?: boolean;
   } | null;
   createdAt: Date | string;
   updatedAt: Date | string;
   deletedAt?: Date | string | null;
-  chapters?: Array<{
-    id: string;
-    name: string;
-    duration: number;
-  }>;
+  chapters?: Chapter[];
 };
 
 export type CourseFilter = {

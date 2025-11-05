@@ -4,15 +4,16 @@ export type Chapter = {
   id: string;
   name: string;
   description?: string;
+  duration: number;
   courseId: string;
   course?: {
     id: string;
     name: string;
   };
   order?: number;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
+  deletedAt?: string;
 };
 
 export type ChapterListResponse = ApiResponse<{

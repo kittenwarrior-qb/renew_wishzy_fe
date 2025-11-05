@@ -1,5 +1,6 @@
 'use client';
 
+import type { Course } from '@/types/course';
 import {
   Anchor,
   Badge,
@@ -20,7 +21,11 @@ import { useChapterList } from '@/components/chapter/useChapter';
 import { useCourseDetail } from '@/components/course/useCourse';
 import { useLectureList } from '@/components/lecture/useLecture';
 import { NotFoundAnimation } from '@/components/rive-animation/NotFoundAnimation';
+import { CourseFAQ } from './course-faq';
 import { CourseModal } from './course-modal';
+import { CourseOverview } from './course-overview';
+import { CourseRequirements } from './course-requirements';
+import { CourseReviews } from './course-reviews';
 import { CourseUserInfo } from './course-user-info';
 
 function ChapterItem({ chapterId, name }: { chapterId: string; name: string }) {
@@ -31,42 +36,40 @@ function ChapterItem({ chapterId, name }: { chapterId: string; name: string }) {
     : Object.values(lecturesRaw).filter(v => typeof v === 'object');
 
   return (
-    <Container size="lg" py="xl">
-      <Paper p="md" withBorder>
-        <Stack gap={6}>
-          <Group justify="space-between">
-            <Title order={4}>{name}</Title>
-            <Text c="dimmed" size="sm">
-              {lectureQuery.isLoading ? '...' : lectures.length}
-              {' '}
-              lectures
-            </Text>
-          </Group>
-          {lectureQuery.isLoading
-            ? (
-                <Loader size="sm" />
-              )
-            : (
-                <Stack gap={4}>
-                  {lectures.map((lec: any) => (
-                    <Group key={lec.id} justify="space-between">
-                      <Text>{lec.name}</Text>
-                      {lec.duration
-                        ? (
-                            <Text c="dimmed" size="sm">
-                              {lec.duration}
-                              {' '}
-                              sec
-                            </Text>
-                          )
-                        : null}
-                    </Group>
-                  ))}
-                </Stack>
-              )}
-        </Stack>
-      </Paper>
-    </Container>
+    <Paper p="md" withBorder>
+      <Stack gap={6}>
+        <Group justify="space-between">
+          <Title order={4}>{name}</Title>
+          <Text c="dimmed" size="sm">
+            {lectureQuery.isLoading ? '...' : lectures.length}
+            {' '}
+            lectures
+          </Text>
+        </Group>
+        {lectureQuery.isLoading
+          ? (
+              <Loader size="sm" />
+            )
+          : (
+              <Stack gap={4}>
+                {lectures.map((lec: any) => (
+                  <Group key={lec.id} justify="space-between">
+                    <Text>{lec.name}</Text>
+                    {lec.duration
+                      ? (
+                          <Text c="dimmed" size="sm">
+                            {lec.duration}
+                            {' '}
+                            sec
+                          </Text>
+                        )
+                      : null}
+                  </Group>
+                ))}
+              </Stack>
+            )}
+      </Stack>
+    </Paper>
   );
 }
 
@@ -119,7 +122,7 @@ export function CourseDetail({ id }: { id: string }) {
     );
   }
 
-  const course = courseQuery.data.data as any;
+  const course = courseQuery.data.data as Course;
 
   const items = [
     { title: 'Trang chủ', href: '/' },
@@ -128,16 +131,18 @@ export function CourseDetail({ id }: { id: string }) {
   ];
 
   return (
-    <Box maw="1280px" mx="auto" py="xl">
-      <BreadcrumbItem items={items} />
-      <Flex gap={32}>
+    <Box maw="1280px" mx="auto" py="md" px={{ base: 'md', sm: 'lg' }}>
+      <Flex gap={{ base: 'md', lg: 32 }} direction={{ base: 'column', lg: 'row' }}>
         {/* Left page */}
-        <Stack gap="lg" className="mt-5 w-[70%]">
+        <Stack gap="lg" className="mt-5 w-full lg:w-[70%]">
+          <BreadcrumbItem items={items} />
           <Stack gap={4}>
             {/* Course name */}
-            <Title order={2}>{typeof course.name === 'string' ? course.name : String(course.name ?? '')}</Title>
+            <Title order={2} size="h2">
+              {typeof course.name === 'string' ? course.name : String(course.name ?? '')}
+            </Title>
             {/* Level, Students, Rating */}
-            <Group gap="sm" className="mt-2">
+            <Group gap="xs" className="mt-2" wrap="wrap">
               {course?.category?.name && (
                 <Badge color="blue">{String(course.category.name)}</Badge>
               )}
@@ -162,6 +167,8 @@ export function CourseDetail({ id }: { id: string }) {
               className="mt-2"
               radius="md"
               src={course.thumbnail}
+              h={{ base: 200, sm: 300, md: 400 }}
+              fit="cover"
             />
 
           </Stack>
@@ -170,6 +177,12 @@ export function CourseDetail({ id }: { id: string }) {
             <Title order={3}>Mô tả khoá học</Title>
             {course.description && <Text c="dimmed">{typeof course.description === 'string' ? course.description : String(course.description)}</Text>}
           </Stack>
+
+          {/* What you'll learn */}
+          <CourseOverview />
+
+          {/* Requirements */}
+          <CourseRequirements />
 
           <Divider label="Chapters" />
           <Stack gap="md">
@@ -187,6 +200,14 @@ export function CourseDetail({ id }: { id: string }) {
           <Divider label="Instructor Info" />
           {/* User info */}
           <CourseUserInfo />
+
+          <Divider label="Reviews" />
+          {/* Reviews */}
+          <CourseReviews />
+
+          <Divider label="FAQ" />
+          {/* FAQ */}
+          <CourseFAQ />
         </Stack>
 
         {/* Modal right page */}
