@@ -13,6 +13,13 @@ export interface RegisterData {
   lastName: string;
 }
 
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  fullName: string;
+}
+
 export interface ResetPasswordData {
   password: string;
   confirmPassword: string;
@@ -71,7 +78,15 @@ export const authService = {
   },
 
   async register(data: RegisterData): Promise<ApiResponse> {
-    const response = await api.post('/auth/register', data);
+    // Transform frontend data to backend format
+    const requestData: RegisterRequest = {
+      email: data.email,
+      password: data.password,
+      confirmPassword: data.confirmPassword,
+      fullName: `${data.firstName.trim()} ${data.lastName.trim()}`.trim()
+    };
+    
+    const response = await api.post('/auth/register', requestData);
     return response.data;
   },
 

@@ -24,7 +24,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      // If we have a token but no user in store, fetch profile
       if (token && !isAuthenticated) {
         try {
           console.log('Fetching user profile with token');
@@ -33,7 +32,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(userProfile);
         } catch (error) {
           console.error('Auth check failed:', error);
-          // Token is invalid, clear it
           localStorage.removeItem('accessToken');
           logout();
         }

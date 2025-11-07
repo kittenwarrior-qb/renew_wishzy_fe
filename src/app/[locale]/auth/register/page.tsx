@@ -68,7 +68,6 @@ export default function RegisterPage() {
 
   const handleInputChange = (field: keyof RegisterData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
@@ -218,7 +217,7 @@ export default function RegisterPage() {
                 href="/auth/login"
                 className="text-primary underline font-medium"
               >
-                {t('auth.login')} ngay
+                {t('auth.login')}
               </Link>
             </p>
           </div>
