@@ -56,10 +56,8 @@ export default async function LocaleLayout({
   return (
     <TranslationProvider locale={locale} messages={messages}>
       <AuthProvider>
-        <div className="min-h-screen bg-background text-foreground transition-colors">
-          <Header />
-          {children}
-        </div>
+        <Header />
+        {children}
       </AuthProvider>
     </TranslationProvider>
   );
