@@ -1,0 +1,20 @@
+{
+  "appName": "Wishzy",
+  "loading": "Loading...",
+  "error": "Error",
+  "success": "Success",
+  "welcome": "Welcome to Wishzy",
+  "subtitle": "Elevate your learning experience with our modern, interactive learning management system.",
+  "getStarted": "Get Started",
+  "learnMore": "Learn More",
+  "features": {
+    "interactiveLearning": "Interactive Learning",
+    "interactiveLearningDesc": "Engage with interactive lessons featuring videos, quizzes, and discussions.",
+    "expertInstructors": "Expert Instructors",
+    "expertInstructorsDesc": "Learn from industry-leading experts with years of experience.",
+    "progressTracking": "Progress Tracking",
+    "progressTrackingDesc": "Monitor your progress and achievements with detailed analytics and personalized dashboards.",
+    "communitySupport": "Community Support",
+    "communitySupportDesc": "Join a vibrant community of learners and instructors to collaborate and share knowledge."
+  }
+}
