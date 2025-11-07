@@ -1,6 +1,5 @@
 'use client';
 
-import Header from "@/components/shared/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Clock, Users, Star, Loader2 } from "lucide-react";
@@ -31,7 +30,6 @@ export default function CoursesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground transition-colors">
-        <Header />
         <div className="container mx-auto px-4 py-16 flex items-center justify-center">
           <div className="flex items-center gap-2">
             <Loader2 className="w-6 h-6 animate-spin" />
@@ -45,7 +43,6 @@ export default function CoursesPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background text-foreground transition-colors">
-        <Header />
         <div className="container mx-auto px-4 py-16 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">{t('courses.errorLoading')}</h2>
@@ -59,7 +56,6 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors">
-      <Header />
       
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16">
@@ -71,7 +67,7 @@ export default function CoursesPage() {
             Discover a wide range of high-quality courses designed to help you advance your skills and career.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-orange-500">
+            <Button size="lg" className="">
               Browse All Courses
             </Button>
             <Button size="lg" variant="outline" className="border-gray-600 text-white">

@@ -1,6 +1,5 @@
 'use client';
 
-import Header from "@/components/shared/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users, TrendingUp, MessageCircle } from "lucide-react";
@@ -10,11 +9,7 @@ export default function Home() {
   const t = useTranslations();
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors">
-      <Header />
-      
-      {/* Hero Section */}
-      <main className="container mx-auto px-4 py-20">
+    <main className="container mx-auto px-4 py-20">
         <div className="text-center max-w-4xl mx-auto">
           <p className="text-primary text-sm font-medium mb-4 tracking-wide">
             {t('appName')}
@@ -94,6 +89,5 @@ export default function Home() {
           </Card>
         </div>
       </main>
-    </div>
   );
 }

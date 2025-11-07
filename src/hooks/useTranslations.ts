@@ -13,12 +13,10 @@ export function useTranslations() {
   const [locale, setLocale] = useState<string>('vi');
 
   useEffect(() => {
-    // Extract locale from pathname
     const segments = pathname.split('/');
     const currentLocale = segments[1] === 'en' ? 'en' : 'vi';
     setLocale(currentLocale);
 
-    // Load translations
     const loadTranslations = async () => {
       try {
         const messages = await import(`../../locales/${currentLocale}.json`);

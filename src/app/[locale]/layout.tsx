@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { TranslationProvider } from '@/providers/TranslationProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
+import Header from '@/components/shared/layout/Header';
 
 const locales = ['vi', 'en'];
 
@@ -55,7 +56,10 @@ export default async function LocaleLayout({
   return (
     <TranslationProvider locale={locale} messages={messages}>
       <AuthProvider>
-        {children}
+        <div className="min-h-screen bg-background text-foreground transition-colors">
+          <Header />
+          {children}
+        </div>
       </AuthProvider>
     </TranslationProvider>
   );

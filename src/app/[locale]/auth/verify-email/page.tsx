@@ -37,16 +37,16 @@ export default function VerifyEmailPage() {
         }
       });
     }
-  }, [token, verificationStatus, verifyEmailMutation]);
+  }, [token]); // Only depend on token to prevent infinite calls
 
   const handleResendVerification = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError('Email là bắt buộc');
+      setError(t('auth.emailRequired'));
       return;
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Email không hợp lệ');
+      setError(t('auth.emailInvalid'));
       return;
     }
     setError('');
@@ -63,7 +63,7 @@ export default function VerifyEmailPage() {
   // Success state
   if (verificationStatus === 'success') {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -76,11 +76,11 @@ export default function VerifyEmailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-center space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 {t('auth.canLoginMessage')}
               </p>
               <Link href="/auth/login">
-                <Button className="w-full bg-orange-500 hover:bg-orange-600">
+                <Button className="w-full">
                   {t('auth.loginNow')}
                 </Button>
               </Link>
@@ -94,52 +94,52 @@ export default function VerifyEmailPage() {
   // Error state
   if (verificationStatus === 'error') {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <XCircle className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 bg-destructive rounded-full flex items-center justify-center mx-auto mb-4">
+              <XCircle className="w-8 h-8 text-destructive-foreground" />
             </div>
-            <CardTitle className="text-2xl font-bold text-red-600">{t('auth.verificationFailedTitle')}</CardTitle>
+            <CardTitle className="text-2xl font-bold text-destructive">{t('auth.verificationFailedTitle')}</CardTitle>
             <CardDescription>
-              <span>{t('auth.verificationPending')}</span> không hợp lệ hoặc đã hết hạn
+              {t('auth.verificationLinkExpired')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 {t('auth.tokenExpiredMessage')}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Liên kết xác thực có thể đã hết hạn. Vui lòng yêu cầu gửi lại email xác thực.
+              <p className="text-sm text-muted-foreground">
+                {t('auth.verificationLinkExpired')}
               </p>
               <form onSubmit={handleResendVerification} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email của bạn</Label>
+                  <Label htmlFor="email">{t('auth.yourEmail')}</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder={t('auth.emailPlaceholder')}
                     value={email}
                     onChange={(e) => handleInputChange(e.target.value)}
-                    className={error ? 'border-red-500' : ''}
+                    className={error ? 'border-destructive' : ''}
                   />
                   {error && (
-                    <p className="text-sm text-red-500">{error}</p>
+                    <p className="text-sm text-destructive">{error}</p>
                   )}
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-orange-500 hover:bg-orange-600"
+                  className="w-full"
                   disabled={resendVerificationMutation.isPending}
                 >
                   {resendVerificationMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Đang gửi...
+                      {t('auth.sending')}
                     </>
                   ) : (
-                    'Gửi lại email xác thực'
+                    t('auth.resendVerificationEmail')
                   )}
                 </Button>
               </form>
@@ -158,15 +158,15 @@ export default function VerifyEmailPage() {
   // Loading state
   if (verificationStatus === 'pending') {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Loader2 className="w-8 h-8 text-white animate-spin" />
+            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+              <Loader2 className="w-8 h-8 text-primary-foreground animate-spin" />
             </div>
-            <CardTitle className="text-2xl font-bold">{t('auth.pendingVerificationTitle')}</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t('auth.verifyingEmail')}</CardTitle>
             <CardDescription>
-              Vui lòng chờ trong giây lát
+              {t('auth.pleaseWait')}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -176,11 +176,11 @@ export default function VerifyEmailPage() {
 
   // Manual verification form
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Mail className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-8 h-8 text-secondary-foreground" />
           </div>
           <CardTitle className="text-2xl font-bold">{t('auth.manualVerificationTitle')}</CardTitle>
           <CardDescription>
@@ -189,48 +189,47 @@ export default function VerifyEmailPage() {
         </CardHeader>
         <CardContent>
           <div className="text-center space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Chúng tôi đã gửi email xác thực đến địa chỉ email bạn đã đăng ký. 
-              Vui lòng kiểm tra hộp thư và nhấp vào liên kết để kích hoạt tài khoản.
+            <p className="text-sm text-muted-foreground">
+              {t('auth.verificationEmailSent')}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Không nhận được email? Kiểm tra thư mục spam hoặc yêu cầu gửi lại.
+            <p className="text-sm text-muted-foreground">
+              {t('auth.checkSpamFolder')}
             </p>
             
             <form onSubmit={handleResendVerification} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email của bạn</Label>
+                <Label htmlFor="email">{t('auth.yourEmail')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(e) => handleInputChange(e.target.value)}
-                  className={error ? 'border-red-500' : ''}
+                  className={error ? 'border-destructive' : ''}
                 />
                 {error && (
-                  <p className="text-sm text-red-500">{error}</p>
+                  <p className="text-sm text-destructive">{error}</p>
                 )}
               </div>
               <Button
                 type="submit"
-                className="w-full bg-orange-500 hover:bg-orange-600"
+                className="w-full"
                 disabled={resendVerificationMutation.isPending}
               >
                 {resendVerificationMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang gửi...
+                    {t('auth.sending')}
                   </>
                 ) : (
-                  'Gửi lại email xác thực'
+                  t('auth.resendVerificationEmail')
                 )}
               </Button>
             </form>
 
             <Link href="/auth/login">
               <Button variant="ghost" className="w-full">
-                Quay lại đăng nhập
+                {t('auth.backToLogin')}
               </Button>
             </Link>
           </div>
