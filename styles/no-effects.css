@@ -1,0 +1,90 @@
+/* Remove all hover effects and focus rings globally */
+
+/* Remove focus rings from all interactive elements */
+*:focus,
+*:focus-visible,
+input:focus,
+textarea:focus,
+select:focus,
+button:focus,
+a:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  ring: none !important;
+}
+
+/* Remove hover effects from buttons */
+button:hover,
+.btn:hover,
+[role="button"]:hover {
+  background-color: inherit !important;
+  color: inherit !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove hover effects from links */
+a:hover {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+/* Remove hover effects from inputs */
+input:hover,
+textarea:hover,
+select:hover {
+  border-color: inherit !important;
+  box-shadow: none !important;
+}
+
+/* Ensure cursor pointer for interactive elements */
+button,
+.btn,
+[role="button"],
+a,
+input[type="submit"],
+input[type="button"] {
+  cursor: pointer !important;
+}
+
+/* Remove active states */
+button:active,
+.btn:active,
+[role="button"]:active,
+a:active {
+  transform: none !important;
+  box-shadow: none !important;
+  background-color: inherit !important;
+}
+
+/* Remove transition effects */
+* {
+  transition: none !important;
+}
+
+/* Specific overrides for shadcn/ui components */
+.bg-primary:hover {
+  background-color: hsl(var(--primary)) !important;
+}
+
+.bg-secondary:hover {
+  background-color: hsl(var(--secondary)) !important;
+}
+
+.border-input:focus {
+  border-color: hsl(var(--input)) !important;
+}
+
+/* Remove ring utilities */
+.ring,
+.ring-1,
+.ring-2,
+.ring-4,
+.ring-8,
+.focus\:ring,
+.focus\:ring-1,
+.focus\:ring-2,
+.focus\:ring-4,
+.focus\:ring-8 {
+  box-shadow: none !important;
+}
