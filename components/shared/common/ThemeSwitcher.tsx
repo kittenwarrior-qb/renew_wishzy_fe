@@ -29,7 +29,7 @@ export const ThemeSwitcher = () => {
       variant="ghost"
       size="icon"
       onClick={handleToggle}
-      className="text-gray-900 dark:text-white hover:text-orange-400 transition-colors"
+      className="text-gray-900 dark:text-white hover:bg-accent hover:text-orange-400 transition-colors"
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} theme`}
     >
       {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}

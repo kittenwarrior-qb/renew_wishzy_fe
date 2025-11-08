@@ -34,10 +34,10 @@ export default function Home() {
             {t('subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20">
-            <Button size="lg" className="bg-primary text-primary-foreground px-8 py-3 text-lg">
+            <Button size="lg" className="px-8 py-3 text-lg">
               {t('getStarted')}
             </Button>
-            <Button size="lg" variant="outline" className="border-border text-foreground px-8 py-3 text-lg">
+            <Button size="lg" variant="outline" className="px-8 py-3 text-lg">
               {t('learnMore')}
             </Button>
           </div>

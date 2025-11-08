@@ -81,7 +81,7 @@ const CartPopover = () => {
       <Button
         variant="ghost"
         size="icon"
-        className="relative text-foreground"
+        className="relative text-foreground hover:bg-accent hover:text-accent-foreground"
         onClick={handleGoToCart}
       >
         <ShoppingCart className="h-5 w-5" />

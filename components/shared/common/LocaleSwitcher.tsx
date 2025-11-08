@@ -30,7 +30,7 @@ export const LocaleSwitcher = () => {
       variant="ghost"
       size="icon"
       onClick={toggleLocale}
-      className="text-gray-900 dark:text-white hover:text-orange-400 transition-colors"
+      className="text-gray-900 dark:text-white hover:bg-accent hover:text-orange-400 transition-colors"
       aria-label={`Switch to ${currentLocale === 'vi' ? 'English' : 'Vietnamese'}`}
     >
       <Globe className="h-5 w-5" />

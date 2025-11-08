@@ -11,6 +11,7 @@ import { User, LogOut } from "lucide-react"
 import React from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { ThemeSwitcher } from "../common/ThemeSwitcher"
 import { LocaleSwitcher } from "../common/LocaleSwitcher"
 import { useLogout, useAuthStatus } from "@/components/shared/auth/useAuth"
@@ -19,10 +20,16 @@ import { useAppStore } from "@/stores/useAppStore"
 import CartPopover from "../cart/CartPopover"
 
 const Header = () => {
+  const pathname = usePathname();
   const t = useTranslations();
   const { user, isAuthenticated } = useAuthStatus();
   const logoutMutation = useLogout();
   const { theme } = useAppStore();
+
+  // Hide header on admin routes (supports both /admin and /[locale]/admin)
+  if (pathname?.includes('/admin')) {
+    return null;
+  }
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -47,21 +54,21 @@ const Header = () => {
               <NavigationMenuList className="space-x-6">
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link href="/" className="text-foreground transition-colors cursor-pointer">
+                    <Link href="/" className="text-foreground hover:text-primary transition-colors cursor-pointer">
                       {t('navigation.home')}
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link href="/courses" className="text-foreground transition-colors cursor-pointer">
+                    <Link href="/courses" className="text-foreground hover:text-primary transition-colors cursor-pointer">
                       {t('navigation.courses')}
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link href="/dashboard" className="text-foreground transition-colors cursor-pointer">
+                    <Link href="/dashboard" className="text-foreground hover:text-primary transition-colors cursor-pointer">
                       {t('navigation.dashboard')}
                     </Link>
                   </NavigationMenuLink>
@@ -101,7 +108,7 @@ const Header = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-foreground"
+                    className="text-foreground hover:bg-accent hover:text-accent-foreground"
                     onClick={handleLogout}
                     disabled={logoutMutation.isPending}
                     title={t('auth.logout')}
@@ -112,7 +119,7 @@ const Header = () => {
               </div>
             ) : (
               <Link href="/auth/login">
-                <Button variant="ghost" size="icon" className="text-foreground" title={t('auth.login')}>
+                <Button variant="ghost" size="icon" className="text-foreground hover:bg-accent hover:text-accent-foreground" title={t('auth.login')}>
                   <User className="h-5 w-5" />
                 </Button>
               </Link>
