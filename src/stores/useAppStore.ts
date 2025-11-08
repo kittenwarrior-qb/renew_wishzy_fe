@@ -52,7 +52,8 @@ interface AppState {
   toggleTheme: () => void;
   addToCart: (course: CourseItemType) => void;
   removeFromCart: (course: CourseItemType) => void;
-    }
+  removeCart: () => void;
+}
 
 export const useAppStore = create<AppState>()(
   devtools(

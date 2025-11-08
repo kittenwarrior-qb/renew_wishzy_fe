@@ -16,7 +16,6 @@ import { LocaleSwitcher } from "../common/LocaleSwitcher"
 import { useLogout, useAuthStatus } from "@/components/shared/auth/useAuth"
 import { useTranslations } from "@/providers/TranslationProvider"
 import { useAppStore } from "@/stores/useAppStore"
-import { useLogout } from "@/hooks/useAuth"
 import CartPopover from "../cart/CartPopover"
 
 const Header = () => {
@@ -24,11 +23,6 @@ const Header = () => {
   const { user, isAuthenticated } = useAuthStatus();
   const logoutMutation = useLogout();
   const { theme } = useAppStore();
-
-  // Debug theme value
-  React.useEffect(() => {
-    console.log('Header theme value:', theme);
-  }, [theme]);
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -39,19 +33,17 @@ const Header = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-10">
-
-          <Link href="/" className="flex items-center space-x-3">
-            <img
-              src={theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"}
-              alt="Wishzy logo"
-              width={80}
-              height={80}
-              className="object-contain"
-              
+            <Link href="/" className="flex items-center space-x-3">
+              <img
+                src={theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"}
+                alt="Wishzy logo"
+                width={80}
+                height={80}
+                className="object-contain"
               />
-          </Link>
+            </Link>
 
-          <NavigationMenu>
+            <NavigationMenu>
             <NavigationMenuList className="space-x-6">
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
@@ -75,8 +67,8 @@ const Header = () => {
                 </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
-          </NavigationMenu>
-              </div>
+            </NavigationMenu>
+          </div>
 
           {/* Right side icons */}
           <div className="flex items-center space-x-2">
