@@ -88,7 +88,7 @@ export const useAppStore = create<AppState>()(
         
         enrollInCourse: (course) => {
           const { enrolledCourses } = get();
-          const isAlreadyEnrolled = enrolledCourses.some(c => c.id === course.id);
+          const isAlreadyEnrolled = enrolledCourses.some(c => String(c.id) === String(course.id));
           
           if (!isAlreadyEnrolled) {
             set({ 
@@ -134,7 +134,7 @@ export const useAppStore = create<AppState>()(
       }
     ),
     {
-      name: 'marshallms-store',
+      name: 'wishzy-store',
     }
   )
 );

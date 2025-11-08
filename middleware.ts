@@ -6,6 +6,7 @@ const defaultLocale = 'vi';
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const search = request.nextUrl.search; // Get query parameters
   
   const hasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
@@ -16,11 +17,12 @@ export function middleware(request: NextRequest) {
   }
   
   if (pathname === '/') {
-    return NextResponse.redirect(new URL(`/${defaultLocale}`, request.url));
+    return NextResponse.redirect(new URL(`/${defaultLocale}${search}`, request.url));
   }
   
   if (!pathname.startsWith('/_next') && !pathname.startsWith('/api') && !pathname.includes('.')) {
-    return NextResponse.redirect(new URL(`/${defaultLocale}${pathname}`, request.url));
+    // Preserve query parameters when redirecting
+    return NextResponse.redirect(new URL(`/${defaultLocale}${pathname}${search}`, request.url));
   }
   
   return NextResponse.next();

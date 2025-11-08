@@ -11,29 +11,33 @@ export function generateStaticParams() {
 
 async function getMessages(locale: string) {
   try {
-    const [common, auth, courses] = await Promise.all([
+    const [common, auth, courses, navigation] = await Promise.all([
       import(`../../../locales/${locale}/common.json`),
       import(`../../../locales/${locale}/auth.json`),
-      import(`../../../locales/${locale}/courses.json`)
+      import(`../../../locales/${locale}/courses.json`),
+      import(`../../../locales/${locale}/navigation.json`)
     ]);
     
     return {
       ...common.default,
       auth: auth.default,
-      courses: courses.default
+      courses: courses.default,
+      navigation: navigation.default
     };
   } catch (error) {
     console.error(`Failed to load messages for locale ${locale}:`, error);
-    const [common, auth, courses] = await Promise.all([
+    const [common, auth, courses, navigation] = await Promise.all([
       import(`../../../locales/vi/common.json`),
       import(`../../../locales/vi/auth.json`),
-      import(`../../../locales/vi/courses.json`)
+      import(`../../../locales/vi/courses.json`),
+      import(`../../../locales/vi/navigation.json`)
     ]);
     
     return {
       ...common.default,
       auth: auth.default,
-      courses: courses.default
+      courses: courses.default,
+      navigation: navigation.default
     };
   }
 }

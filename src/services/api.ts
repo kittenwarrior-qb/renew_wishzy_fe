@@ -1,36 +1,46 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:8000/api/v1';
-
-const api: AxiosInstance = axios.create({
-  baseURL: API_URL,
+// Configuration
+const API_CONFIG = {
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://localhost:8000/api/v1',
   timeout: 10000,
   withCredentials: true,
+} as const;
+
+// Token management utilities
+const TokenManager = {
+  get: () => localStorage.getItem('accessToken'),
+  set: (token: string) => localStorage.setItem('accessToken', token),
+  remove: () => localStorage.removeItem('accessToken'),
+};
+
+// Create axios instance
+const api: AxiosInstance = axios.create({
+  ...API_CONFIG,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// Request interceptor - Add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
+    const token = TokenManager.get();
+    if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error: AxiosError) => Promise.reject(error)
 );
 
+// Response interceptor - Handle token refresh
 api.interceptors.response.use(
-  (response: AxiosResponse) => {
-    return response;
-  },
-  async (error) => {
-    const originalRequest = error.config;
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as any;
 
+    // Handle 401 errors with token refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -38,14 +48,21 @@ api.interceptors.response.use(
         const refreshResponse = await api.post('/auth/refresh-token');
         const { accessToken } = refreshResponse.data;
         
-        localStorage.setItem('accessToken', accessToken);
+        TokenManager.set(accessToken);
         
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        }
         
         return api(originalRequest);
       } catch (refreshError) {
-        localStorage.removeItem('accessToken');
-        window.location.href = '/auth/login';
+        TokenManager.remove();
+        
+        // Only redirect if we're in browser environment
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login';
+        }
+        
         return Promise.reject(refreshError);
       }
     }

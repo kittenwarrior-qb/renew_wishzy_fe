@@ -27,6 +27,8 @@
       "@/stores/*": ["./src/stores/*"],
       "@/providers/*": ["./src/providers/*"],
       "@/libs/*": ["./src/libs/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/types": ["./src/types/index.ts"],
       "@/locales/*": ["./locales/*"]
     }
   },

@@ -1,5 +1,6 @@
 {
   "appName": "Wishzy",
+  "avatar": "Avatar",
   "loading": "Loading...",
   "error": "Error",
   "success": "Success",

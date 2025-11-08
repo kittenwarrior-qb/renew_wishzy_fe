@@ -1,134 +1,147 @@
-import api from './api';
+import { apiRequest } from '@/hooks/useApi';
+import type {
+  LoginCredentials,
+  LoginResponse,
+  RegisterData,
+  RegisterResponse,
+  VerifyEmailResponse,
+  ResendVerificationData,
+  ResendVerificationResponse,
+  ForgotPasswordData,
+  ForgotPasswordResponse,
+  ResetPasswordData,
+  ResetPasswordResponse,
+  RefreshTokenResponse,
+  ProfileResponse,
+  LogoutResponse,
+  User
+} from '@/types/auth';
 
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
+// Wishzy Auth Service - Full Flow Implementation
+export const wishzyAuthService = {
+  /**
+   * User Registration
+   * POST /auth/register
+   */
+  register: async (data: RegisterData): Promise<RegisterResponse> => {
+    const response = await apiRequest<RegisterResponse>('auth/register', {
+      method: 'POST',
+      data,
+    });
+    return response;
+  },
 
-export interface RegisterData {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-}
+  /**
+   * Email Verification
+   * GET /auth/verify-email?token=xxx
+   */
+  verifyEmail: async (token: string): Promise<VerifyEmailResponse> => {
+    const response = await apiRequest<VerifyEmailResponse>('auth/verify-email', {
+      method: 'GET',
+      params: { token },
+    });
+    return response;
+  },
 
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  fullName: string;
-}
+  /**
+   * Resend Verification Email
+   * POST /auth/resend-verification
+   */
+  resendVerification: async (data: ResendVerificationData): Promise<ResendVerificationResponse> => {
+    const response = await apiRequest<ResendVerificationResponse>('auth/resend-verification', {
+      method: 'POST',
+      data,
+    });
+    return response;
+  },
 
-export interface ResetPasswordData {
-  password: string;
-  confirmPassword: string;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  fullName: string;
-  firstName?: string;
-  lastName?: string;
-  dob?: string | null;
-  gender?: string | null;
-  verified: boolean;
-  isEmailVerified?: boolean;
-  address?: string | null;
-  avatar?: string | null;
-  age?: number | null;
-  phone?: string | null;
-  loginType: string;
-  role: string;
-  isInstructorActive: boolean;
-  passwordModified: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AuthResponse {
-  user: User;
-  accessToken: string;
-  message: string;
-}
-
-export interface ApiResponse<T = unknown> {
-  data?: T;
-  message: string;
-  statusCode?: number;
-}
-
-export const authService = {
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await api.post('/auth/login', credentials);
-    console.log('Raw API response:', response);
-    console.log('Response data:', response.data);
-    
-    if (response.data && response.data.data) {
-      console.log('Using nested data:', response.data.data);
-      return {
-        user: response.data.data.user,
-        accessToken: response.data.data.accessToken,
-        message: response.data.message
+  /**
+   * User Login
+   * POST /auth/login
+   * Sets refresh token in httpOnly cookie automatically
+   */
+  login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
+    const response = await apiRequest<{
+      success: boolean;
+      data: {
+        user: User;
+        accessToken: string;
       };
-    }
+      message: string;
+    }>('auth/login', {
+      method: 'POST',
+      data: credentials,
+    });
     
-    return response.data;
-  },
-
-  async register(data: RegisterData): Promise<ApiResponse> {
-    // Transform frontend data to backend format
-    const requestData: RegisterRequest = {
-      email: data.email,
-      password: data.password,
-      confirmPassword: data.confirmPassword,
-      fullName: `${data.firstName.trim()} ${data.lastName.trim()}`.trim()
+    // Transform response to expected format
+    return {
+      user: response.data.user,
+      accessToken: response.data.accessToken,
+      message: response.message,
     };
-    
-    const response = await api.post('/auth/register', requestData);
+  },
+
+  /**
+   * Forgot Password
+   * POST /auth/forgot-password
+   */
+  forgotPassword: async (data: ForgotPasswordData): Promise<ForgotPasswordResponse> => {
+    const response = await apiRequest<ForgotPasswordResponse>('auth/forgot-password', {
+      method: 'POST',
+      data,
+    });
+    return response;
+  },
+
+  /**
+   * Reset Password
+   * PUT /auth/reset-password?token=xxx
+   */
+  resetPassword: async (token: string, data: ResetPasswordData): Promise<ResetPasswordResponse> => {
+    const response = await apiRequest<ResetPasswordResponse>('auth/reset-password', {
+      method: 'PUT',
+      data,
+      params: { token },
+    });
+    return response;
+  },
+
+  /**
+   * Refresh Access Token
+   * POST /auth/refresh-token
+   * Uses refresh token from httpOnly cookie
+   */
+  refreshToken: async (): Promise<RefreshTokenResponse> => {
+    const response = await apiRequest<RefreshTokenResponse>('auth/refresh-token', {
+      method: 'POST',
+    });
+    return response;
+  },
+
+  /**
+   * Get User Profile
+   * GET /auth/profile
+   * Requires valid access token
+   */
+  getProfile: async (): Promise<User> => {
+    const response = await apiRequest<ProfileResponse>('auth/profile', {
+      method: 'GET',
+    });
     return response.data;
   },
 
-  async verifyEmail(token: string): Promise<ApiResponse> {
-    const response = await api.get(`/auth/verify-email?token=${token}`);
-    return response.data;
-  },
-
-  async resendVerification(email: string): Promise<ApiResponse> {
-    const response = await api.post('/auth/resend-verification', { email });
-    return response.data;
-  },
-
-  async forgotPassword(email: string): Promise<ApiResponse> {
-    const response = await api.post('/auth/forgot-password', { email });
-    return response.data;
-  },
-
-  async resetPassword(token: string, data: ResetPasswordData): Promise<ApiResponse> {
-    const response = await api.put(`/auth/reset-password?token=${token}`, data);
-    return response.data;
-  },
-
-  async refreshToken(): Promise<{ accessToken: string }> {
-    const response = await api.post('/auth/refresh-token');
-    return response.data;
-  },
-
-  async getProfile(): Promise<User> {
-    const response = await api.get('/auth/profile');
-    console.log('getProfile response:', response.data);
-    
-    if (response.data && response.data.data) {
-      console.log('Using nested user data:', response.data.data);
-      return response.data.data;
-    }
-    
-    return response.data;
-  },
-
-  async logout(): Promise<ApiResponse> {
-    const response = await api.post('/auth/logout');
-    return response.data;
+  /**
+   * User Logout
+   * POST /auth/logout
+   * Clears refresh token cookie
+   */
+  logout: async (): Promise<LogoutResponse> => {
+    const response = await apiRequest<LogoutResponse>('auth/logout', {
+      method: 'POST',
+    });
+    return response;
   },
 };
+
+// Legacy compatibility
+export const authService = wishzyAuthService;
