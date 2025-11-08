@@ -4,15 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users, TrendingUp, MessageCircle } from "lucide-react";
 import { useTranslations } from "@/providers/TranslationProvider";
+import { useQueryHook } from "@/src/hooks/useQueryHook";
+import { courseService } from "@/src/services/course";
+import { CourseItemType } from "@/src/types/course/course-item.types";
+import { PaginationResponse } from "@/src/types/pagination/pagination.type";
+import ListCourse from "@/components/shared/course/ListCourse";
+
 
 export default function Home() {
+  const { data: courses } = useQueryHook<PaginationResponse<CourseItemType>>(
+    ['courses'],
+    () => courseService.getCourses(),
+  );
+
   const t = useTranslations();
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors">
       
-      {/* Hero Section */}
-      <main className="container mx-auto px-4 py-20">
+      <main className="container mx-auto py-20">
+        {/* Hero Section */}
         <div className="text-center max-w-4xl mx-auto">
           <p className="text-primary text-sm font-medium mb-4 tracking-wide">
             {t('appName')}
@@ -91,6 +102,13 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Courses */}
+        <div>
+          <h2>Danh sách khoá học</h2>
+          <ListCourse courses={courses?.items || []} />
+        </div>
       </main>
+    </div>
   );
 }

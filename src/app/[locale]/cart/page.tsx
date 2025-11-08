@@ -3,81 +3,97 @@
 import { Button } from '@/components/ui/button'
 import CartItem from '@/components/shared/cart/CartItem'
 import { useRouter } from 'next/navigation'
+import { useAppStore } from '@/src/stores/useAppStore'
+import { CourseItemType } from '@/src/types/course/course-item.types'
 
-// Sample cart data - you can replace with real data from your store/API
-const cartItems = [
-  {
-    id: 1,
-    title: 'The Complete Full-Stack Web Development Bootcamp',
-    author: 'By Dr. Angela Yu, Developer and Lead Instructor',
-    image: 'https://cdn.tokyotechlab.com/Blog/Blog%202024/Blog%20T11/training_course_la_gi_467fe41815.png',
-    rating: 4.7,
-    ratingCount: '450,657',
-    badge: 'Bestseller',
+// Helper function to convert CourseItemType to CartItem format
+const convertToCartItem = (course: CourseItemType) => {
+  const originalPrice = course?.price ? Number(course.price) : 500000;
+  const salePrice = Math.floor(originalPrice * 0.7); // 30% discount
+  
+  // Parse hash-based ID or keep as number
+  const numericId = parseInt(course.id.replace(/\D/g, '').slice(0, 10)) || Math.abs(hashCode(course.id));
+  
+  return {
+    id: numericId,
+    courseId: course.id, // Keep original string ID for matching
+    title: course.name || 'Khóa học',
+    author: `By ${course.creator?.fullName || 'Giảng viên'}`,
+    image: course.thumbnail || '/images/course-placeholder.jpg',
+    rating: Number(course.averageRating) || course.rating || 5.0,
+    ratingCount: course.numberOfStudents?.toLocaleString() || '0',
+    badge: 'Khóa học',
     badgeColor: 'bg-[#eceb98] text-[#3d3c0a]',
-    hours: '61.5 total hours',
-    lectures: '374 lectures',
-    level: 'All Levels',
-    price: 309000,
-    originalPrice: 1709000,
-  },
-]
+    hours: course.totalDuration ? `${Math.floor(course.totalDuration / 60)}h` : '0h',
+    lectures: `${course.chapters?.length || 0} chương`,
+    level: course.level || 'Tất cả',
+    price: salePrice,
+    originalPrice: originalPrice,
+  };
+};
 
-const wishlistItems = [
-  {
-    id: 2,
-    title: 'React & TypeScript - The Practical Guide',
-    author: 'By Academind by Maximilian Schwarzmüller and 1 other',
-    image: 'https://picsum.photos/seed/course2/240/135',
-    rating: 4.7,
-    ratingCount: '3,059',
-    badge: 'Highest Rated',
-    badgeColor: 'bg-[#eceb98] text-[#3d3c0a]',
-    hours: '7.5 total hours',
-    lectures: '102 lectures',
-    level: 'Intermediate',
-    price: 319000,
-    originalPrice: 1609000,
-  },
-]
-
-const recommendedCourses = [
-  { id: 3, image: 'https://picsum.photos/seed/rec1/300/170' },
-  { id: 4, image: 'https://picsum.photos/seed/rec2/300/170' },
-  { id: 5, image: 'https://picsum.photos/seed/rec3/300/170' },
-  { id: 6, image: 'https://picsum.photos/seed/rec4/300/170' },
-  { id: 7, image: 'https://picsum.photos/seed/rec5/300/170' },
-]
+// Simple hash function for string IDs
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
+}
 
 const CartPage = () => {
   const router = useRouter()
+  const { cart } = useAppStore()
+
+  // Calculate totals
+  const totalOriginal = cart.reduce((sum, course) => {
+    const originalPrice = course?.price ? Number(course.price) : 500000;
+    return sum + originalPrice;
+  }, 0);
+  
+  const totalSale = cart.reduce((sum, course) => {
+    const originalPrice = course?.price ? Number(course.price) : 500000;
+    const salePrice = Math.floor(originalPrice * 0.7);
+    return sum + salePrice;
+  }, 0);
 
   return (
     <div className='container mx-auto py-10'>
       <h1 className="text-3xl font-bold mb-4">Giỏ hàng</h1>
-      <p className="text-sm text-muted-foreground mb-3">Có 2 sản phẩm trong giỏ</p>
+      <p className="text-sm text-muted-foreground mb-3">
+        Có {cart.length} sản phẩm trong giỏ
+      </p>
       
-      <div className='flex gap-10'>
-        <div className='w-3/4'>
-          <CartItem course={cartItems[0]} />
-          <CartItem course={cartItems[0]} />
-          <CartItem course={cartItems[0]} />
-          <CartItem course={cartItems[0]} />
-          <CartItem course={cartItems[0]} />
+      {cart.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-lg text-muted-foreground">Giỏ hàng của bạn đang trống</p>
+          <Button className="mt-4" onClick={() => router.push('/courses')}>
+            Tiếp tục mua sắm
+          </Button>
         </div>
-        <div className='w-1/4'>
-          <h3 className='text-lg font-bold'>Tổng cộng:</h3>
-          <h1 className='text-3xl font-bold'>500.000 ₫</h1>
-          <p className='line-through text-muted-foreground'>1.700.000 ₫</p>
-          <Button className='w-full mt-4' onClick={() => router.push('/checkout')}>Thanh toán ngay</Button>
-          <hr className='mt-4' />
-          <Button variant={'outline'} className='w-full mt-4'>Voucher giảm giá</Button>
+      ) : (
+        <div className='flex gap-10'>
+          <div className='w-3/4'>
+            {cart.map((course) => (
+              <CartItem key={course.id} course={convertToCartItem(course)} />
+            ))}
+          </div>
+          <div className='w-1/4'>
+            <h3 className='text-lg font-bold'>Tổng cộng:</h3>
+            <h1 className='text-3xl font-bold'>{totalSale.toLocaleString()} ₫</h1>
+            <p className='line-through text-muted-foreground'>{totalOriginal.toLocaleString()} ₫</p>
+            <Button className='w-full mt-4' onClick={() => router.push('/checkout')}>
+              Thanh toán ngay
+            </Button>
+            <hr className='mt-4' />
+            <Button variant={'outline'} className='w-full mt-4'>Voucher giảm giá</Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
-
-
 }
 
 export default CartPage
