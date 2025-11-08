@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Star } from "lucide-react"
 import Image from "next/image"
 import { useAppStore } from "@/src/stores/useAppStore"
+import { Checkbox } from "@/components/ui/checkbox"
+import { formatPrice } from "@/lib/utils"
 
 interface CartItemProps {
   course: {
@@ -22,14 +24,12 @@ interface CartItemProps {
     price: number
     originalPrice: number
   }
+  isSelected: boolean
+  onToggleSelect: (courseId: string) => void
 }
 
-const CartItem = ({ course }: CartItemProps) => {
+const CartItem = ({ course, isSelected, onToggleSelect }: CartItemProps) => {
   const { cart, removeFromCart } = useAppStore()
-  
-  const formatPrice = (price: number) => {
-    return `₫${price.toLocaleString('vi-VN')}`
-  }
   
   const handleRemoveFromCart = () => {
     // Find the course in cart by the original string courseId
@@ -43,6 +43,15 @@ const CartItem = ({ course }: CartItemProps) => {
     <Card className="max-w-[950px] p-0 border-0 border-t-[0.5px] border-t-[#e5e7eb] shadow-none rounded-none">
       <CardContent className="py-5">
         <div className="flex flex-col gap-4 sm:flex-row">
+          {/* Checkbox */}
+          <div className="flex items-start pt-1">
+            <Checkbox 
+              checked={isSelected}
+              onCheckedChange={() => onToggleSelect(course.courseId)}
+              className="mt-1"
+            />
+          </div>
+          
           {/* Left - Image & Course Info */}
           <div className="flex flex-1 gap-4">
             {/* Course Image */}
