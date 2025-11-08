@@ -17,7 +17,7 @@ async function getMessages(locale: string) {
       import(`../../../locales/${locale}/courses.json`),
       import(`../../../locales/${locale}/navigation.json`)
     ]);
-    
+
     return {
       ...common.default,
       auth: auth.default,
@@ -32,7 +32,7 @@ async function getMessages(locale: string) {
       import(`../../../locales/vi/courses.json`),
       import(`../../../locales/vi/navigation.json`)
     ]);
-    
+
     return {
       ...common.default,
       auth: auth.default,
@@ -50,7 +50,7 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  
+
   if (!locales.includes(locale)) {
     notFound();
   }

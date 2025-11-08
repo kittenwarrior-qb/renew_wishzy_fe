@@ -5,14 +5,14 @@ import type { ApiResponse, PaginatedResponse } from '@/types/common';
 
 const buildQueryParams = (params?: Record<string, unknown>): string => {
   if (!params) return '';
-  
+
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
       searchParams.append(key, String(value));
     }
   });
-  
+
   const queryString = searchParams.toString();
   return queryString ? `?${queryString}` : '';
 };
@@ -26,13 +26,13 @@ export const apiRequest = async <TData = unknown>(
   }
 ): Promise<TData> => {
   const { method = 'GET', data, params } = options || {};
-  
+
   const url = `${endpoint}${buildQueryParams(params)}`;
-  
+
   const config: any = {
     method: method.toLowerCase(),
   };
-  
+
   if (data) {
     config.data = data;
   }
@@ -48,7 +48,7 @@ export const useApiQuery = <TData = unknown, TError = Error>(
   }
 ) => {
   const { params, ...queryOptions } = options || {};
-  
+
   return useQuery<TData, TError>({
     queryKey: [endpoint, params],
     queryFn: () => apiRequest<TData>(endpoint, { params }),
@@ -84,7 +84,7 @@ export const useApiMutation = <TData = unknown, TVariables = unknown, TError = E
       } else {
         queryClient.invalidateQueries({ queryKey: [endpoint] });
       }
-      
+
       mutationOptions.onSuccess?.(data, variables, context);
     },
     ...mutationOptions,
