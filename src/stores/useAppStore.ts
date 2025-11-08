@@ -1,39 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-
-interface Course {
-  id: number;
-  title: string;
-  description: string;
-  instructor: string;
-  duration: string;
-  students: number;
-  rating: number;
-  image: string;
-  price: string;
-}
-
-interface User {
-  id: string;
-  email: string;
-  fullName: string;
-  firstName?: string;
-  lastName?: string;
-  dob?: string | null;
-  gender?: string | null;
-  verified: boolean;
-  isEmailVerified?: boolean;
-  address?: string | null;
-  avatar?: string | null;
-  age?: number | null;
-  phone?: string | null;
-  loginType: string;
-  role: string;
-  isInstructorActive: boolean;
-  passwordModified: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Course, User } from '@/types';
 
 interface AppState {
   // User state
@@ -93,7 +60,7 @@ export const useAppStore = create<AppState>()(
         
         enrollInCourse: (course) => {
           const { enrolledCourses } = get();
-          const isAlreadyEnrolled = enrolledCourses.some(c => c.id === course.id);
+          const isAlreadyEnrolled = enrolledCourses.some(c => String(c.id) === String(course.id));
           
           if (!isAlreadyEnrolled) {
             set({ 
@@ -119,7 +86,7 @@ export const useAppStore = create<AppState>()(
       }
     ),
     {
-      name: 'marshallms-store',
+      name: 'wishzy-store',
     }
   )
 );
