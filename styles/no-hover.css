@@ -1,0 +1,41 @@
+/* Disable hover effects on all buttons */
+button,
+.btn {
+  transition: none !important;
+}
+
+button:hover,
+.btn:hover {
+  background-color: inherit !important;
+  border-color: inherit !important;
+  color: inherit !important;
+  transform: none !important;
+  box-shadow: inherit !important;
+  opacity: inherit !important;
+}
+
+/* Keep cursor pointer for interactive elements */
+button,
+.btn,
+a,
+[role="button"] {
+  cursor: pointer !important;
+}
+
+/* Disable hover effects on specific shadcn/ui button variants */
+.inline-flex.items-center.justify-center:hover,
+[data-slot="button"]:hover {
+  background-color: inherit !important;
+  border-color: inherit !important;
+  color: inherit !important;
+}
+
+/* Disable focus visible effects except for accessibility */
+button:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+  background-color: inherit !important;
+  border-color: inherit !important;
+  color: inherit !important;
+}

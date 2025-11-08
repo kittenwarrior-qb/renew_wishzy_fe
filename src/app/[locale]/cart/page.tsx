@@ -8,17 +8,15 @@ import { CourseItemType } from '@/src/types/course/course-item.types'
 import { useEffect, useRef } from 'react'
 import { formatPrice } from '@/lib/utils'
 
-// Helper function to convert CourseItemType to CartItem format
 const convertToCartItem = (course: CourseItemType) => {
   const originalPrice = course?.price ? Number(course.price) : 500000;
   const salePrice = Math.floor(originalPrice * 0.7); // 30% discount
   
-  // Parse hash-based ID or keep as number
   const numericId = parseInt(course.id.replace(/\D/g, '').slice(0, 10)) || Math.abs(hashCode(course.id));
   
   return {
     id: numericId,
-    courseId: course.id, // Keep original string ID for matching
+    courseId: course.id,
     title: course.name || 'Khóa học',
     author: `By ${course.creator?.fullName || 'Giảng viên'}`,
     image: course.thumbnail || '/images/course-placeholder.jpg',

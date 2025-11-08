@@ -3,15 +3,20 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, Eye, EyeOff, ArrowLeft, Shield } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useResetPassword } from './useAuth';
 import { useTranslations } from '@/providers/TranslationProvider';
 import type { ResetPasswordData } from '@/types/auth';
-import { cn } from '@/lib/utils';
 
 export const ResetPasswordForm = () => {
   const t = useTranslations();
@@ -68,145 +73,145 @@ export const ResetPasswordForm = () => {
   // Token error state
   if (tokenError) {
     return (
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-destructive rounded-full flex items-center justify-center mx-auto mb-4">
-            <Shield className="w-8 h-8 text-destructive-foreground" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-destructive">
-            {t('auth.resetTokenError')}
-          </CardTitle>
-          <CardDescription>
-            {t('auth.resetTokenErrorMessage')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center space-y-4">
-            <p className="text-sm text-muted-foreground">
-              {tokenError}
-            </p>
-            <Link href="/auth/forgot-password">
-              <Button className="w-full">
-                {t('auth.requestNewResetLink')}
-              </Button>
-            </Link>
-            <Link href="/auth/login">
-              <Button variant="ghost" className="w-full">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {t('auth.backToLogin')}
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col gap-6 w-full max-w-sm mx-auto">
+        <Card className="overflow-hidden p-0">
+          <CardContent className="p-0">
+            <div className="p-6 md:p-8">
+              <FieldGroup>
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <h1 className="text-2xl font-bold text-destructive">{t('auth.resetTokenError')}</h1>
+                  <p className="text-muted-foreground text-balance">
+                    {t('auth.resetTokenErrorMessage')}
+                  </p>
+                </div>
+                
+                <Field>
+                  <Link href="/auth/forgot-password">
+                    <Button className="w-full">
+                      {t('auth.requestNewResetLink')}
+                    </Button>
+                  </Link>
+                </Field>
+                
+                <FieldDescription className="text-center">
+                  <Link href="/auth/login" className="inline-flex items-center gap-2 underline">
+                    {t('auth.backToLogin')}
+                  </Link>
+                </FieldDescription>
+              </FieldGroup>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center">
-        <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-          <Shield className="w-8 h-8 text-primary-foreground" />
-        </div>
-        <CardTitle className="text-2xl font-bold">
-          {t('auth.resetPasswordTitle')}
-        </CardTitle>
-        <CardDescription>
-          {t('auth.resetPasswordSubtitle')}
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="password">
-              {t('auth.newPassword')}
-            </Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder={t('auth.passwordPlaceholder')}
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                className={cn('pr-10', errors.password && 'border-destructive')}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
+    <div className="flex flex-col gap-6 w-full max-w-sm mx-auto">
+      <Card className="overflow-hidden p-0">
+        <CardContent className="p-0">
+          <form onSubmit={handleSubmit} className="p-6 md:p-8">
+            <FieldGroup>
+              <div className="flex flex-col items-center gap-2 text-center">
+                <h1 className="text-2xl font-bold">{t('auth.resetPasswordTitle')}</h1>
+                <p className="text-muted-foreground text-balance">
+                  {t('auth.resetPasswordSubtitle')}
+                </p>
+              </div>
+              
+              <Field>
+                <FieldLabel htmlFor="password">{t('auth.newPassword')}</FieldLabel>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder={t('auth.passwordPlaceholder')}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    className={cn('pr-10', errors.password && 'border-destructive')}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {errors.password && (
+                  <FieldDescription className="text-destructive">
+                    {errors.password}
+                  </FieldDescription>
                 )}
-              </Button>
-            </div>
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password}</p>
-            )}
-          </div>
+              </Field>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">
-              {t('auth.confirmNewPassword')}
-            </Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder={t('auth.confirmPasswordPlaceholder')}
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                className={cn('pr-10', errors.confirmPassword && 'border-destructive')}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
+              <Field>
+                <FieldLabel htmlFor="confirmPassword">{t('auth.confirmNewPassword')}</FieldLabel>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder={t('auth.confirmNewPassword')}
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    className={cn('pr-10', errors.confirmPassword && 'border-destructive')}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {errors.confirmPassword && (
+                  <FieldDescription className="text-destructive">
+                    {errors.confirmPassword}
+                  </FieldDescription>
                 )}
-              </Button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-            )}
-          </div>
+              </Field>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={resetPasswordMutation.isPending}
-          >
-            {resetPasswordMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('auth.resettingPassword')}
-              </>
-            ) : (
-              t('auth.resetPassword')
-            )}
-          </Button>
-        </form>
+              <Field>
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={resetPasswordMutation.isPending}
+                >
+                  {resetPasswordMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t('auth.resettingPassword')}
+                    </>
+                  ) : (
+                    t('auth.resetPassword')
+                  )}
+                </Button>
+              </Field>
 
-        <div className="mt-6 text-center">
-          <Link href="/auth/login">
-            <Button variant="ghost" className="w-full">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {t('auth.backToLogin')}
-            </Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+              <FieldDescription className="text-center">
+                <Link href="/auth/login" className="inline-flex items-center gap-2 underline">
+                  <ArrowLeft className="w-4 h-4" />
+                  {t('auth.backToLogin')}
+                </Link>
+              </FieldDescription>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
