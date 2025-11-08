@@ -5,6 +5,8 @@ import CartItem from '@/components/shared/cart/CartItem'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/src/stores/useAppStore'
 import { CourseItemType } from '@/src/types/course/course-item.types'
+import { useEffect, useRef } from 'react'
+import { formatPrice } from '@/lib/utils'
 
 const convertToCartItem = (course: CourseItemType) => {
   const originalPrice = course?.price ? Number(course.price) : 500000;
@@ -19,7 +21,7 @@ const convertToCartItem = (course: CourseItemType) => {
     author: `By ${course.creator?.fullName || 'Giảng viên'}`,
     image: course.thumbnail || '/images/course-placeholder.jpg',
     rating: Number(course.averageRating) || course.rating || 5.0,
-    ratingCount: course.numberOfStudents?.toLocaleString() || '0',
+    ratingCount: course.numberOfStudents?.toString() || '0',
     badge: 'Khóa học',
     badgeColor: 'bg-[#eceb98] text-[#3d3c0a]',
     hours: course.totalDuration ? `${Math.floor(course.totalDuration / 60)}h` : '0h',
@@ -43,15 +45,75 @@ function hashCode(str: string): number {
 
 const CartPage = () => {
   const router = useRouter()
-  const { cart } = useAppStore()
+  const { cart, removeCart, orderListCourse, addToOrderList, removeFromOrderList, setOrderList } = useAppStore()
+  const hasUserInteracted = useRef(false)
 
-  // Calculate totals
-  const totalOriginal = cart.reduce((sum, course) => {
+  useEffect(() => {
+    if (!hasUserInteracted.current && orderListCourse.length === 0 && cart.length > 0) {
+      setOrderList(cart)
+    }
+    
+    const validOrderList = orderListCourse.filter(orderItem => 
+      cart.some(cartItem => cartItem.id === orderItem.id)
+    )
+    
+    if (validOrderList.length !== orderListCourse.length) {
+      setOrderList(validOrderList)
+    }
+  }, [cart.length])
+
+  const handleDeleteAll = () => {
+    removeCart()
+    setOrderList([]) // Clear order list when cart is cleared
+  }
+
+  // Toggle selection for checkout
+  const handleToggleSelect = (courseId: string) => {
+    hasUserInteracted.current = true // Mark that user has interacted
+    const course = cart.find(c => c.id === courseId)
+    if (!course) return
+
+    const isSelected = orderListCourse.some(c => c.id === courseId)
+    if (isSelected) {
+      removeFromOrderList(course)
+    } else {
+      addToOrderList(course)
+    }
+  }
+
+  // Select all items
+  const handleSelectAll = () => {
+    hasUserInteracted.current = true
+    setOrderList(cart)
+  }
+
+  // Deselect all items
+  const handleDeselectAll = () => {
+    hasUserInteracted.current = true
+    setOrderList([])
+  }
+
+  // Check if course is selected
+  const isSelected = (courseId: string) => {
+    return orderListCourse.some(c => c.id === courseId)
+  }
+
+  // Handle checkout
+  const handleCheckout = () => {
+    if (orderListCourse.length === 0) {
+      alert('Vui lòng chọn ít nhất một khóa học để thanh toán')
+      return
+    }
+    router.push('/checkout')
+  }
+
+  // Calculate totals based on selected items
+  const totalOriginal = orderListCourse.reduce((sum, course) => {
     const originalPrice = course?.price ? Number(course.price) : 500000;
     return sum + originalPrice;
   }, 0);
   
-  const totalSale = cart.reduce((sum, course) => {
+  const totalSale = orderListCourse.reduce((sum, course) => {
     const originalPrice = course?.price ? Number(course.price) : 500000;
     const salePrice = Math.floor(originalPrice * 0.7);
     return sum + salePrice;
@@ -59,10 +121,10 @@ const CartPage = () => {
 
   return (
     <div className='container mx-auto py-10'>
-      <h1 className="text-3xl font-bold mb-4">Giỏ hàng</h1>
-      <p className="text-sm text-muted-foreground mb-3">
-        Có {cart.length} sản phẩm trong giỏ
-      </p>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-3xl font-bold">Giỏ hàng</h1>
+        
+      </div>
       
       {cart.length === 0 ? (
         <div className="text-center py-20">
@@ -73,16 +135,61 @@ const CartPage = () => {
         </div>
       ) : (
         <div className='flex gap-10'>
-          <div className='w-3/4'>
+            <div className='w-3/4'>
+               <div className="flex justify-between items-center mb-3">
+                <p className="text-sm text-muted-foreground">
+                  Có {cart.length} sản phẩm trong giỏ ({orderListCourse.length} đã chọn)
+                </p>
+                <div className="flex gap-2">
+                  {cart.length > 0 && (
+                    <>
+                      {orderListCourse.length === cart.length ? (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handleDeselectAll}
+                        >
+                          Bỏ chọn tất cả
+                        </Button>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handleSelectAll}
+                        >
+                          Chọn tất cả
+                        </Button>
+                      )}
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={handleDeleteAll}
+                      >
+                        Xóa tất cả
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
             {cart.map((course) => (
-              <CartItem key={course.id} course={convertToCartItem(course)} />
+              <CartItem 
+                key={course.id} 
+                course={convertToCartItem(course)} 
+                isSelected={isSelected(course.id)}
+                onToggleSelect={handleToggleSelect}
+              />
             ))}
           </div>
           <div className='w-1/4'>
             <h3 className='text-lg font-bold'>Tổng cộng:</h3>
-            <h1 className='text-3xl font-bold'>{totalSale.toLocaleString()} ₫</h1>
-            <p className='line-through text-muted-foreground'>{totalOriginal.toLocaleString()} ₫</p>
-            <Button className='w-full mt-4' onClick={() => router.push('/checkout')}>
+            <h1 className='text-3xl font-bold'>{formatPrice(totalSale)}</h1>
+            <p className='line-through text-muted-foreground'>{formatPrice(totalOriginal)}</p>
+            <p className='text-xs text-muted-foreground mt-2'>({orderListCourse.length} khóa học đã chọn)</p>
+            <Button 
+              className='w-full mt-4' 
+              onClick={handleCheckout}
+              disabled={orderListCourse.length === 0}
+            >
               Thanh toán ngay
             </Button>
             <hr className='mt-4' />

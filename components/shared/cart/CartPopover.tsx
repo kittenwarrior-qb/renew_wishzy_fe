@@ -6,6 +6,7 @@ import { useAppStore } from "@/src/stores/useAppStore"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { useState, useRef, useEffect } from "react"
+import { formatPrice } from "@/lib/utils"
 
 const CartPopover = () => {
   const { cart, removeFromCart } = useAppStore()
@@ -136,10 +137,10 @@ const CartPopover = () => {
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-sm font-bold text-primary">
-                          {salePrice.toLocaleString()}₫
+                          {formatPrice(salePrice)}
                         </span>
                         <span className="text-xs text-muted-foreground line-through">
-                          {originalPrice.toLocaleString()}₫
+                          {formatPrice(originalPrice)}
                         </span>
                       </div>
                     </div>
@@ -166,7 +167,7 @@ const CartPopover = () => {
             <div className="flex items-center justify-between mb-3">
               <span className="font-semibold">Tổng cộng:</span>
               <span className="text-xl font-bold text-primary">
-                {totalPrice.toLocaleString()}₫
+                {formatPrice(totalPrice)}
               </span>
             </div>
             <Button

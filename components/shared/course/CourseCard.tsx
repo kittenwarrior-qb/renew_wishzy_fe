@@ -5,6 +5,8 @@ import { CourseItemType } from "@/src/types/course/course-item.types";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/src/stores/useAppStore";
+import { useRouter } from "next/navigation";
+import { formatPrice } from "@/lib/utils";
 
 interface CourseCardProps {
   course: CourseItemType;
@@ -17,6 +19,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
   const [leaveTimeout, setLeaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const [popupPosition, setPopupPosition] = useState<'left' | 'right'>('right');
   const cardRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Check if course is already in cart
   const isInCart = cart.some(c => c.id === course.id);
@@ -110,7 +113,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <Card className="max-w-[350px] overflow-hidden hover:shadow-lg transition-shadow duration-300 group py-0 gap-2 shadow-none border-none relative">
+      <Card onClick={() => router.push(`/course-detail/${course.id}`)} className="max-w-[350px] overflow-hidden hover:shadow-lg transition-shadow duration-300 group py-0 gap-2 shadow-none border-none relative">
         {/* Discount Badge */}
         <div className="absolute top-2 right-2 z-20 text-xs bg-red-500 text-white px-2 py-1 rounded font-semibold shadow-lg">
           -30%
@@ -142,7 +145,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
             </div>
             <div className="flex items-center gap-1">
               <Users className="w-4 h-4" />
-              <span>{course?.numberOfStudents?.toLocaleString() || '0'}</span>
+              <span>{course?.numberOfStudents || '0'}</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
@@ -153,10 +156,10 @@ const CourseCard = ({ course }: CourseCardProps) => {
           <div className="pt-2 border-t">
             <div className="flex items-center gap-2">
               <p className="text-xl font-bold text-primary">
-                {salePrice.toLocaleString()}₫
+                {formatPrice(salePrice)}
               </p>
               <p className="text-sm text-muted-foreground line-through">
-                {originalPrice.toLocaleString()}₫
+                {formatPrice(originalPrice)}
               </p>
             </div>
           </div>
@@ -208,7 +211,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
               </div>
               <div className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
-                <span>{course?.numberOfStudents?.toLocaleString() || '0'}</span>
+                <span>{course?.numberOfStudents || '0'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
@@ -219,10 +222,10 @@ const CourseCard = ({ course }: CourseCardProps) => {
             {/* Price */}
             <div className="flex items-center gap-2">
               <p className="text-xl font-bold text-primary">
-                {salePrice.toLocaleString()}₫
+                {formatPrice(salePrice)}
               </p>
               <p className="text-xs text-muted-foreground line-through">
-                {originalPrice.toLocaleString()}₫
+                {formatPrice(originalPrice)}
               </p>
             </div>
 

@@ -40,6 +40,7 @@ interface AppState {
 
   // cart state
   cart: CourseItemType[];
+  orderListCourse: CourseItemType[];
   
   // Actions
   setUser: (user: User | null) => void;
@@ -53,6 +54,10 @@ interface AppState {
   addToCart: (course: CourseItemType) => void;
   removeFromCart: (course: CourseItemType) => void;
   removeCart: () => void;
+  addToOrderList: (course: CourseItemType) => void;
+  removeFromOrderList: (course: CourseItemType) => void;
+  clearOrderList: () => void;
+  setOrderList: (courses: CourseItemType[]) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -68,6 +73,7 @@ export const useAppStore = create<AppState>()(
         isLoading: false,
         theme: 'light',
         cart: [],
+        orderListCourse: [],
 
         // Actions
         setUser: (user) => set({ user, isAuthenticated: !!user }),
@@ -122,6 +128,27 @@ export const useAppStore = create<AppState>()(
         },
 
         removeCart: () => set({ cart: [] }),
+
+        addToOrderList: (course) => {
+          const { orderListCourse } = get();
+          const isAlreadyInOrder = orderListCourse.some(c => c.id === course.id);
+          
+          if (!isAlreadyInOrder) {
+            set({ 
+              orderListCourse: [...orderListCourse, course] 
+            });
+          }
+        },
+
+        removeFromOrderList: (course) => {
+          const { orderListCourse } = get();
+          const updatedOrderList = orderListCourse.filter(c => c.id !== course.id);
+          set({ orderListCourse: updatedOrderList });
+        },
+
+        clearOrderList: () => set({ orderListCourse: [] }),
+
+        setOrderList: (courses) => set({ orderListCourse: courses }),
       }),
       {
         name: 'user-storage',
@@ -131,6 +158,7 @@ export const useAppStore = create<AppState>()(
           enrolledCourses: state.enrolledCourses,
           theme: state.theme,
           cart: state.cart,
+          orderListCourse: state.orderListCourse,
         }),
       }
     ),
