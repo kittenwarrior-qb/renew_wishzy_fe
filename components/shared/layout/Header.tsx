@@ -44,29 +44,29 @@ const Header = () => {
             </Link>
 
             <NavigationMenu>
-            <NavigationMenuList className="space-x-6">
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link href="/" className="text-foreground transition-colors cursor-pointer">
-                    {t('navigation.home')}
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link href="/courses" className="text-foreground transition-colors cursor-pointer">
-                    {t('navigation.courses')}
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link href="/dashboard" className="text-foreground transition-colors cursor-pointer">
-                    {t('navigation.dashboard')}
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            </NavigationMenuList>
+              <NavigationMenuList className="space-x-6">
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link href="/" className="text-foreground transition-colors cursor-pointer">
+                      {t('navigation.home')}
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link href="/courses" className="text-foreground transition-colors cursor-pointer">
+                      {t('navigation.courses')}
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link href="/dashboard" className="text-foreground transition-colors cursor-pointer">
+                      {t('navigation.dashboard')}
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              </NavigationMenuList>
             </NavigationMenu>
           </div>
 
@@ -75,18 +75,18 @@ const Header = () => {
             <LocaleSwitcher />
             <ThemeSwitcher />
             <CartPopover />
-            
+
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-3">
                 <span className="text-sm font-medium hidden md:block">
                   {user.fullName || user.email}
                 </span>
-                
+
                 {/* Avatar or Initial */}
                 <div className="flex items-center space-x-2">
                   {user.avatar ? (
-                    <img 
-                      src={user.avatar} 
+                    <img
+                      src={user.avatar}
                       alt={t('common.avatar')}
                       className="w-8 h-8 rounded-full object-cover border-2 border-border"
                     />
@@ -97,10 +97,10 @@ const Header = () => {
                       </span>
                     </div>
                   )}
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="text-foreground"
                     onClick={handleLogout}
                     disabled={logoutMutation.isPending}
@@ -124,4 +124,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default Header;  
