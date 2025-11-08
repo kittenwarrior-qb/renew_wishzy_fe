@@ -4,8 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users, TrendingUp, MessageCircle } from "lucide-react";
 import { useTranslations } from "@/providers/TranslationProvider";
+import { useQueryHook } from "@/src/hooks/useQueryHook";
+import { courseService } from "@/src/services/course";
+import { CourseItemType } from "@/src/types/course/course-item.types";
+import { PaginationResponse } from "@/src/types/pagination/pagination.type";
+import ListCourse from "@/components/shared/course/ListCourse";
+
 
 export default function Home() {
+  const { data: courses } = useQueryHook<PaginationResponse<CourseItemType>>(
+    ['courses'],
+    () => courseService.getCourses(),
+  );
+
   const t = useTranslations();
 
   return (
@@ -89,6 +100,12 @@ export default function Home() {
               </CardDescription>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Courses */}
+        <div>
+          <h2>Danh sách khoá học</h2>
+          <ListCourse courses={courses?.items || []} />
         </div>
       </main>
       </div>

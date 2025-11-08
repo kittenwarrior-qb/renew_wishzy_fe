@@ -16,6 +16,8 @@ import { LocaleSwitcher } from "../common/LocaleSwitcher"
 import { useLogout, useAuthStatus } from "@/components/shared/auth/useAuth"
 import { useTranslations } from "@/providers/TranslationProvider"
 import { useAppStore } from "@/stores/useAppStore"
+import { useLogout } from "@/hooks/useAuth"
+import CartPopover from "../cart/CartPopover"
 
 const Header = () => {
   const t = useTranslations();
@@ -80,6 +82,7 @@ const Header = () => {
           <div className="flex items-center space-x-2">
             <LocaleSwitcher />
             <ThemeSwitcher />
+            <CartPopover />
             
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-3">

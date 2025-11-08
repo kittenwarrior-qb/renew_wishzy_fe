@@ -1,6 +1,28 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { Course, User } from '@/types';
+import { CourseItemType } from '@/src/types/course/course-item.types';
+
+interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  firstName?: string;
+  lastName?: string;
+  dob?: string | null;
+  gender?: string | null;
+  verified: boolean;
+  isEmailVerified?: boolean;
+  address?: string | null;
+  avatar?: string | null;
+  age?: number | null;
+  phone?: string | null;
+  loginType: string;
+  role: string;
+  isInstructorActive: boolean;
+  passwordModified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface AppState {
   // User state
@@ -8,24 +30,29 @@ interface AppState {
   isAuthenticated: boolean;
   
   // Course state
-  courses: Course[];
-  selectedCourse: Course | null;
-  enrolledCourses: Course[];
+  courses: CourseItemType[];
+  selectedCourse: CourseItemType | null;
+  enrolledCourses: CourseItemType[];
   
   // UI state
   isLoading: boolean;
   theme: 'light' | 'dark';
+
+  // cart state
+  cart: CourseItemType[];
   
   // Actions
   setUser: (user: User | null) => void;
   login: (user: User) => void;
   logout: () => void;
-  setCourses: (courses: Course[]) => void;
-  selectCourse: (course: Course) => void;
-  enrollInCourse: (course: Course) => void;
+  setCourses: (courses: CourseItemType[]) => void;
+  selectCourse: (course: CourseItemType) => void;
+  enrollInCourse: (course: CourseItemType) => void;
   setLoading: (loading: boolean) => void;
   toggleTheme: () => void;
-}
+  addToCart: (course: CourseItemType) => void;
+  removeFromCart: (course: CourseItemType) => void;
+    }
 
 export const useAppStore = create<AppState>()(
   devtools(
@@ -39,6 +66,7 @@ export const useAppStore = create<AppState>()(
         enrolledCourses: [],
         isLoading: false,
         theme: 'light',
+        cart: [],
 
         // Actions
         setUser: (user) => set({ user, isAuthenticated: !!user }),
@@ -74,6 +102,25 @@ export const useAppStore = create<AppState>()(
         toggleTheme: () => set((state) => ({ 
           theme: state.theme === 'light' ? 'dark' : 'light' 
         })),
+
+        addToCart: (course) => {
+          const { cart } = get();
+          const isAlreadyInCart = cart.some(c => c.id === course.id);
+          
+          if (!isAlreadyInCart) {
+            set({ 
+              cart: [...cart, course] 
+            });
+          }
+        },
+
+        removeFromCart: (course) => {
+          const { cart } = get();
+          const updatedCart = cart.filter(c => c.id !== course.id);
+          set({ cart: updatedCart });
+        },
+
+        removeCart: () => set({ cart: [] }),
       }),
       {
         name: 'user-storage',
@@ -82,6 +129,7 @@ export const useAppStore = create<AppState>()(
           isAuthenticated: state.isAuthenticated,
           enrolledCourses: state.enrolledCourses,
           theme: state.theme,
+          cart: state.cart,
         }),
       }
     ),

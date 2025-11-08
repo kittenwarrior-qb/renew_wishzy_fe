@@ -3,10 +3,12 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Star } from "lucide-react"
 import Image from "next/image"
+import { useAppStore } from "@/src/stores/useAppStore"
 
 interface CartItemProps {
   course: {
     id: number
+    courseId: string // Original string ID from CourseItemType
     title: string
     author: string
     image: string
@@ -23,8 +25,18 @@ interface CartItemProps {
 }
 
 const CartItem = ({ course }: CartItemProps) => {
+  const { cart, removeFromCart } = useAppStore()
+  
   const formatPrice = (price: number) => {
     return `₫${price.toLocaleString('vi-VN')}`
+  }
+  
+  const handleRemoveFromCart = () => {
+    // Find the course in cart by the original string courseId
+    const courseToRemove = cart.find(c => c.id === course.courseId)
+    if (courseToRemove) {
+      removeFromCart(courseToRemove)
+    }
   }
 
   return (
@@ -88,7 +100,10 @@ const CartItem = ({ course }: CartItemProps) => {
               
               {/* Actions */}
               <div className="mt-auto flex flex-wrap items-center gap-3 text-sm">
-                <button className="font-semibold text-foreground hover:text-primary">
+                <button 
+                  onClick={handleRemoveFromCart}
+                  className="font-semibold text-foreground hover:text-primary"
+                >
                   Xoá khỏi giỏ hàng
                 </button>
                 <button className="font-semibold text-foreground hover:text-primary">
