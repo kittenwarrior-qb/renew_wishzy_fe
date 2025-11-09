@@ -14,6 +14,8 @@ export interface CategoryFilter extends Record<string, unknown> {
   name?: string;
   parentId?: string;
   search?: string;
+  isSubCategory?: boolean;
+  deleted?: boolean;
 }
 
 export interface CategoryListResponse {
