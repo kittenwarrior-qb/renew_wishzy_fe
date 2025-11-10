@@ -12,7 +12,7 @@ export type AdminActionDialogProps = {
     children?: React.ReactNode
     confirmText?: string
     cancelText?: string
-    confirmVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+    confirmVariant?: "primary" | "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
     loading?: boolean
     onConfirm?: () => void
     showCancel?: boolean
@@ -27,7 +27,7 @@ export function AdminActionDialog({
     children,
     confirmText = "Xác nhận",
     cancelText = "Huỷ",
-    confirmVariant = "default",
+    confirmVariant = "primary",
     loading,
     onConfirm,
     showCancel = true,
@@ -40,7 +40,7 @@ export function AdminActionDialog({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className={contentClass}>
-                <DialogHeader>
+                <DialogHeader className="border-b pb-3">
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
                 {description ? <div className="text-sm text-muted-foreground">{description}</div> : null}
@@ -50,7 +50,7 @@ export function AdminActionDialog({
                         <Button variant="outline" onClick={() => onOpenChange(false)}>{cancelText}</Button>
                     ) : null}
                     {onConfirm ? (
-                        <Button variant={confirmVariant} onClick={onConfirm} disabled={!!loading} className="cursor-pointer">
+                        <Button variant={confirmVariant as any} onClick={onConfirm} disabled={!!loading} className="cursor-pointer">
                             {loading ? "Đang xử lý..." : confirmText}
                         </Button>
                     ) : null}

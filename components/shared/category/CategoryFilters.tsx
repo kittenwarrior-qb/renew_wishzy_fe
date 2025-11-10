@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Filter, Trash2 } from "lucide-react"
+import { Search, Filter, X } from "lucide-react"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu"
 
@@ -17,9 +17,10 @@ export type CategoryFiltersProps = {
     setPage: (p: number) => void
     filtersActive: boolean
     parents: any[]
+    onSearchSubmit?: (value?: string) => void
 }
 
-export function CategoryFilters({ nameFilter, setNameFilter, parentIdFilter, setParentIdFilter, isSubCategory, setIsSubCategory, setPage, filtersActive, parents }: CategoryFiltersProps) {
+export function CategoryFilters({ nameFilter, setNameFilter, parentIdFilter, setParentIdFilter, isSubCategory, setIsSubCategory, setPage, filtersActive, parents, onSearchSubmit }: CategoryFiltersProps) {
     return (
         <div className="flex flex-col gap-2 md:flex-row md:items-center">
             <div className="relative md:w-80">
@@ -28,16 +29,22 @@ export function CategoryFilters({ nameFilter, setNameFilter, parentIdFilter, set
                     placeholder="Tìm danh mục..."
                     value={nameFilter}
                     onChange={(e) => setNameFilter(e.target.value)}
-                    className="h-9 pl-9 pr-10"
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault()
+                            onSearchSubmit?.(e.currentTarget.value)
+                        }
+                    }}
+                    className="h-9 pl-9 pr-10 focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 {nameFilter ? (
                     <button
                         type="button"
-                        onClick={() => { setNameFilter(""); setPage(1) }}
+                        onClick={() => { setNameFilter(""); setPage(1); onSearchSubmit?.("") }}
                         className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-md border text-muted-foreground hover:bg-accent"
                         aria-label="Xoá tìm kiếm"
                     >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <X className="h-3.5 w-3.5" />
                     </button>
                 ) : null}
             </div>
@@ -65,14 +72,14 @@ export function CategoryFilters({ nameFilter, setNameFilter, parentIdFilter, set
                         </Select>
                     </div>
                     <div>
-                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Parent</label>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">Danh mục cha</label>
                         <Select
                             value={parentIdFilter || "__any"}
                             onValueChange={(v) => { setParentIdFilter(v === "__any" ? "" : v); setPage(1) }}
                         >
                             <SelectTrigger className="h-9"><SelectValue placeholder="Parent" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="__any">Tất cả parent</SelectItem>
+                                <SelectItem value="__any">Tất cả danh mục cha</SelectItem>
                                 {parents.map((p: any) => (
                                     <SelectItem key={String(p.id)} value={String(p.id)}>{p.name}</SelectItem>
                                 ))}
@@ -80,7 +87,7 @@ export function CategoryFilters({ nameFilter, setNameFilter, parentIdFilter, set
                         </Select>
                     </div>
                     <div className="flex justify-end">
-                        <Button variant="outline" size="sm" onClick={() => { setNameFilter(""); setParentIdFilter(""); setIsSubCategory(undefined); setPage(1); }}>
+                        <Button variant="outline" size="sm" onClick={() => { setNameFilter(""); setParentIdFilter(""); setIsSubCategory(undefined); setPage(1); onSearchSubmit?.(""); }}>
                             Đặt lại
                         </Button>
                     </div>
@@ -91,10 +98,10 @@ export function CategoryFilters({ nameFilter, setNameFilter, parentIdFilter, set
                 <Button
                     variant="outline"
                     className="h-9 md:ml-2 gap-2"
-                    onClick={() => { setNameFilter(""); setParentIdFilter(""); setIsSubCategory(undefined); setPage(1); }}
+                    onClick={() => { setNameFilter(""); setParentIdFilter(""); setIsSubCategory(undefined); setPage(1); onSearchSubmit?.(""); }}
                     title="Xoá tất cả điều kiện lọc"
                 >
-                    <Trash2 className="h-4 w-4" />
+                    <X className="h-4 w-4" />
                 </Button>
             ) : null}
         </div>

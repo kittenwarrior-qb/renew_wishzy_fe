@@ -1,4 +1,5 @@
 "use client"
+
 import React from "react"
 import HeaderAdmin from "@/components/shared/layout/HeaderAdmin"
 import AdminAppSidebar from "@/components/shared/layout/AdminAppSidebar"
@@ -15,9 +16,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter()
   const params = useParams<{ locale: string }>()
   const locale = params?.locale || "vi"
-  const { ready } = useAdminGuard({ allowedRoles: ["admin","superadmin","owner"], redirectTo: `/${locale}` })
+  const { ready } = useAdminGuard({ allowedRoles: ["admin"], redirectTo: `/${locale}` })
+  const { theme } = useAppStore()
+  const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
 
   React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const react = require('@ckeditor/ckeditor5-react')
+        const classic = require('@ckeditor/ckeditor5-build-classic')
+          ; (window as any).__CKE__ = {
+            CKEditor: react?.CKEditor,
+            ClassicEditor: classic?.default || classic,
+          }
+      } catch { }
+    }
+
     const onUnsaved = (e: Event) => {
       const detail = (e as CustomEvent).detail as { proceed?: () => void } | undefined
       leaveProceedRef.current = detail?.proceed ?? null
@@ -29,8 +43,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!ready) {
     return (
-      <div className="flex h-dvh items-center justify-center text-sm text-muted-foreground">
-        Đang kiểm tra quyền truy cập...
+      <div className="flex h-dvh items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground" role="status" aria-live="polite" aria-busy="true">
+          <img src={logoSrc} alt="Wishzy" className="h-10 w-auto opacity-90" />
+          <div aria-label="loading" className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span>Đang kiểm tra quyền truy cập...</span>
+        </div>
       </div>
     )
   }
