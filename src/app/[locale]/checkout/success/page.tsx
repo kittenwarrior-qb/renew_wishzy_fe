@@ -44,7 +44,7 @@ const CheckoutSuccessPage = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-[800px] mx-auto py-10">
+      <div className="max-w-[1300px] mx-auto px-4 py-10">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -57,7 +57,7 @@ const CheckoutSuccessPage = () => {
 
   if (!orderDetails) {
     return (
-      <div className="max-w-[800px] mx-auto py-10">
+      <div className="max-w-[1300px] mx-auto px-4 py-10">
         <Card className="p-8 text-center">
           <div className="text-red-500 mb-4">
             <Package className="w-16 h-16 mx-auto" />
@@ -98,7 +98,7 @@ const CheckoutSuccessPage = () => {
   }
 
   return (
-    <div className="max-w-[900px] mx-auto py-8 px-4">
+    <div className="max-w-[1300px] mx-auto py-8 px-4">
       {/* Success Header */}
       <Card className="mb-6 overflow-hidden">
         <div className={`p-8 text-center ${isCompleted ? 'bg-green-50 dark:bg-green-950/20' : 'bg-yellow-50 dark:bg-yellow-950/20'}`}>

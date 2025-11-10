@@ -229,8 +229,8 @@ export function VideoPlayer({
 
   if (!isMounted) {
     return (
-      <div className="space-y-4">
-        <div className="relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center">
+      <div className="w-full space-y-4">
+        <div className="relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center shadow-2xl">
           <div className="text-white">Loading player...</div>
         </div>
       </div>
@@ -238,9 +238,9 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       {/* Video Player */}
-      <div className="relative bg-black rounded-lg overflow-hidden">
+      <div className="relative bg-black rounded-lg overflow-hidden shadow-2xl">
         <div data-vjs-player>
           <video
             ref={videoRef}
@@ -258,12 +258,12 @@ export function VideoPlayer({
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-2">
         <Button
           variant="outline"
           onClick={handlePrevious}
           disabled={!hasPrevious}
-          className="gap-2"
+          className="gap-2 hover:bg-accent hover:text-accent-foreground"
         >
           <SkipBack className="w-4 h-4" />
           Previous Lecture
@@ -273,7 +273,7 @@ export function VideoPlayer({
           variant="outline"
           onClick={handleNext}
           disabled={!hasNext}
-          className="gap-2"
+          className="gap-2 hover:bg-accent hover:text-accent-foreground"
         >
           Next Lecture
           <SkipForward className="w-4 h-4" />

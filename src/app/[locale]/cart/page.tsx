@@ -120,7 +120,7 @@ const CartPage = () => {
   }, 0);
 
   return (
-    <div className='container mx-auto py-10'>
+    <div className='max-w-[1300px] mx-auto px-4 py-10'>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-3xl font-bold">Giỏ hàng</h1>
         
