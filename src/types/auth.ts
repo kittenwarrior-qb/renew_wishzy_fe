@@ -87,6 +87,21 @@ export interface ProfileResponse {
   data: User;
 }
 
+export interface UpdateProfileData {
+  fullName?: string;
+  phone?: string;
+  dob?: string;
+  gender?: string;
+  age?: number;
+  address?: string;
+  avatar?: string;
+}
+
+export interface UpdateProfileResponse {
+  data: User;
+  message: string;
+}
+
 // Logout Types
 export interface LogoutResponse {
   message: string;
