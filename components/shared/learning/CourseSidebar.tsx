@@ -49,9 +49,9 @@ export function CourseSidebar({ course, courseId, currentLectureId }: CourseSide
   };
 
   return (
-    <div className="w-80 h-screen bg-card border-r flex flex-col">
+    <div className="w-full h-screen bg-card border-r flex flex-col sticky top-0">
       {/* Header */}
-      <div className="p-4 border-b">
+      <div className="p-4 border-b shrink-0">
         <h2 className="font-semibold text-lg mb-2">{course.title}</h2>
         <div className="text-sm text-muted-foreground mb-3">
           Progress: {course.completedLessons}/{course.totalLessons} lessons
@@ -67,12 +67,12 @@ export function CourseSidebar({ course, courseId, currentLectureId }: CourseSide
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto scrollbar-thin">
         {course.chapters.map((chapter) => (
           <div key={chapter.id} className="border-b">
             <Button
               variant="ghost"
-              className="w-full justify-start p-4 h-auto"
+              className="w-full justify-start p-4 h-auto hover:bg-accent hover:text-accent-foreground"
               onClick={() => toggleChapter(chapter.id)}
             >
               <div className="flex items-center gap-3 w-full">

@@ -22,7 +22,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors">
       
-      <main className="container mx-auto py-20">
+      <main className="max-w-[1300px] mx-auto px-4 py-20">
         <div className="text-center max-w-4xl mx-auto">
           <p className="text-primary text-sm font-medium mb-4 tracking-wide">
             {t('appName')}

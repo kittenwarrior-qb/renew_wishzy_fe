@@ -4,10 +4,18 @@ import HeaderAdmin from "@/components/shared/layout/HeaderAdmin"
 import AdminAppSidebar from "@/components/shared/layout/AdminAppSidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
+import { Notifications } from "@/components/shared/admin/Notifications"
+import { useAppStore } from "@/stores/useAppStore"
+import { useParams, useRouter } from "next/navigation"
+import { useAdminGuard } from "@/hooks/useAdminGuard"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const leaveProceedRef = React.useRef<null | (() => void)>(null)
   const [openLeaveConfirm, setOpenLeaveConfirm] = React.useState(false)
+  const router = useRouter()
+  const params = useParams<{ locale: string }>()
+  const locale = params?.locale || "vi"
+  const { ready } = useAdminGuard({ allowedRoles: ["admin","superadmin","owner"], redirectTo: `/${locale}` })
 
   React.useEffect(() => {
     const onUnsaved = (e: Event) => {
@@ -19,6 +27,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => window.removeEventListener("unsaved-changes", onUnsaved as EventListener)
   }, [])
 
+  if (!ready) {
+    return (
+      <div className="flex h-dvh items-center justify-center text-sm text-muted-foreground">
+        Đang kiểm tra quyền truy cập...
+      </div>
+    )
+  }
+
   return (
     <SidebarProvider style={{ ["--sidebar-width"]: "20rem", ["--sidebar-width-icon"]: "3.75rem" } as React.CSSProperties}>
       <AdminAppSidebar />
@@ -28,6 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </main>
       </SidebarInset>
+      <Notifications />
       <ConfirmDialog
         open={openLeaveConfirm}
         onOpenChange={setOpenLeaveConfirm}

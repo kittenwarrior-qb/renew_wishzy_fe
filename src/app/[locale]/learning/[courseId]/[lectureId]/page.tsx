@@ -124,51 +124,74 @@ export default function LearningPage() {
   const prevLecture = getPreviousLecture(lectureId);
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <CourseSidebar 
-        course={fakeCourse}
-        courseId={courseId}
-        currentLectureId={lectureId} 
-      />
+    <div className="min-h-screen bg-background">
+      {/* Main Container with max-width */}
+      <div className="max-w-[1300px] mx-auto">
+        <div className="flex">
+          {/* Sidebar - Hidden on mobile, shown on desktop */}
+          <aside className="hidden lg:block lg:w-80 shrink-0">
+            <CourseSidebar 
+              course={fakeCourse}
+              courseId={courseId}
+              currentLectureId={lectureId} 
+            />
+          </aside>
 
-      <div className="flex-1 flex flex-col">
-        <div className="p-6 pb-0">
-          <VideoPlayer
-            lectureId={lectureId}
-            videoUrl={lecture.videoUrl || ''}
-            title={lecture.title}
-            initialProgress={progress}
-            onProgressUpdate={handleProgressUpdate}
-            onComplete={handleComplete}
-            onNext={nextLecture ? handleNext : undefined}
-            onPrevious={prevLecture ? handlePrevious : undefined}
-            hasNext={!!nextLecture}
-            hasPrevious={!!prevLecture}
-          />
-        </div>
-
-        {/* Content Area */}
-        <div className="flex-1 p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-              <LectureInfo
-                lecture={lecture}
-                chapter={chapter}
-                onMarkComplete={handleMarkComplete}
-              />
-            </div>
-
-            {/* Right Sidebar - Additional Info */}
-            <div className="lg:col-span-1">
-              <div className="bg-muted/30 rounded-lg p-4 text-center text-muted-foreground">
-                <p className="text-sm">Additional content area</p>
-                <p className="text-xs mt-1">Notes, comments, etc.</p>
+          {/* Main Content Area */}
+          <main className="flex-1 min-w-0">
+            {/* Video Player Section */}
+            <div className="w-full bg-black/5 dark:bg-black/20">
+              <div className="px-4 sm:px-6 lg:px-8 py-6">
+                <VideoPlayer
+                  lectureId={lectureId}
+                  videoUrl={lecture.videoUrl || ''}
+                  title={lecture.title}
+                  initialProgress={progress}
+                  onProgressUpdate={handleProgressUpdate}
+                  onComplete={handleComplete}
+                  onNext={nextLecture ? handleNext : undefined}
+                  onPrevious={prevLecture ? handlePrevious : undefined}
+                  hasNext={!!nextLecture}
+                  hasPrevious={!!prevLecture}
+                />
               </div>
             </div>
-          </div>
+
+            {/* Content Area */}
+            <div className="px-4 sm:px-6 lg:px-8 py-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Content */}
+                <div className="lg:col-span-2">
+                  <LectureInfo
+                    lecture={lecture}
+                    chapter={chapter}
+                    onMarkComplete={handleMarkComplete}
+                  />
+                </div>
+
+                {/* Right Sidebar - Additional Info */}
+                <div className="lg:col-span-1">
+                  <div className="bg-muted/30 rounded-lg p-4 text-center text-muted-foreground">
+                    <p className="text-sm">Additional content area</p>
+                    <p className="text-xs mt-1">Notes, comments, etc.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
         </div>
+      </div>
+
+      {/* Mobile Sidebar Toggle - Show on mobile */}
+      <div className="lg:hidden fixed bottom-4 right-4 z-50">
+        <button
+          onClick={() => {/* Add mobile sidebar toggle logic */}}
+          className="bg-primary text-primary-foreground rounded-full p-4 shadow-lg hover:bg-primary/90 transition-colors"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
       </div>
     </div>
   );

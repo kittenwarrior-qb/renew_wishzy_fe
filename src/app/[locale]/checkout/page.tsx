@@ -70,7 +70,7 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="max-w-[1000px] mx-auto  py-5">
+    <div className="max-w-[1300px] mx-auto px-4 py-5">
       <h1 className="text-3xl font-bold mb-5">Thanh toán</h1>
       <div className="flex gap-20">
         {/* Left item */}
