@@ -58,11 +58,12 @@ export default function HeaderAdmin() {
 
 function mapAdminPathToLabel(subpath: string): string {
   const map: Record<string, string> = {
+    "categories/create": "Tạo danh mục",
+    "categories": "Danh mục",
+    "categories/trash": "Danh mục / Thùng rác",
     "users/students": "Học sinh",
     "users/teachers": "Giảng viên",
     "users/admins": "Quản trị viên",
-    "classes": "Lớp học",
-    "subjects": "Môn học",
     "courses": "Khoá học",
     "exams": "Bài kiểm tra",
     "communication/reviews": "Đánh giá",
@@ -74,7 +75,6 @@ function mapAdminPathToLabel(subpath: string): string {
     "vouchers": "Voucher",
     "settings": "Thiết lập",
   }
-  // Try to find the longest matching key
   const keys = Object.keys(map).sort((a, b) => b.length - a.length)
   for (const k of keys) if (subpath.startsWith(k)) return map[k]
   return subpath
