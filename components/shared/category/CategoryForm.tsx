@@ -109,7 +109,8 @@ export function CategoryForm({
           value={value.notes ?? ""}
           onChange={onField("notes")}
           placeholder="Ghi chú..."
-          rows={6}
+          rows={5}
+          className="resize-none max-h-40"
           disabled={disabled}
           ref={register ? (register("notes") as any) : undefined}
         />

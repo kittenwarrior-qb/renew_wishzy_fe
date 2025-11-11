@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useCategoryList, useDeleteCategory, useParentCategories, useCreateCategory, useUpdateCategory, useSubCategories, useCategoryDetail, useSubCategoriesCount } from "@/components/shared/category/useCategory"
 import type { CategoryFilter, Category } from "@/types/category"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2, Search, Filter, Plus, ChevronDown, Inbox } from "lucide-react"
+import { Pencil, Trash2, Search, Filter, Plus, ChevronDown, Inbox, RotateCcw } from "lucide-react"
 import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
 import { notify } from "@/components/shared/admin/Notifications"
 import { Pagination } from "@/components/shared/common/Pagination"
@@ -28,6 +28,7 @@ export default function CategoryListPage() {
     const [page, setPage] = React.useState<number>(Number(searchParams.get("page") || 1))
     const [limit, setLimit] = React.useState<number>(Number(searchParams.get("limit") || 10))
     const [nameFilter, setNameFilter] = React.useState<string>(searchParams.get("name") || searchParams.get("search") || "")
+    const [nameInput, setNameInput] = React.useState<string>(searchParams.get("name") || searchParams.get("search") || "")
     const [parentIdFilter, setParentIdFilter] = React.useState<string>(searchParams.get("parentId") || "")
     const [isSubCategory, setIsSubCategory] = React.useState<boolean | undefined>(() => {
         const v = searchParams.get("isSubCategory")
@@ -48,7 +49,8 @@ export default function CategoryListPage() {
 
 
     React.useEffect(() => {
-        const t = setTimeout(() => setPage(1), 400)
+        // When actual filter changes (via submit), reset to first page
+        const t = setTimeout(() => setPage(1), 0)
         return () => clearTimeout(t)
     }, [nameFilter])
 
@@ -184,12 +186,12 @@ export default function CategoryListPage() {
     }
 
     return (
-        <div className="">
+        <div className="relative">
             <div className="mb-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <CategoryFilters
-                        nameFilter={nameFilter}
-                        setNameFilter={setNameFilter}
+                        nameFilter={nameInput}
+                        setNameFilter={setNameInput}
                         parentIdFilter={parentIdFilter}
                         setParentIdFilter={setParentIdFilter}
                         isSubCategory={isSubCategory}
@@ -197,20 +199,15 @@ export default function CategoryListPage() {
                         setPage={setPage}
                         filtersActive={filtersActive}
                         parents={(parentsData?.data ?? []) as any}
+                        onSearchSubmit={(v) => { setNameFilter(v !== undefined ? v : nameInput); setPage(1) }}
                     />
                     <div className="flex items-center gap-2 justify-end">
-                        <Pagination
-                            pagination={{ totalItems: total, totalPages, currentPage, itemsPerPage: pageSize }}
-                            onPageChange={(p) => setPage(p)}
-                            className="m-0"
-                            size="sm"
-                        />
                         <Link href={`/${locale}/admin/categories/trash`} className="inline-flex">
-                            <Button variant="outline" className="h-9 gap-2 cursor-pointer" title="Thùng rác">
-                                Thùng rác
+                            <Button variant="outline" className="h-9 gap-2 cursor-pointer" title="Danh sách thùng rác">
+                                <RotateCcw className="h-4 w-4" />
                             </Button>
                         </Link>
-                        <Button className="h-9 gap-2" onClick={() => openCreateFor()}>
+                        <Button className="h-9 gap-2 cursor-pointer" onClick={() => openCreateFor()}>
                             <Plus className="h-4 w-4" />
                             Tạo danh mục
                         </Button>
@@ -218,16 +215,17 @@ export default function CategoryListPage() {
                 </div>
             </div>
 
-            <div className="relative min-h-[300px]">
-                {isPending ? (
-                    <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                        <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
-                            <img src={logoSrc} alt="Wishzy" className="h-10 w-auto opacity-90" />
-                            <div aria-label="loading" className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                            <span>Đang tải dữ liệu...</span>
-                        </div>
+            {isPending ? (
+                <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                    <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
+                        <img src={logoSrc} alt="Wishzy" className="h-10 w-auto opacity-90" />
+                        <div aria-label="loading" className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        <span>Đang tải dữ liệu...</span>
                     </div>
-                ) : null}
+                </div>
+            ) : null}
+
+            <div className="min-h-[300px]">
                 {isError ? (
                     <div className="py-10 text-center text-sm text-destructive">Lỗi tải dữ liệu</div>
                 ) : (((data?.data ?? []) as Category[]).length === 0) ? (
@@ -251,8 +249,18 @@ export default function CategoryListPage() {
                         onAddChild={(parentId) => openCreateFor(parentId)}
                         onPageChange={(p) => setPage(p)}
                         deleting={deleting}
+                        locale={locale}
                     />
                 )}
+            </div>
+
+            {/* Bottom pagination */}
+            <div className="mt-4 flex justify-end">
+                <Pagination
+                    pagination={{ totalItems: total, totalPages, currentPage, itemsPerPage: pageSize }}
+                    onPageChange={(p) => setPage(p)}
+                    size="sm"
+                />
             </div>
 
             <AdminActionDialog
@@ -279,7 +287,7 @@ export default function CategoryListPage() {
                 title="Thay đổi chưa lưu"
                 description={<span>Bạn có thay đổi chưa lưu. Thoát mà không lưu?</span>}
                 confirmText="Thoát"
-                confirmVariant="destructive"
+                confirmVariant="default"
                 position="top"
                 onConfirm={() => {
                     const fn = pendingCloseRef.current
@@ -334,8 +342,8 @@ export default function CategoryListPage() {
                     onValidate={(field, v) => { if (field === "name") { setNameTouched(true); setNameError(validateCategoryName(v)) } }}
                     parents={(parentsData?.data ?? []) as any}
                     error={nameTouched ? (nameError || undefined) : undefined}
-                    allowParentSelect={false}
-                    showParentField={!!createDefaultParentId}
+                    allowParentSelect={true}
+                    showParentField={true}
                 />
             </AdminActionDialog>
 
@@ -384,10 +392,11 @@ export default function CategoryListPage() {
                         if (nameTouched) setNameError(validateCategoryName(v.name || ""))
                     }}
                     onValidate={(field, v) => { if (field === "name") { setNameTouched(true); setNameError(validateCategoryName(v)) } }}
-                    parents={((parentsData?.data ?? []) as any[]).filter((p: any) => !p.parentId) as any}
+                    parents={(parentsData?.data ?? []) as any}
                     error={nameTouched ? (nameError || undefined) : undefined}
                     excludeId={editing ? editing.id : undefined}
-                    showParentField={editing ? !!editing.parentId : false}
+                    allowParentSelect={true}
+                    showParentField={true}
                 />
             </AdminActionDialog>
         </div>
