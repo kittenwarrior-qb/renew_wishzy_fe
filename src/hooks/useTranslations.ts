@@ -19,13 +19,46 @@ export function useTranslations() {
 
     const loadTranslations = async () => {
       try {
-        const messages = await import(`../../locales/${currentLocale}.json`);
-        setTranslations(messages.default);
+        // Load all translation files from the locale directory
+        const [auth, common, courses, navigation] = await Promise.all([
+          import(`../../locales/${currentLocale}/auth.json`).catch(() => ({ default: {} })),
+          import(`../../locales/${currentLocale}/common.json`).catch(() => ({ default: {} })),
+          import(`../../locales/${currentLocale}/courses.json`).catch(() => ({ default: {} })),
+          import(`../../locales/${currentLocale}/navigation.json`).catch(() => ({ default: {} })),
+        ]);
+
+        // Merge all translations
+        const mergedTranslations = {
+          auth: auth.default,
+          common: common.default,
+          courses: courses.default,
+          navigation: navigation.default,
+        };
+
+        setTranslations(mergedTranslations);
       } catch (error) {
         console.error('Failed to load translations:', error);
         // Fallback to Vietnamese
-        const fallback = await import(`../../locales/vi.json`);
-        setTranslations(fallback.default);
+        try {
+          const [auth, common, courses, navigation] = await Promise.all([
+            import(`../../locales/vi/auth.json`).catch(() => ({ default: {} })),
+            import(`../../locales/vi/common.json`).catch(() => ({ default: {} })),
+            import(`../../locales/vi/courses.json`).catch(() => ({ default: {} })),
+            import(`../../locales/vi/navigation.json`).catch(() => ({ default: {} })),
+          ]);
+
+          const mergedTranslations = {
+            auth: auth.default,
+            common: common.default,
+            courses: courses.default,
+            navigation: navigation.default,
+          };
+
+          setTranslations(mergedTranslations);
+        } catch (fallbackError) {
+          console.error('Failed to load fallback translations:', fallbackError);
+          setTranslations({});
+        }
       }
     };
 
@@ -34,7 +67,7 @@ export function useTranslations() {
 
   const t = (key: string): string => {
     const keys = key.split('.');
-    let value = translations;
+    let value: unknown = translations;
     
     for (const k of keys) {
       if (value && typeof value === 'object' && value !== null && k in value) {

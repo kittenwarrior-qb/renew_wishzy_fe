@@ -29,15 +29,18 @@ export const apiRequest = async <TData = unknown>(
 
   const url = `${endpoint}${buildQueryParams(params)}`;
 
+  // Build axios config properly
   const config: any = {
     method: method.toLowerCase(),
+    url,
   };
 
-  if (data) {
+  // For methods that support body, add data directly
+  if (data && ['post', 'put', 'patch'].includes(method.toLowerCase())) {
     config.data = data;
   }
 
-  const response = await api.request({ url, ...config });
+  const response = await api.request(config);
   return response.data;
 };
 
@@ -76,7 +79,7 @@ export const useApiMutation = <TData = unknown, TVariables = unknown, TError = E
         params,
       });
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, context, mutationFunctionContext) => {
       if (invalidateQueries) {
         invalidateQueries.forEach(queryKey => {
           queryClient.invalidateQueries({ queryKey: [queryKey] });
@@ -85,7 +88,7 @@ export const useApiMutation = <TData = unknown, TVariables = unknown, TError = E
         queryClient.invalidateQueries({ queryKey: [endpoint] });
       }
 
-      mutationOptions.onSuccess?.(data, variables, context);
+      mutationOptions.onSuccess?.(data, variables, context, mutationFunctionContext);
     },
     ...mutationOptions,
   });
