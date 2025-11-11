@@ -65,6 +65,8 @@ function mapAdminPathToLabel(subpath: string): string {
     "users/teachers": "Giảng viên",
     "users/admins": "Quản trị viên",
     "courses": "Khoá học",
+    "courses/create": "Tạo khoá học",
+    "courses/:id": "Khoá học",
     "exams": "Bài kiểm tra",
     "communication/reviews": "Đánh giá",
     "communication/comments": "Bình luận",
