@@ -134,12 +134,12 @@ export const wishzyAuthService = {
 
   /**
    * Update User Profile
-   * PUT /auth/profile
+   * PATCH /api/v1/user/profile/me
    * Requires valid access token
    */
   updateProfile: async (data: UpdateProfileData): Promise<User> => {
-    const response = await apiRequest<UpdateProfileResponse>('auth/profile', {
-      method: 'PUT',
+    const response = await apiRequest<UpdateProfileResponse>('/users/profile/me', {
+      method: 'PATCH',
       data,
     });
     return response.data;

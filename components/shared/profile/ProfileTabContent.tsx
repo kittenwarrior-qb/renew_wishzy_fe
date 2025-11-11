@@ -7,6 +7,7 @@ import { useQueryHook } from '@/src/hooks/useQueryHook';
 import { useMutationHook } from '@/src/hooks/useMutationHook';
 import { wishzyAuthService } from '@/src/services/auth';
 import { UpdateProfileData } from '@/src/types/auth';
+import { useAppStore } from '@/src/stores/useAppStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export const ProfileTabContent = () => {
     const queryClient = useQueryClient();
+    const { setUser } = useAppStore();
     const { data, isLoading } = useQueryHook(
         ['profile'],
         () => wishzyAuthService.getProfile(),
@@ -28,12 +30,16 @@ export const ProfileTabContent = () => {
         gender: profile?.gender || '',
         age: profile?.age || undefined,
         address: profile?.address || '',
+        avatar: profile?.avatar || '',
     });
 
     const updateMutation = useMutationHook(
         (data: UpdateProfileData) => wishzyAuthService.updateProfile(data),
         {
-            onSuccess: () => {
+            onSuccess: (updatedUser) => {
+                // Update store with new user data
+                setUser(updatedUser);
+                // Invalidate cache
                 queryClient.invalidateQueries({ queryKey: ['profile'] });
                 setIsEditing(false);
             },
@@ -49,6 +55,7 @@ export const ProfileTabContent = () => {
                 gender: profile.gender || '',
                 age: profile.age || undefined,
                 address: profile.address || '',
+                avatar: profile.avatar || '',
             });
         }
     }, [profile]);
