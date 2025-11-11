@@ -13,6 +13,7 @@ import { useAppStore } from "@/stores/useAppStore"
 import { useCourseList, useToggleCourseStatus, useDeleteCourse, useCreateCourse, useUpdateCourse, type Course } from "@/components/shared/course/useCourse"
 import { useParentCategories } from "@/components/shared/category/useCategory"
 import { Plus, Pencil, Trash2, Inbox } from "lucide-react"
+import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 
 type CourseFormValue = Partial<Pick<Course, "name" | "price" | "level" | "totalDuration" | "categoryId" | "description" | "notes" | "thumbnail">>
 
@@ -58,7 +59,7 @@ export default function Page() {
     courseLevel: level !== '__all' ? (level as 'beginner' | 'intermediate' | 'advanced') : undefined,
     categoryId: categoryId !== '__all' ? categoryId : undefined,
   }), [page, limit, name, status, level, categoryId])
-  const { data, isPending, isError } = useCourseList(filter)
+  const { data, isPending, isFetching, isError } = useCourseList(filter)
   const { data: parentsData } = useParentCategories()
   const categories = (parentsData?.data ?? []) as Array<{ id: string; name: string }>
   const items = (data?.data ?? []) as Course[]
@@ -120,15 +121,7 @@ export default function Page() {
       </div>
 
       <div className="relative min-h-[300px]">
-        {isPending ? (
-          <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
-              <img src={logoSrc} alt="Wishzy" className="h-10 w-auto opacity-90" />
-              <div aria-label="loading" className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              <span>Đang tải dữ liệu...</span>
-            </div>
-          </div>
-        ) : null}
+        <LoadingOverlay show={isPending || isFetching} />
 
         {isError ? (
           <div className="py-16 text-center text-sm text-destructive">Lỗi tải dữ liệu</div>

@@ -1,0 +1,118 @@
+"use client"
+
+import * as React from "react"
+import { useParams, useRouter } from "next/navigation"
+import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
+import { useOrderDetail } from "@/components/shared/order/useOrder"
+import { Button } from "@/components/ui/button"
+
+export default function Page() {
+    const params = useParams<{ locale: string; id: string }>()
+    const locale = params?.locale || "vi"
+    const id = params?.id as string
+    const router = useRouter()
+
+    const { data: order, isPending, isFetching, isError } = useOrderDetail(id)
+
+    const user = (order as any)?.user
+    const details = (order as any)?.orderDetails ?? []
+    const voucher = (order as any)?.voucher
+
+    return (
+        <div className="relative p-4 md:p-6">
+            <LoadingOverlay show={isPending || isFetching} />
+
+            <div className="mb-4 flex items-center justify-between">
+                <h1 className="text-lg font-semibold">Đơn hàng #{id}</h1>
+                <div className="inline-flex gap-2">
+                    <Button variant="outline" onClick={() => router.push(`/${locale}/admin/orders`)}>Quay lại</Button>
+                </div>
+            </div>
+
+            {isError ? (
+                <div className="py-10 text-center text-destructive">Lỗi tải chi tiết đơn hàng</div>
+            ) : !order ? null : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2 space-y-4">
+                        <div className="rounded-lg border">
+                            <div className="p-4">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <div>
+                                        <div className="text-sm text-muted-foreground">Khách hàng</div>
+                                        <div className="font-medium">{user?.fullName || user?.email || (order as any)?.userId}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-sm text-muted-foreground">Tổng tiền</div>
+                                        <div className="font-semibold">{Number((order as any)?.totalPrice).toLocaleString()}₫</div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <div className="text-muted-foreground">Trạng thái</div>
+                                        <div className="capitalize">{(order as any)?.status}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-muted-foreground">Thanh toán</div>
+                                        <div className="uppercase">{(order as any)?.paymentMethod}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-muted-foreground">Ngày tạo</div>
+                                        <div>{new Date((order as any)?.createdAt).toLocaleString()}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-muted-foreground">Cập nhật</div>
+                                        <div>{new Date((order as any)?.updatedAt).toLocaleString()}</div>
+                                    </div>
+                                    {voucher ? (
+                                        <div className="col-span-2">
+                                            <div className="text-muted-foreground">Voucher</div>
+                                            <div className="font-medium">{voucher?.code || voucher?.id}</div>
+                                        </div>
+                                    ) : null}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="rounded-lg border overflow-hidden">
+                            <div className="p-4 border-b font-medium">Sản phẩm</div>
+                            <div className="divide-y">
+                                {details.length === 0 ? (
+                                    <div className="p-4 text-sm text-muted-foreground">Không có sản phẩm</div>
+                                ) : details.map((d: any) => (
+                                    <div key={d.id} className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <div className="font-medium">{d.course?.name || d.courseId}</div>
+                                            <div className="text-xs text-muted-foreground">Mã chi tiết: {d.id}</div>
+                                        </div>
+                                        <div className="font-medium">{Number(d.price).toLocaleString()}₫</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="rounded-lg border">
+                            <div className="p-4 space-y-2 text-sm">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-muted-foreground">Tổng tiền</div>
+                                    <div className="font-semibold">{Number((order as any)?.totalPrice).toLocaleString()}₫</div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="text-muted-foreground">Trạng thái</div>
+                                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${(order as any)?.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' : (order as any)?.status === 'pending' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>
+                                        {(order as any)?.status}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="text-muted-foreground">Thanh toán</div>
+                                    <div className="uppercase">{(order as any)?.paymentMethod}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}

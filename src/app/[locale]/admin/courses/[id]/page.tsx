@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { useCourseDetail } from "@/components/shared/course/useCourse"
 import { useChapterList, useCreateChapter } from "@/components/shared/chapter/useChapter"
+import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { AdminCourseChapters } from "@/components/shared/course/AdminCourseChapters"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -23,8 +24,8 @@ export default function CourseDetailPage() {
     const locale = params?.locale || "vi"
     const courseId = params?.id as string
 
-    const { data: course, isPending: loadingCourse } = useCourseDetail(courseId)
-    const { data: chapterRes, isPending: loadingChapters } = useChapterList(courseId)
+    const { data: course, isPending: loadingCourse, isFetching: fetchingCourse } = useCourseDetail(courseId)
+    const { data: chapterRes, isPending: loadingChapters, isFetching: fetchingChapters } = useChapterList(courseId)
     const chapters = chapterRes?.items ?? []
 
     const [openCreate, setOpenCreate] = React.useState(false)
@@ -62,15 +63,7 @@ export default function CourseDetailPage() {
 
     return (
         <div className="p-4 md:p-6 space-y-6 relative">
-            {(loadingCourse || loadingChapters) && (
-                <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
-                        <img src={logoSrc} alt="Wishzy" className="h-10 w-auto opacity-90" />
-                        <div aria-label="loading" className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        <span>Đang tải dữ liệu...</span>
-                    </div>
-                </div>
-            )}
+            <LoadingOverlay show={loadingCourse || loadingChapters || fetchingCourse || fetchingChapters} />
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Link href={`/${locale}/admin/courses`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-1 hover:bg-accent">
