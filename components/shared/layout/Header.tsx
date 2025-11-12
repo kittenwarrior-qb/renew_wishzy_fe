@@ -74,6 +74,7 @@ const Header = () => {
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
+                
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
                     <Link href="/dashboard" className="text-foreground hover:text-primary transition-colors cursor-pointer">
@@ -81,6 +82,15 @@ const Header = () => {
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
+                
+                 <NavigationMenuItem>
+                  <NavigationMenuLink asChild>
+                    <Link href="/students" className="text-foreground hover:text-primary transition-colors cursor-pointer">
+                      {t('navigation.students')}
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+
               </NavigationMenuList>
             </NavigationMenu>
           </div>

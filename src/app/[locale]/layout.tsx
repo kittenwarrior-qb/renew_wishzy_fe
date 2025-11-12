@@ -11,33 +11,37 @@ export function generateStaticParams() {
 
 async function getMessages(locale: string) {
   try {
-    const [common, auth, courses, navigation] = await Promise.all([
+    const [common, auth, courses, navigation, students] = await Promise.all([
       import(`../../../locales/${locale}/common.json`),
       import(`../../../locales/${locale}/auth.json`),
       import(`../../../locales/${locale}/courses.json`),
-      import(`../../../locales/${locale}/navigation.json`)
+      import(`../../../locales/${locale}/navigation.json`),
+      import(`../../../locales/${locale}/students.json`)
     ]);
 
     return {
       ...common.default,
       auth: auth.default,
       courses: courses.default,
-      navigation: navigation.default
+      navigation: navigation.default,
+      students: students.default
     };
   } catch (error) {
     console.error(`Failed to load messages for locale ${locale}:`, error);
-    const [common, auth, courses, navigation] = await Promise.all([
+    const [common, auth, courses, navigation, students] = await Promise.all([
       import(`../../../locales/vi/common.json`),
       import(`../../../locales/vi/auth.json`),
       import(`../../../locales/vi/courses.json`),
-      import(`../../../locales/vi/navigation.json`)
+      import(`../../../locales/vi/navigation.json`),
+      import(`../../../locales/vi/students.json`)
     ]);
 
     return {
       ...common.default,
       auth: auth.default,
       courses: courses.default,
-      navigation: navigation.default
+      navigation: navigation.default,
+      students: students.default
     };
   }
 }

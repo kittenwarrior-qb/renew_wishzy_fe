@@ -1,0 +1,19 @@
+{
+  "title": "Quản lý Học viên",
+  "description": "Quản lý học viên và các khóa học đã đăng ký",
+  "searchPlaceholder": "Tìm kiếm học viên...",
+  "addStudent": "Thêm Học viên",
+  "studentList": "Danh sách Học viên",
+  "studentDetails": "Thông tin Chi tiết",
+  "backToList": "Quay lại Danh sách",
+  "contactInfo": "Thông tin Liên hệ",
+  "joinedOn": "Tham gia ngày",
+  "enrolledCourses": "Khóa học đã đăng ký",
+  "student": "Học viên",
+  "contact": "Liên hệ",
+  "actions": "Thao tác",
+  "view": "Xem",
+  "noStudents": "Không tìm thấy học viên nào",
+  "loading": "Đang tải...",
+  "errorLoading": "Lỗi khi tải danh sách học viên"
+}

@@ -1,0 +1,19 @@
+{
+  "title": "Student Management",
+  "description": "Manage your students and their course enrollments",
+  "searchPlaceholder": "Search students...",
+  "addStudent": "Add Student",
+  "studentList": "Student List",
+  "studentDetails": "Student Details",
+  "backToList": "Back to List",
+  "contactInfo": "Contact Information",
+  "joinedOn": "Joined on",
+  "enrolledCourses": "Enrolled Courses",
+  "student": "Student",
+  "contact": "Contact",
+  "actions": "Actions",
+  "view": "View",
+  "noStudents": "No students found",
+  "loading": "Loading...",
+  "errorLoading": "Error loading students"
+}
