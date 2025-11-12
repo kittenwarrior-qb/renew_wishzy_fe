@@ -29,7 +29,7 @@ export const useCategoryList = (filter?: CategoryFilter) => {
   if (filter?.search) params.search = filter.search;
   else if (filter?.name) params.name = filter.name;
 
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [CATEGORY_ENDPOINTS.list, params],
     queryFn: async () => categoryService.list(params),
     staleTime: 10 * 60 * 1000,
@@ -56,7 +56,7 @@ export const useDeletedCategories = (filter?: Pick<CategoryFilter, 'page' | 'lim
   };
   if (filter?.name) params.name = filter.name;
 
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [`${CATEGORY_ENDPOINTS.list}/trash`, params],
     queryFn: async () => categoryService.trash(params),
     staleTime: 5 * 60 * 1000,
@@ -77,7 +77,7 @@ export const useDeletedCategories = (filter?: Pick<CategoryFilter, 'page' | 'lim
 
 
 export const useCategoryDetail = (id: string) => {
-  return useQuery<Category>({
+  return useQuery<any, unknown, Category>({
     queryKey: [CATEGORY_ENDPOINTS.detail, id],
     queryFn: async () => categoryService.get(id),
     enabled: !!id,
@@ -141,7 +141,7 @@ export const useRestoreCategory = () => {
 };
 
 export const useParentCategories = () => {
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [CATEGORY_ENDPOINTS.list, { limit: 1000 }],
     queryFn: async () => categoryService.parents({ limit: 1000 }),
     staleTime: 30 * 60 * 1000,
@@ -162,7 +162,7 @@ export const useParentCategories = () => {
 
 // Subcategories hook (categories with specific parent)
 export const useSubCategories = (parentId: string, page: number = 1, limit: number = 10) => {
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [CATEGORY_ENDPOINTS.list, { parentId, page, limit }],
     queryFn: async () => categoryService.subcategories(parentId, { page, limit }),
     enabled: !!parentId,
@@ -184,7 +184,7 @@ export const useSubCategories = (parentId: string, page: number = 1, limit: numb
 
 // Subcategories count hook (lightweight count via pagination total)
 export const useSubCategoriesCount = (parentId: string) => {
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [CATEGORY_ENDPOINTS.list, { parentId, limit: 1 }],
     queryFn: async () => categoryService.subcategories(parentId, { limit: 1 }),
     enabled: !!parentId,
@@ -205,7 +205,7 @@ export const useSubCategoriesCount = (parentId: string) => {
 
 // Popular categories hook
 export const usePopularCategories = (limit = 10) => {
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [`${CATEGORY_ENDPOINTS.list}/popular`, { limit }],
     queryFn: async () => categoryService.popular(limit),
     staleTime: 60 * 60 * 1000,
@@ -225,7 +225,7 @@ export const usePopularCategories = (limit = 10) => {
 
 // Search categories hook
 export const useSearchCategories = (searchTerm?: string) => {
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [`${CATEGORY_ENDPOINTS.list}/search`, { q: searchTerm }],
     queryFn: async () => (searchTerm && searchTerm.length > 2 ? categoryService.search(searchTerm) : Promise.resolve({} as any)),
     enabled: !!searchTerm && searchTerm.length > 2,

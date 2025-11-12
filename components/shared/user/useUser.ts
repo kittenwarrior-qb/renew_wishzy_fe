@@ -12,7 +12,7 @@ export type UserList = {
 }
 
 export const usePendingInstructorCount = () => {
-  return useQuery<{ total: number }>({
+  return useQuery<any, unknown, { total: number }>({
     queryKey: [ENDPOINT, 'instructors', 'pending-count'],
     queryFn: async () => usersService.list({ role: 'instructor', page: 1, limit: 100 }),
     staleTime: 30 * 1000,
@@ -44,7 +44,7 @@ export const useUserList = (filter?: UserFilter) => {
     email: filter?.email,
     role: filter?.role,
   }
-  return useQuery<UserList>({
+  return useQuery<any, unknown, UserList>({
     queryKey: [ENDPOINT, params],
     queryFn: async () => usersService.list(params),
     staleTime: 5 * 60 * 1000,
@@ -66,7 +66,7 @@ export const useUserList = (filter?: UserFilter) => {
 }
 
 export const useUserDetail = (id?: string) => {
-  return useQuery<User | null>({
+  return useQuery<any, unknown, User | null>({
     queryKey: [ENDPOINT, id],
     queryFn: async () => usersService.get(id as string),
     enabled: !!id,
@@ -99,7 +99,7 @@ export const useInstructorList = (filter?: InstructorFilter, options?: ListOptio
     role: filter?.role ?? 'instructor',
     status: filter?.status,
   }
-  return useQuery<UserList>({
+  return useQuery<any, unknown, UserList>({
     queryKey: [ENDPOINT, 'instructors', params],
     queryFn: async () => usersService.list(params),
     staleTime: 5 * 60 * 1000,

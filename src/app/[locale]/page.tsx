@@ -9,6 +9,7 @@ import { courseService } from "@/src/services/course";
 import { CourseItemType } from "@/src/types/course/course-item.types";
 import { PaginationResponse } from "@/src/types/pagination/pagination.type";
 import ListCourse from "@/components/shared/course/ListCourse";
+import { BannerCarousel } from "@/components/shared/banner";
 
 
 export default function Home() {
@@ -21,8 +22,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors">
-      
-      <main className="max-w-[1300px] mx-auto px-4 py-20">
+      <main className="mx-auto mt-20">
+        <div className="max-w-[1300px] mx-auto px-4">
         <div className="text-center max-w-4xl mx-auto">
           <p className="text-primary text-sm font-medium mb-4 tracking-wide">
             {t('appName')}
@@ -102,10 +103,13 @@ export default function Home() {
           </Card>
         </div>
 
+        <BannerCarousel className="mb-20" autoplayDelay={5000} />
+
         {/* Courses */}
         <div>
           <h2>Danh sách khoá học</h2>
           <ListCourse courses={courses?.items || []} />
+        </div>
         </div>
       </main>
       </div>

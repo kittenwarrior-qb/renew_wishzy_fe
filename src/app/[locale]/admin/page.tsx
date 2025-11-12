@@ -7,6 +7,10 @@ import { useUserList, useInstructorList } from "@/components/shared/user/useUser
 import { useCourseList } from "@/components/shared/course/useCourse"
 import { useCategoryList } from "@/components/shared/category/useCategory"
 import { useBannerList } from "@/components/shared/banner/useBanner"
+import type { UserList } from "@/components/shared/user/useUser"
+import type { CourseListResponse } from "@/components/shared/course/useCourse"
+import type { CategoryListResponse } from "@/types/category"
+import type { BannerListResponse } from "@/components/shared/banner/useBanner"
 
 export default function Page() {
   const { data: usersRes, isPending: loadingUsers, isFetching: fetchingUsers } = useUserList({ page: 1, limit: 1, role: 'user' })
@@ -23,11 +27,11 @@ export default function Page() {
     loadingBanners || fetchingBanners
   )
 
-  const totalUsers = usersRes?.total ?? 0
-  const totalInstructors = instrRes?.total ?? 0
-  const totalCourses = coursesRes?.total ?? 0
-  const totalCategories = categoriesRes?.total ?? 0
-  const totalBanners = bannersRes?.total ?? 0
+  const totalUsers = (usersRes as UserList | undefined)?.total ?? 0
+  const totalInstructors = (instrRes as UserList | undefined)?.total ?? 0
+  const totalCourses = (coursesRes as CourseListResponse | undefined)?.total ?? 0
+  const totalCategories = (categoriesRes as CategoryListResponse | undefined)?.total ?? 0
+  const totalBanners = (bannersRes as BannerListResponse | undefined)?.total ?? 0
 
   const cards: Array<{ title: string; value: number; icon: React.ReactNode; hint?: string }> = [
     { title: "Người dùng", value: totalUsers, icon: <Users className="h-5 w-5" /> },
@@ -65,3 +69,4 @@ export default function Page() {
     </div>
   )
 }
+

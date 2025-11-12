@@ -59,7 +59,7 @@ export const useCourseList = (filter?: CourseFilter) => {
     maxPrice: filter?.maxPrice,
     status: typeof filter?.status === 'boolean' ? filter?.status : undefined,
   }
-  return useQuery<CourseListResponse>({
+  return useQuery<any, unknown, CourseListResponse>({
     queryKey: [ENDPOINT, params],
     queryFn: async () => courseService.list(params),
     staleTime: 5 * 60 * 1000,
@@ -79,7 +79,7 @@ export const useCourseList = (filter?: CourseFilter) => {
 }
 
 export const useCourseDetail = (id?: string) => {
-  return useQuery<Course>({
+  return useQuery<any, unknown, Course>({
     queryKey: [ENDPOINT, id],
     queryFn: async () => courseService.get(id as string),
     enabled: !!id,

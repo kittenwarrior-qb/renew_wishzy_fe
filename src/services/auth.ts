@@ -13,6 +13,8 @@ import type {
   ResetPasswordResponse,
   RefreshTokenResponse,
   ProfileResponse,
+  UpdateProfileData,
+  UpdateProfileResponse,
   LogoutResponse,
   User
 } from '@/types/auth';
@@ -126,6 +128,19 @@ export const wishzyAuthService = {
   getProfile: async (): Promise<User> => {
     const response = await apiRequest<ProfileResponse>('auth/profile', {
       method: 'GET',
+    });
+    return response.data;
+  },
+
+  /**
+   * Update User Profile
+   * PUT /auth/profile
+   * Requires valid access token
+   */
+  updateProfile: async (data: UpdateProfileData): Promise<User> => {
+    const response = await apiRequest<UpdateProfileResponse>('auth/profile', {
+      method: 'PUT',
+      data,
     });
     return response.data;
   },

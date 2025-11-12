@@ -1,36 +1,71 @@
-import api from "./api";
+import api from './api';
+import type {
+    Banner,
+    CreateBannerRequest,
+    UpdateBannerRequest,
+    BannerResponse,
+    BannersResponse,
+} from '@/types/banner';
 
-const BASE = "/banners";
+export type {
+    Banner,
+    CreateBannerRequest,
+    UpdateBannerRequest,
+    BannerResponse,
+    BannersResponse,
+} from '@/types/banner';
 
-export type Banner = {
-  id: string;
-  title: string;
-  imageUrl: string;
-  link: string;
-  position: number;
-  createdAt: string;
-  updatedAt: string;
-};
+const BANNER_ENDPOINTS = {
+    base: '/banners',
+    byId: (id: string) => `/banners/${id}`,
+} as const;
 
 export const bannerService = {
-  async list(params?: Record<string, any>) {
-    const res = await api.get(BASE, { params });
-    return res.data;
-  },
-  async get(id: string) {
-    const res = await api.get(`${BASE}/${id}`);
-    return res.data;
-  },
-  async create(data: Partial<Banner>) {
-    const res = await api.post(BASE, data);
-    return res.data;
-  },
-  async update(id: string, data: Partial<Banner>) {
-    const res = await api.patch(`${BASE}/${id}`, data);
-    return res.data;
-  },
-  async remove(id: string) {
-    const res = await api.delete(`${BASE}/${id}`);
-    return res.data;
-  },
+
+    async list(params?: Record<string, any>): Promise<{ items: Banner[]; pagination?: any }> {
+        const response = await api.get<any>(BANNER_ENDPOINTS.base, { params });
+        const root = response?.data ?? {};
+        const data = root?.data ?? root;
+        const items: Banner[] = data?.items ?? data?.banners ?? [];
+        const pagination = data?.pagination;
+        return { items, pagination };
+    },
+
+    async getAll(): Promise<Banner[]> {
+        const response = await api.get<BannersResponse>(BANNER_ENDPOINTS.base);
+        return response.data.data.banners;
+    },
+
+    async getById(bannerId: string): Promise<Banner> {
+        const response = await api.get<BannerResponse>(
+            BANNER_ENDPOINTS.byId(bannerId)
+        );
+        return response.data.data.banner;
+    },
+
+    async create(data: CreateBannerRequest): Promise<Banner> {
+        const response = await api.post<BannerResponse>(
+            BANNER_ENDPOINTS.base,
+            data
+        );
+        return response.data.data.banner;
+    },
+
+    async update(
+        bannerId: string,
+        data: UpdateBannerRequest
+    ): Promise<Banner> {
+        const response = await api.patch<BannerResponse>(
+            BANNER_ENDPOINTS.byId(bannerId),
+            data
+        );
+        return response.data.data.banner;
+    },
+
+    async delete(bannerId: string): Promise<Banner> {
+        const response = await api.delete<BannerResponse>(
+            BANNER_ENDPOINTS.byId(bannerId)
+        );
+        return response.data.data.banner;
+    },
 };

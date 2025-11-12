@@ -7,7 +7,15 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu"
 import { Button } from "@/components/ui/button"
-import { User, LogOut } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { User, LogOut, Heart, BookOpen, UserCircle } from "lucide-react"
 import React from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -89,33 +97,62 @@ const Header = () => {
                   {user.fullName || user.email}
                 </span>
 
-                {/* Avatar or Initial */}
-                <div className="flex items-center space-x-2">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={t('common.avatar')}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-border"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center border-2 border-border">
-                      <span className="text-primary-foreground text-sm font-semibold">
-                        {user.fullName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
-                      </span>
-                    </div>
-                  )}
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-foreground hover:bg-accent hover:text-accent-foreground"
-                    onClick={handleLogout}
-                    disabled={logoutMutation.isPending}
-                    title={t('auth.logout')}
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </Button>
-                </div>
+                {/* Avatar Dropdown Menu */}
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <button className="focus:outline-none focus:ring-2 focus:ring-primary rounded-full cursor-pointer">
+                      {user.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt={t('common.avatar')}
+                          className="w-8 h-8 rounded-full object-cover border-2 border-border hover:border-primary transition-colors"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center border-2 border-border hover:border-primary transition-colors">
+                          <span className="text-primary-foreground text-sm font-semibold">
+                            {user.fullName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{user.fullName || 'User'}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile?tab=wishlist" className="cursor-pointer flex items-center">
+                        <Heart className="mr-2 h-4 w-4" />
+                        <span>Khoá học yêu thích</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile?tab=my-learning" className="cursor-pointer flex items-center">
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        <span>Khoá học của tôi</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile?tab=profile" className="cursor-pointer flex items-center">
+                        <UserCircle className="mr-2 h-4 w-4" />
+                        <span>Hồ sơ</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      disabled={logoutMutation.isPending}
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>{t('auth.logout')}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <Link href="/auth/login">
