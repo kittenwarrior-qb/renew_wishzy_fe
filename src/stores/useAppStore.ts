@@ -42,6 +42,9 @@ interface AppState {
   cart: CourseItemType[];
   orderListCourse: CourseItemType[];
   
+  // wishlist state
+  wishlist: CourseItemType[];
+  
   // Actions
   setUser: (user: User | null) => void;
   login: (user: User) => void;
@@ -58,6 +61,9 @@ interface AppState {
   removeFromOrderList: (course: CourseItemType) => void;
   clearOrderList: () => void;
   setOrderList: (courses: CourseItemType[]) => void;
+  addToWishlist: (course: CourseItemType) => void;
+  removeFromWishlist: (course: CourseItemType) => void;
+  setWishlist: (courses: CourseItemType[]) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -74,6 +80,7 @@ export const useAppStore = create<AppState>()(
         theme: 'light',
         cart: [],
         orderListCourse: [],
+        wishlist: [],
 
         // Actions
         setUser: (user) => set({ user, isAuthenticated: !!user }),
@@ -149,6 +156,25 @@ export const useAppStore = create<AppState>()(
         clearOrderList: () => set({ orderListCourse: [] }),
 
         setOrderList: (courses) => set({ orderListCourse: courses }),
+
+        addToWishlist: (course) => {
+          const { wishlist } = get();
+          const isAlreadyInWishlist = wishlist.some(c => c.id === course.id);
+          
+          if (!isAlreadyInWishlist) {
+            set({ 
+              wishlist: [...wishlist, course] 
+            });
+          }
+        },
+
+        removeFromWishlist: (course) => {
+          const { wishlist } = get();
+          const updatedWishlist = wishlist.filter(c => c.id !== course.id);
+          set({ wishlist: updatedWishlist });
+        },
+
+        setWishlist: (courses) => set({ wishlist: courses }),
       }),
       {
         name: 'user-storage',
@@ -159,6 +185,7 @@ export const useAppStore = create<AppState>()(
           theme: state.theme,
           cart: state.cart,
           orderListCourse: state.orderListCourse,
+          wishlist: state.wishlist,
         }),
       }
     ),

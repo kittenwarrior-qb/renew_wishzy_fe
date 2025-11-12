@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/src/stores/useAppStore";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
+import { wishlistService } from "@/src/services/wishlist";
 
 interface CourseCardProps {
   course: CourseItemType;
 }
 
 const CourseCard = ({ course }: CourseCardProps) => {
-  const { cart, addToCart } = useAppStore();
+  const { cart, addToCart, wishlist, addToWishlist, removeFromWishlist } = useAppStore();
   const [isHovered, setIsHovered] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [leaveTimeout, setLeaveTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -23,6 +24,9 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
   // Check if course is already in cart
   const isInCart = cart.some(c => c.id === course.id);
+  
+  // Check if course is already in wishlist
+  const isInWishlist = wishlist.some(c => c.id === course.id);
 
   // Calculate sale price (placeholder logic)
   const originalPrice = course?.price ? Number(course.price) : 500000;
@@ -32,6 +36,28 @@ const CourseCard = ({ course }: CourseCardProps) => {
   const handleAddToCart = () => {
     if (!isInCart) {
       addToCart(course);
+    }
+  };
+  
+  // Handle toggle wishlist
+  const handleToggleWishlist = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      if (isInWishlist) {
+        removeFromWishlist(course);
+        await wishlistService.removeFromWishlist(course.id);
+      } else {
+        addToWishlist(course);
+        await wishlistService.addToWishlist(course.id);
+      }
+    } catch (error) {
+      console.error('Failed to toggle wishlist:', error);
+      // Revert on error
+      if (isInWishlist) {
+        addToWishlist(course);
+      } else {
+        removeFromWishlist(course);
+      }
     }
   };
 
@@ -258,11 +284,20 @@ const CourseCard = ({ course }: CourseCardProps) => {
                   Mua ngay
                 </Button>
                 <Button 
+                  onClick={handleToggleWishlist}
                   variant="outline"
                   size="sm"
-                  className="px-3"
+                  className={`px-3 ${
+                    isInWishlist 
+                      ? 'bg-red-50 border-red-500 hover:bg-red-100 dark:bg-red-950 dark:border-red-500' 
+                      : ''
+                  }`}
                 >
-                  <Heart className="w-4 h-4" />
+                  <Heart className={`w-4 h-4 ${
+                    isInWishlist 
+                      ? 'fill-red-500 text-red-500' 
+                      : ''
+                  }`} />
                 </Button>
               </div>
             </div>
