@@ -5,7 +5,6 @@ import { useRouter, useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useCourseList, useDeleteCourse, useCreateCourse, useUpdateCourse, useUpdateCourseStatus } from "@/components/shared/course/useCourse"
 import { useParentCategories } from "@/components/shared/category/useCategory"
-import { useCreateChapter } from "@/components/shared/chapter/useChapter"
 import type { CourseFilter, Course } from "@/types/course/course.types"
 import { Button } from "@/components/ui/button"
 import { Plus, Inbox } from "lucide-react"
@@ -16,7 +15,6 @@ import { CourseFilters } from "@/components/shared/course/CourseFilters"
 import { CourseTable } from "@/components/shared/course/CourseTable"
 import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog"
 import { CourseForm, type CourseFormValue } from "@/components/shared/course/CourseForm"
-import { ChapterForm, type ChapterFormItem } from "@/components/shared/chapter/ChapterForm"
 import { validateCategoryName, normalizeSpaces } from "@/lib/validators"
 import { useAppStore } from "@/stores/useAppStore"
 
@@ -61,13 +59,11 @@ export default function CourseListPage() {
     const { mutate: createCourse, isPending: creating } = useCreateCourse()
     const { mutate: updateCourse, isPending: updating } = useUpdateCourse()
     const { mutate: updateCourseStatus, isPending: updatingStatus } = useUpdateCourseStatus()
-    const { mutate: createChapter, isPending: creatingChapter } = useCreateChapter()
     const [openDeleteConfirm, setOpenDeleteConfirm] = React.useState(false)
     const [target, setTarget] = React.useState<{ id: string; name: string } | null>(null)
     const [openCreate, setOpenCreate] = React.useState(false)
     const [openEdit, setOpenEdit] = React.useState(false)
     const [editing, setEditing] = React.useState<Course | null>(null)
-    const [createStep, setCreateStep] = React.useState<1 | 2>(1) // Step 1: Chapters, Step 2: Course Info
     const [createForm, setCreateForm] = React.useState<CourseFormValue>({ 
         name: "", 
         description: "", 
@@ -78,7 +74,6 @@ export default function CourseListPage() {
         level: "", 
         status: true 
     })
-    const [createChapters, setCreateChapters] = React.useState<ChapterFormItem[]>([{ name: "", description: "", duration: "0" }])
     const [editForm, setEditForm] = React.useState<CourseFormValue>({ 
         name: "", 
         description: "", 
@@ -97,23 +92,17 @@ export default function CourseListPage() {
     
     const isCreateDirty = React.useMemo(() => {
         if (!openCreate) return false
-        if (createStep === 1) {
-            // Step 1: Only check chapters
-            return createChapters.some(ch => ch.name.trim() || ch.description.trim() || ch.duration !== "0")
-        } else {
-            // Step 2: Check course form
-            return (
-                !!(createForm.name && createForm.name.trim()) ||
-                !!(createForm.description && createForm.description.trim()) ||
-                !!(createForm.notes && createForm.notes.trim()) ||
-                !!(createForm.thumbnail && createForm.thumbnail.trim()) ||
-                createForm.price !== "0" ||
-                !!(createForm.categoryId && createForm.categoryId.trim()) ||
-                !!(createForm.level && createForm.level.trim()) ||
-                createForm.status !== true
-            )
-        }
-    }, [openCreate, createStep, createForm, createChapters])
+        return (
+            !!(createForm.name && createForm.name.trim()) ||
+            !!(createForm.description && createForm.description.trim()) ||
+            !!(createForm.notes && createForm.notes.trim()) ||
+            !!(createForm.thumbnail && createForm.thumbnail.trim()) ||
+            createForm.price !== "0" ||
+            !!(createForm.categoryId && createForm.categoryId.trim()) ||
+            !!(createForm.level && createForm.level.trim()) ||
+            createForm.status !== true
+        )
+    }, [openCreate, createForm])
     
     const isEditDirty = React.useMemo(() => {
         if (!openEdit || !editing) return false
@@ -215,8 +204,6 @@ export default function CourseListPage() {
             level: "", 
             status: true 
         })
-        setCreateChapters([{ name: "", description: "", duration: "0" }])
-        setCreateStep(1) // Start with chapters step
         setNameError("")
         setNameTouched(false)
         setOpenCreate(true)
@@ -365,7 +352,7 @@ export default function CourseListPage() {
                 }}
             />
 
-            {/* Unified Create Dialog - Wizard Style */}
+            {/* Create Course Dialog */}
             <AdminActionDialog
                 open={openCreate}
                 onOpenChange={(next) => {
@@ -374,49 +361,19 @@ export default function CourseListPage() {
                             pendingCloseRef.current = () => {
                                 bypassUnsavedGuardRef.current = true
                                 setOpenCreate(false)
-                                setCreateStep(1)
                                 bypassUnsavedGuardRef.current = false
                             }
                             setUnsavedOpen(true)
                             return
                         }
                     }
-                    if (!next) {
-                        setCreateStep(1) // Reset to step 1 when closing
-                    }
                     setOpenCreate(next)
                 }}
-                title={createStep === 1 ? "Bước 1: Tạo Chapters" : "Bước 2: Thông tin khóa học"}
-                confirmText={
-                    creating || creatingChapter ? "Đang lưu..." : 
-                    createStep === 1 ? "Tiếp theo" : "Tạo khóa học"
-                }
-                loading={creating || creatingChapter}
+                title="Thêm khóa học"
+                confirmText={creating ? "Đang lưu..." : "Tạo khóa học"}
+                loading={creating}
                 position="top"
                 onConfirm={() => {
-                    if (createStep === 1) {
-                        // Step 1: Validate chapters and move to step 2
-                        const validChapters = createChapters.filter(ch => ch.name.trim())
-                        if (validChapters.length === 0) {
-                            notify({ title: "Lỗi", description: "Vui lòng thêm ít nhất một chapter", variant: "destructive" })
-                            return
-                        }
-                        // Validate each chapter has name and duration
-                        for (const ch of validChapters) {
-                            if (!ch.name.trim()) {
-                                notify({ title: "Lỗi", description: "Tất cả chapters phải có tên", variant: "destructive" })
-                                return
-                            }
-                            if (!ch.duration || parseFloat(ch.duration) <= 0) {
-                                notify({ title: "Lỗi", description: "Tất cả chapters phải có thời lượng lớn hơn 0", variant: "destructive" })
-                                return
-                            }
-                        }
-                        setCreateStep(2)
-                        return
-                    }
-                    
-                    // Step 2: Create course with chapters
                     const err = validateCategoryName(createForm.name || "")
                     setNameError(err)
                     setNameTouched(true)
@@ -425,21 +382,7 @@ export default function CourseListPage() {
                         notify({ title: "Lỗi", description: "Vui lòng chọn danh mục", variant: "destructive" })
                         return
                     }
-                    // Validate chapters
-                    const validChapters = createChapters.filter(ch => ch.name.trim())
-                    if (validChapters.length === 0) {
-                        notify({ title: "Lỗi", description: "Vui lòng thêm ít nhất một chapter", variant: "destructive" })
-                        return
-                    }
-                    // Calculate totalDuration in seconds
-                    const totalDuration = validChapters.reduce((sum, ch) => {
-                        const minutes = parseFloat(ch.duration) || 0
-                        return sum + (minutes * 60)
-                    }, 0)
-                    
-                    // Create course first with chapters-based totalDuration
-                    // Format request according to Swagger API spec:
-                    // { name, price, level, totalDuration, categoryId, description?, notes?, thumbnail? }
+                    // Create course only (no chapters)
                     const priceValue = parseFloat(createForm.price) || 0
                     if (priceValue <= 0) {
                         notify({ title: "Lỗi", description: "Giá phải lớn hơn 0", variant: "destructive" })
@@ -460,7 +403,7 @@ export default function CourseListPage() {
                         name: normalizeSpaces(createForm.name),
                         price: priceValue,
                         categoryId: createForm.categoryId,
-                        totalDuration: totalDuration, // In seconds, calculated from chapters
+                        totalDuration: 0,
                     }
                     
                     // Add optional fields only if they have values
@@ -478,96 +421,32 @@ export default function CourseListPage() {
                     }
                     
                     console.log("Creating course with data:", JSON.stringify(courseData, null, 2))
-                    
+
                     createCourse(courseData, {
                         onSuccess: (response: any) => {
                             console.log("Course creation response:", response)
-                            // Extract courseId from response - API returns { success: true, data: { id: ... } }
-                            // apiRequest returns response.data from axios, which is the API response body
-                            // Response structure: { success: true, data: { id: "...", ... }, message: "...", url: "..." }
                             const courseId = response?.data?.id || response?.id || response?.data?.data?.id
                             if (!courseId) {
                                 console.error("Course creation response (full):", JSON.stringify(response, null, 2))
                                 notify({ title: "Lỗi", description: "Không thể lấy ID khóa học. Vui lòng kiểm tra console.", variant: "destructive" })
                                 return
                             }
-                            
-                            // Create chapters sequentially and track created durations
-                            let chapterIndex = 0
-                            const createdDurations: number[] = []
-                            
-                            const createNextChapter = () => {
-                                if (chapterIndex >= validChapters.length) {
-                                    // All chapters created, now update course with actual totalDuration and set status = true
-                                    const actualTotalDuration = createdDurations.reduce((sum, dur) => sum + dur, 0)
-                                    const needsDurationUpdate = actualTotalDuration !== totalDuration
-                                    
-                                    // Always set status to true after creating course (checkbox is checked by default)
-                                    const finalizeCourse = () => {
-                                        updateCourseStatus({ id: String(courseId), status: true }, {
-                                            onSuccess: () => {
-                                                setOpenCreate(false)
-                                                setCreateStep(1)
-                                                notify({ title: "Đã tạo khóa học thành công", variant: "success" })
-                                            },
-                                            onError: (e: any) => {
-                                                setOpenCreate(false)
-                                                setCreateStep(1)
-                                                notify({ 
-                                                    title: "Đã tạo khóa học", 
-                                                    description: `Không thể kích hoạt khóa học: ${String(e?.message || "Lỗi không xác định")}`, 
-                                                    variant: "warning" 
-                                                })
-                                            }
-                                        })
-                                    }
-                                    
-                                    // Update totalDuration if different, then set status
-                                    if (needsDurationUpdate) {
-                                        updateCourse({
-                                            id: String(courseId),
-                                            totalDuration: actualTotalDuration,
-                                        }, {
-                                            onSuccess: () => {
-                                                finalizeCourse()
-                                            },
-                                            onError: (e: any) => {
-                                                // Still try to set status even if duration update fails
-                                                finalizeCourse()
-                                            }
-                                        })
-                                    } else {
-                                        // Just set status
-                                        finalizeCourse()
-                                    }
-                                    return
-                                }
-                                
-                                const ch = validChapters[chapterIndex]
-                                const chapterDuration = parseFloat(ch.duration) * 60 || 0 // Convert minutes to seconds
-                                
-                                createChapter({
-                                    name: normalizeSpaces(ch.name),
-                                    description: ch.description ? normalizeSpaces(ch.description) : undefined,
-                                    duration: chapterDuration,
-                                    courseId: String(courseId),
-                                }, {
-                                    onSuccess: (chapterResponse: any) => {
-                                        // Track the actual duration that was created
-                                        const actualDuration = chapterResponse?.data?.duration || chapterResponse?.data?.data?.duration || chapterDuration
-                                        createdDurations.push(actualDuration)
-                                        chapterIndex++
-                                        createNextChapter()
+                            // Set status if checked
+                            if (createForm.status) {
+                                updateCourseStatus({ id: String(courseId), status: true }, {
+                                    onSuccess: () => {
+                                        setOpenCreate(false)
+                                        notify({ title: "Đã tạo khóa học thành công", variant: "success" })
                                     },
-                                    onError: (e: any) => {
-                                        notify({ title: "Lỗi", description: `Không thể tạo chapter "${ch.name}": ${String(e?.message || "Lỗi không xác định")}`, variant: "destructive" })
-                                        chapterIndex++
-                                        createNextChapter() // Continue with next chapter even if one fails
+                                    onError: (_e: any) => {
+                                        setOpenCreate(false)
+                                        notify({ title: "Đã tạo khóa học", description: "Không thể kích hoạt khóa học.", variant: "warning" })
                                     }
                                 })
+                            } else {
+                                setOpenCreate(false)
+                                notify({ title: "Đã tạo khóa học thành công", variant: "success" })
                             }
-                            
-                            createNextChapter()
                         },
                         onError: (e: any) => {
                             console.error("Course creation error:", e)
@@ -577,77 +456,16 @@ export default function CourseListPage() {
                 }}
             >
                 <div className="space-y-4">
-                    {/* Step indicator */}
-                    <div className="flex items-center gap-2 pb-4 border-b">
-                        <div className={`flex items-center gap-2 ${createStep >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${createStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                1
-                            </div>
-                            <span className="text-sm font-medium">Chapters</span>
-                        </div>
-                        <div className="flex-1 h-px bg-border mx-2" />
-                        <div className={`flex items-center gap-2 ${createStep >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${createStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                2
-                            </div>
-                            <span className="text-sm font-medium">Thông tin khóa học</span>
-                        </div>
-                    </div>
-
-                    {createStep === 1 ? (
-                        <div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                Vui lòng tạo ít nhất một chapter trước khi tiếp tục. Thông tin chapters sẽ được sử dụng để tính tổng thời lượng khóa học.
-                            </p>
-                            <ChapterForm
-                                chapters={createChapters}
-                                onChange={setCreateChapters}
-                                disabled={creating || creatingChapter}
-                            />
-                        </div>
-                    ) : (
-                        <div>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                Đã tạo {createChapters.filter(ch => ch.name.trim()).length} chapter(s). Vui lòng nhập thông tin khóa học.
-                            </p>
-                            <CourseForm
-                                value={createForm}
-                                onChange={(v) => {
-                                    setCreateForm(v)
-                                    if (nameTouched) setNameError(validateCategoryName(v.name || ""))
-                                }}
-                                onValidate={(field, v) => { if (field === "name") { setNameTouched(true); setNameError(validateCategoryName(String(v))) } }}
-                                categories={(categoriesData?.data ?? []) as any}
-                                error={nameTouched ? (nameError || undefined) : undefined}
-                            />
-                            <div className="mt-4 p-3 bg-muted/50 rounded-md">
-                                <p className="text-xs font-medium mb-2">Tổng hợp chapters:</p>
-                                <div className="space-y-1 text-xs">
-                                    {createChapters.filter(ch => ch.name.trim()).map((ch, idx) => (
-                                        <div key={idx} className="flex justify-between">
-                                            <span>{ch.name}</span>
-                                            <span className="text-muted-foreground">{ch.duration} phút</span>
-                                        </div>
-                                    ))}
-                                    <div className="pt-2 border-t mt-2 flex justify-between font-medium">
-                                        <span>Tổng thời lượng:</span>
-                                        <span>{(createChapters.reduce((sum, ch) => sum + (parseFloat(ch.duration) || 0), 0) / 60).toFixed(1)} giờ</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="mt-4 pt-4 border-t">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setCreateStep(1)}
-                                    disabled={creating || creatingChapter}
-                                    className="w-full"
-                                >
-                                    Quay lại
-                                </Button>
-                            </div>
-                        </div>
-                    )}
+                    <CourseForm
+                        value={createForm}
+                        onChange={(v) => {
+                            setCreateForm(v)
+                            if (nameTouched) setNameError(validateCategoryName(v.name || ""))
+                        }}
+                        onValidate={(field, v) => { if (field === "name") { setNameTouched(true); setNameError(validateCategoryName(String(v))) } }}
+                        categories={(categoriesData?.data ?? []) as any}
+                        error={nameTouched ? (nameError || undefined) : undefined}
+                    />
                 </div>
             </AdminActionDialog>
 
