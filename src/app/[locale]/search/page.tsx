@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCourseList } from "@/components/shared/course/useCourse";
 import { useParentCategories } from "@/components/shared/category/useCategory";
@@ -691,4 +691,27 @@ const SearchPage = () => {
   );
 };
 
-export default SearchPage;
+// Loading component for Suspense fallback
+const LoadingState = () => (
+  <div className="flex items-center justify-center p-12 min-h-[400px]">
+    <div className="w-full max-w-sm text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+      <p className="text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
+
+// Wrap the SearchPage with Suspense
+const SearchPageWrapper = () => {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <SearchPage />
+    </Suspense>
+  );
+};
+
+export default SearchPageWrapper;
+
+// Prevent static prerendering of this page
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
