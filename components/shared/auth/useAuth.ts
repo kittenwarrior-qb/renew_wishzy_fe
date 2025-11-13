@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAppStore } from '@/stores/useAppStore';
 import { wishzyAuthService } from '@/services/auth';
@@ -51,17 +51,21 @@ export const useLogin = () => {
         return;
       }
       
-      // Store access token
       localStorage.setItem('accessToken', data.accessToken);
       
-      // Update store
       loginStore(data.user);
       
-      // Show success message
       toast.success(data.message || 'Đăng nhập thành công');
       
+      // Check user role and redirect accordingly
       setTimeout(() => {
-        router.push('/');
+        if (data.user.role === 'admin') {
+          router.push('/admin');
+        } else if (data.user.role === 'instructor' || data.user.isInstructorActive) {
+          router.push('/instructor');
+        } else {
+          router.push('/');
+        }
       }, 100);
     },
     onError: (error: unknown) => {
@@ -248,6 +252,14 @@ export const useAuthStatus = () => {
     user,
     isAuthenticated: isAuthenticated && !!token,
     token,
+    isAdmin: user?.role === 'admin',
+    isInstructor: user?.role === 'instructor' || user?.isInstructorActive,
+    checkRole: (requiredRole: 'admin' | 'instructor' | 'user') => {
+      if (!user) return false;
+      if (requiredRole === 'admin') return user.role === 'admin';
+      if (requiredRole === 'instructor') return user.role === 'instructor' || user.isInstructorActive;
+      return true; // All authenticated users have at least 'user' role
+    }
   };
 };
 
@@ -257,12 +269,30 @@ export const useAuthStatus = () => {
 export const useAutoLogin = () => {
   const { login: loginStore } = useAppStore();
   const profileQuery = useProfile();
+  const router = useRouter();
+  const pathname = usePathname();
   
   React.useEffect(() => {
     if (profileQuery.data && !profileQuery.isError) {
       loginStore(profileQuery.data);
+      
+      // Check user role and redirect if needed
+      const user = profileQuery.data;
+      const isAdmin = user.role === 'admin';
+      const isInstructor = user.role === 'instructor' || user.isInstructorActive;
+      
+      // Only redirect if user is on the homepage or login page
+      const isAuthPage = pathname === '/' || pathname?.includes('/auth/');
+      
+      if (isAuthPage) {
+        if (isAdmin && !pathname?.includes('/admin')) {
+          router.push('/admin');
+        } else if (isInstructor && !pathname?.includes('/instructor')) {
+          router.push('/instructor');
+        }
+      }
     }
-  }, [profileQuery.data, profileQuery.isError, loginStore]);
+  }, [profileQuery.data, profileQuery.isError, loginStore, router, pathname]);
   
   return profileQuery;
 };
