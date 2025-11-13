@@ -1,201 +1,134 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Star, Users, BookOpen } from 'lucide-react';
-import { useParentCategories } from '@/components/shared/category/useCategory';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
+
+const featuresData = [
+  "Học mọi lúc mọi nơi",
+  "Nội dung chất lượng",
+  "Đánh giá năng lực",
+];
+
+const image = [
+  "https://res.cloudinary.com/djuksxdrw/image/upload/v1763030028/QmZKSgTAvsNo9tMZcMvMMQoYLAUMqiGfPVbQgj9YKEmW8y_l7c3at.avif",
+  "https://res.cloudinary.com/djuksxdrw/image/upload/v1763030307/z6859109728630_0a19fc6f5477fe33038f87e95c653a13-Photoroom_psx2ld.png",
+  "https://res.cloudinary.com/djuksxdrw/image/upload/v1763029064/2c43debb-0cc1-4d34-a923-8fac68aedaba_vbw6vq.png"
+  
+]
 
 const HeroSection = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  
-  // Fetch real parent categories
-  const { data: categoriesData, isLoading } = useParentCategories();
-  
-  // Prepare categories for dropdown
-  const categories = [
-    { value: 'all', label: 'Tất cả danh mục' },
-    ...(categoriesData?.data?.map(category => ({
-      value: category.id,
-      label: category.name
-    })) || [])
-  ];
-
-  const handleSearch = () => {
-    console.log('Searching for:', searchQuery, 'in category:', selectedCategory);
-    // Here you would typically navigate to search results page
-    // router.push(`/courses?search=${searchQuery}&category=${selectedCategory}`);
-  };
-
   return (
-    <section className="w-full bg-background py-16 md:py-20">
+    <section className="relative w-full overflow-hidden bg-background py-16 md:py-24">
       <div className="max-w-[1300px] mx-auto px-4">
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 items-center">
-          <div className="w-full lg:w-3/5 space-y-10">
-            <div className="space-y-6">
-              <div className="inline-flex items-center px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                <BookOpen className="w-4 h-4 mr-2" />
-                Wishzy - The Leader In Online Learning
-              </div>
-              
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-                Engaging & Accessible
-                <br />
-                <span className="text-primary">
-                  Online
-                </span>{' '}
-                Courses For All
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+          <div className="flex flex-col space-y-8">
+            <div className="inline-flex items-center self-start gap-2 px-5 py-2 bg-muted/80 rounded-full text-sm font-medium shadow-sm">
+              <span className="text-primary">✦</span>
+              <span>Nền tảng học trực tuyến</span>
+            </div>
+
+            <div className="space-y-4">
+              <h1 className="space-y-1 text-3xl font-bold tracking-tight sm:text-4xl xl:text-5xl">
+                <div>
+                  Khám phá <span className="italic font-normal">khóa học</span>
+                </div>
+                <div>
+                  <span className="text-primary">wishzy</span>{" "}
+                  <span>Online</span>
+                </div>
               </h1>
-              
-              <p className="text-xl text-muted-foreground max-w-2xl">
-                Discover thousands of courses from expert instructors. Learn at your own pace with lifetime access on mobile and desktop.
+
+              <p className="text-xl text-muted-foreground">
+                Học tập chủ động – luyện thi hiệu quả. Truy cập hàng trăm khóa
+                học, bài giảng và bài kiểm tra được cập nhật liên tục.
+                <br className="hidden sm:block" />
+                Trải nghiệm học tập dễ dàng, không cần đăng ký trước.
               </p>
             </div>
 
-            <div className="md:hidden w-full">
-              <div className="flex flex-col space-y-4">
-                <div className="w-full">
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="h-14 rounded-full bg-background border shadow-sm px-6">
-                      <SelectValue placeholder="Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {isLoading ? (
-                        <SelectItem value="loading" disabled>Loading categories...</SelectItem>
-                      ) : (
-                        categories.map((category) => (
-                          <SelectItem key={category.value} value={category.value}>
-                            {category.label}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex w-full rounded-full overflow-hidden border shadow-sm bg-background">
-                  <Input
-                    type="text"
-                    placeholder="Search Courses, Instructors"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-14 flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-l-full bg-transparent px-6"
-                  />
-                  <Button 
-                    onClick={handleSearch}
-                    className="h-14 px-6 rounded-r-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
-                    <Search className="w-5 h-5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Desktop Search Bar */}
-            <div className="hidden md:block bg-background rounded-full shadow-sm border overflow-hidden max-w-3xl">
-              <div className="flex">
-                <div className="shrink-0 w-48 border-r">
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="h-14 border-0 focus:ring-0 focus:ring-offset-0 rounded-none bg-transparent px-6">
-                      <SelectValue placeholder="Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {isLoading ? (
-                        <SelectItem value="loading" disabled>Loading categories...</SelectItem>
-                      ) : (
-                        categories.map((category) => (
-                          <SelectItem key={category.value} value={category.value}>
-                            {category.label}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex-1 relative flex items-center">
-                  <Input
-                    type="text"
-                    placeholder="Search Courses, Instructors"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-14 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none bg-transparent px-6"
-                  />
-                </div>
-
-                <Button 
-                  onClick={handleSearch}
-                  className="h-14 px-8 rounded-none bg-primary text-primary-foreground hover:bg-primary/90"
+            <div className="flex flex-wrap gap-4">
+              <Button
+                size="lg"
+                className="rounded-full px-7! h-[48px] bg-primary hover:bg-primary/90 text-[16px] transition-all hover:-translate-y-1 "
+              >
+                Bắt đầu học ngay
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="ml-2"
                 >
-                  <Search className="w-5 h-5" />
-                  <span className="ml-2">Search</span>
-                </Button>
-              </div>
-            </div>
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </Button>
 
-            <div className="flex flex-wrap gap-10 text-sm text-muted-foreground">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">250K+</div>
-                <div>Students Enrolled</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-primary fill-primary" />
-                  ))}
+              <Button variant="outline" size="lg" className="rounded-full px-7 h-[48px] text-[16px] transition-transform hover:-translate-y-1">
+                Xem khóa học
+              </Button>
+            </div>
+            <div className="mt-8 flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-8">
+              {featuresData.map((feature, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className=" h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Check className="h-3 w-3 text-primary" />
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {feature}
+                  </span>
                 </div>
-                <span className="font-semibold text-foreground">4.9</span>
-                <span>/ 200 Review</span>
-              </div>
-            </div>
-
-            <div className="text-sm text-muted-foreground">
-              Trusted by over 15K Users worldwide since 2024
+              ))}
             </div>
           </div>
 
-          {/* Right Content - 40% */}
-          <div className="w-full lg:w-2/5 relative">
-            <div className="relative">
-              {/* Main Image Placeholder */}
-              <div className="relative bg-primary/10 rounded-2xl p-8 overflow-hidden">
-                <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                  <BookOpen className="w-4 h-4" />
-                  50+ Courses
-                </div>
-                
-                {/* Student Avatar Group */}
-                <div className="absolute top-4 left-4 flex items-center gap-2">
-                  <div className="flex -space-x-2">
-                    <div className="w-8 h-8 bg-primary/80 rounded-full border-2 border-white"></div>
-                    <div className="w-8 h-8 bg-primary/60 rounded-full border-2 border-white"></div>
-                    <div className="w-8 h-8 bg-primary/40 rounded-full border-2 border-white"></div>
-                    <div className="w-8 h-8 bg-primary/20 rounded-full border-2 border-white"></div>
-                  </div>
-                  <div className="text-foreground text-sm font-medium">250K+ Students</div>
+          <div className="relative hidden lg:block">
+            <div className="inline-flex items-end gap-4 relative">
+              <div className="self-stretch inline-flex flex-col items-start gap-4 relative flex-[0_0_auto]">
+                <div className="relative flex-1 w-[277px] grow rounded-lg overflow-hidden">
+                  <img 
+                    src={image[0]} 
+                    alt="Khóa học trực tuyến" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
-                {/* Placeholder for student image */}
-                <div className="mt-16 flex justify-center">
-                  <div className="w-48 h-64 bg-primary/5 rounded-2xl flex items-center justify-center">
-                    <Users className="w-16 h-16 text-primary/40" />
-                  </div>
-                </div>
-
-                {/* Floating elements */}
-                <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm rounded-lg p-3 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-foreground">Live Learning</span>
-                  </div>
+                <div className="relative w-[277px] h-[188px] overflow-hidden">
+                  <div className="absolute inset-0 bg-primary rounded-bl-[200px] rounded-2xl" />
                 </div>
               </div>
 
-              {/* Decorative elements */}
-              <div className="absolute -top-4 -right-4 w-8 h-8 bg-primary/20 rounded-full animate-bounce"></div>
-              <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-primary/30 rounded-full animate-pulse"></div>
+              <div className="inline-flex flex-col items-start gap-4 relative flex-[0_0_auto]">
+                <div className="relative w-[277px] h-[270px] rounded-lg overflow-hidden">
+                  <div className="absolute left-[calc(50.00%-138px)] bottom-0 w-[277px] h-[188px] overflow-hidden">
+                    <div className="absolute inset-0 bg-primary rounded-tr-[200px] rounded-2xl" />
+                  </div>
+
+                  <div className="absolute top-7 left-[calc(50.00%-112px)] w-[213px] h-[242px] rounded-t-full overflow-hidden">
+                    <img 
+                      src={image[1]} 
+                      alt="Học tập trực tuyến" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+
+                <div className="relative self-stretch w-full h-56 rounded-lg overflow-hidden">
+                  <img 
+                    src={image[2]} 
+                    alt="Nền tảng học trực tuyến" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -205,3 +138,5 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
+
+

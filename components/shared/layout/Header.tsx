@@ -56,6 +56,16 @@ const Header = () => {
   const { theme } = useAppStore();
   const [isOpen, setIsOpen] = React.useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
+  const [isScrolled, setIsScrolled] = React.useState(false);
+  
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   if (pathname?.includes('/admin') || pathname?.includes('/instructor')) {
     return null;
@@ -66,7 +76,7 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-card text-card-foreground transition-colors border-b border-border shadow-sm backdrop-blur-sm bg-opacity-90">
+    <header className={`sticky top-0 z-50 w-full bg-card text-card-foreground transition-all duration-200   ${isScrolled ? 'shadow-sm ' : 'border-b border-borderư'}`}>
       <div className="max-w-[1300px] mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className={`flex items-center gap-4 lg:gap-6 ${isSearchExpanded ? 'w-[calc(100%-80px)]' : ''}`}>
@@ -75,8 +85,8 @@ const Header = () => {
                 <img
                   src={theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"}
                   alt="Wishzy logo"
-                  width={80}
-                  height={80}
+                  width={100}
+                  height={90}
                   className="hidden sm:block object-contain"
                 />
                 
@@ -131,7 +141,7 @@ const Header = () => {
                           />
                         ) : (
                           <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-                            <span className="text-primary-foreground text-sm font-semibold">
+                            <span className="text-primary-foreground text-sm font-medium">
                               {user.fullName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
                             </span>
                           </div>
@@ -180,11 +190,18 @@ const Header = () => {
                   </DropdownMenu>
                 </div>
               ) : (
-                <Link href="/auth/login">
-                  <Button variant="ghost" size="icon" className="text-foreground hover:bg-accent hover:text-accent-foreground" title={t('auth.login')}>
-                    <User className="h-5 w-5" />
-                  </Button>
-                </Link>
+                <div className="flex items-center space-x-2">
+                  <Link href="/auth/login">
+                    <Button variant="ghost" className="font-medium">
+                      {t('auth.login')}
+                    </Button>
+                  </Link>
+                  <Link href="/auth/register">
+                    <Button className="font-medium bg-primary hover:bg-primary/90">
+                      {t('auth.register')}
+                    </Button>
+                  </Link>
+                </div>
               )}
             </div>
             
@@ -267,10 +284,18 @@ const Header = () => {
                         </button>
                       </div>
                     ) : (
-                      <Link href="/auth/login" className="flex items-center py-2 hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
-                        <User className="mr-2 h-4 w-4" />
-                        <span>{t('auth.login')}</span>
-                      </Link>
+                      <div className="flex flex-col space-y-3">
+                        <Link href="/auth/login" className="w-full" onClick={() => setIsOpen(false)}>
+                          <Button variant="outline" className="w-full font-medium">
+                            {t('auth.login')}
+                          </Button>
+                        </Link>
+                        <Link href="/auth/register" className="w-full" onClick={() => setIsOpen(false)}>
+                          <Button className="w-full font-medium bg-primary hover:bg-primary/90">
+                            {t('auth.register')}
+                          </Button>
+                        </Link>
+                      </div>
                     )}
                   </div>
                   
