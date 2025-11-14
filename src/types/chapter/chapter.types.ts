@@ -7,7 +7,7 @@ export interface ChapterType {
   createdBy: string
   createdAt: string
   updatedAt: string
-  deletedAt: string
+  deletedAt: string | null
   course: Course
   lecture: Lecture[]
 }
