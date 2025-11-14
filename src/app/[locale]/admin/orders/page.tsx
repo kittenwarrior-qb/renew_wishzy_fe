@@ -7,7 +7,6 @@ import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { useOrderList } from "@/components/shared/order/useOrder"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Pagination } from "@/components/shared/common/Pagination"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 
 export default function Page() {
@@ -64,9 +63,11 @@ export default function Page() {
             { key: 'id', title: 'Mã đơn', render: (row: OrderListRow) => (<Link href={`/${locale}/admin/orders/${row.id}`} className="text-primary hover:underline">{row.id}</Link>) },
             { key: 'user', title: 'Khách hàng', render: (row: OrderListRow) => row.user?.fullName || row.user?.email || row.userId || '' },
             { key: 'totalPrice', title: 'Tổng tiền', align: 'right', render: (row: OrderListRow) => `${Number(row.totalPrice ?? 0).toLocaleString()}₫` },
-            { key: 'status', title: 'Trạng thái', render: (row: OrderListRow) => (
-              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${row.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' : row.status === 'pending' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>{row.status}</span>
-            ) },
+            {
+              key: 'status', title: 'Trạng thái', render: (row: OrderListRow) => (
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${row.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' : row.status === 'pending' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>{row.status}</span>
+              )
+            },
             { key: 'paymentMethod', title: 'Thanh toán', render: (row: OrderListRow) => String(row.paymentMethod || '').toUpperCase() },
             { key: 'createdAt', title: 'Ngày tạo', render: (row: OrderListRow) => row.createdAt ? new Date(row.createdAt).toLocaleString() : '' },
           ]
@@ -75,13 +76,20 @@ export default function Page() {
               columns={columns}
               data={isError ? [] : items}
               loading={isPending || isFetching}
+              pagination={{
+                totalItems: total,
+                currentPage,
+                itemsPerPage: pageSize,
+                onPageChange: (p) => setPage(p),
+                pageSizeOptions: [10, 20, 50],
+                onPageSizeChange: (sz) => {
+                  setLimit(sz)
+                  setPage(1)
+                },
+              }}
             />
           )
         })()}
-
-        <div className="mt-4 flex justify-end">
-          <Pagination pagination={{ totalItems: total, totalPages, currentPage, itemsPerPage: pageSize }} onPageChange={(p) => setPage(p)} size="sm" />
-        </div>
       </div>
     </div>
   )
