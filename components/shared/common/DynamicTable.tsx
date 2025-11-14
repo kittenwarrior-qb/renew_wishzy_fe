@@ -45,6 +45,8 @@ export type DynamicTableProps<T> = {
     currentPage: number
     itemsPerPage: number
     onPageChange: (page: number) => void
+    pageSizeOptions?: number[]
+    onPageSizeChange?: (pageSize: number) => void
   } | null
 }
 
@@ -63,13 +65,13 @@ export function DynamicTable<T extends Record<string, any>>({
   skeletonRows = 6,
   emptyText = "Không có dữ liệu",
   headerExtra,
-  stickyHeader = false,
+  stickyHeader = true,
   enableRowDrag,
   onRowReorder,
   wrapperClassName,
   useParentScroll,
   pagination,
-} : DynamicTableProps<T>) {
+}: DynamicTableProps<T>) {
   const getRowKey = React.useCallback(
     (row: T, index: number): React.Key => {
       if (getRowId) return getRowId(row, index)
@@ -113,22 +115,40 @@ export function DynamicTable<T extends Record<string, any>>({
     return v || ''
   }
 
+  const isStickyRightAction = (col: any): boolean => {
+    if (!col) return false
+    if (col.type === 'action') return true
+    if (col.sticky === 'right') return true
+    if (col.isAction === true) return true
+    return false
+  }
+
   return (
     <div className={cn("w-full", className, wrapperClassName)}>
       <div className="flex items-center justify-between mb-2">
         <div />
         {headerExtra}
       </div>
-      <div className="relative overflow-auto border rounded-md">
+      <div className="relative overflow-auto border rounded-md max-h-[70vh]">
         {loadingOverlay ? <LoadingOverlay show={effectiveLoading || !!isRefetching} /> : null}
-        <table className="w-full text-sm">
-          <thead className={cn("bg-muted/50", headerClassName, stickyHeader && "sticky top-0 z-10") }>
+        <table className="w-full min-w-max text-sm">
+          <thead className={cn("bg-muted", headerClassName, stickyHeader && "sticky top-0 z-10")}>
             <tr>
               {columns.map((col: any, i) => (
                 <th
                   key={String(col.key) + i}
-                  className={cn("px-3 py-2 font-medium", getAlignClass(col), getHeaderClass(col))}
-                  style={(col.headerStyle || col.width) ? { ...(col.headerStyle || {}), width: col.width } : undefined}
+                  className={cn(
+                    "px-3 py-3 text-[13px] font-semibold whitespace-nowrap",
+                    getAlignClass(col),
+                    getHeaderClass(col),
+                    "text-center",
+                    isStickyRightAction(col) && "sticky right-0 bg-muted"
+                  )}
+                  style={
+                    (col.headerStyle || col.width || isStickyRightAction(col))
+                      ? { ...(col.headerStyle || {}), width: col.width, ...(isStickyRightAction(col) ? { right: 0 } : {}) }
+                      : undefined
+                  }
                 >
                   {getHeaderLabel(col)}
                 </th>
@@ -140,7 +160,7 @@ export function DynamicTable<T extends Record<string, any>>({
               Array.from({ length: skeletonRows }).map((_, r) => (
                 <tr key={`sk-${r}`} className="border-t">
                   {columns.map((c: any, ci) => (
-                    <td key={`sk-${r}-${ci}`} className={cn("px-3 py-3", getAlignClass(c)) }>
+                    <td key={`sk-${r}-${ci}`} className={cn("px-3 py-3", getAlignClass(c))}>
                       <div className="h-3 w-3/5 max-w-[220px] bg-muted animate-pulse rounded" />
                     </td>
                   ))}
@@ -156,8 +176,17 @@ export function DynamicTable<T extends Record<string, any>>({
                   {columns.map((col: any, ci) => (
                     <td
                       key={String(col.key) + ci}
-                      className={cn("px-3 py-2 align-middle", getAlignClass(col), getCellClass(col, row))}
-                      style={(col.cellStyle || col.width) ? { ...(col.cellStyle || {}), width: col.width } : undefined}
+                      className={cn(
+                        "px-3 py-2 align-middle whitespace-nowrap",
+                        getAlignClass(col),
+                        getCellClass(col, row),
+                        isStickyRightAction(col) && "sticky right-0 bg-background"
+                      )}
+                      style={
+                        (col.cellStyle || col.width || isStickyRightAction(col))
+                          ? { ...(col.cellStyle || {}), width: col.width, ...(isStickyRightAction(col) ? { right: 0 } : {}) }
+                          : undefined
+                      }
                     >
                       {renderCell(col, row, ri)}
                     </td>
@@ -169,7 +198,7 @@ export function DynamicTable<T extends Record<string, any>>({
         </table>
       </div>
       {pagination ? (
-        <div className="mt-3 flex justify-end">
+        <div className="mt-3 w-full">
           <Pagination
             pagination={{
               totalItems: pagination.totalItems,
@@ -178,6 +207,8 @@ export function DynamicTable<T extends Record<string, any>>({
               itemsPerPage: pagination.itemsPerPage,
             }}
             onPageChange={pagination.onPageChange}
+            pageSizeOptions={pagination.pageSizeOptions}
+            onPageSizeChange={pagination.onPageSizeChange}
           />
         </div>
       ) : null}
