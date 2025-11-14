@@ -30,50 +30,7 @@ const CourseComment = ({ courseId, comments = [] }: CourseCommentProps) => {
   const [newRating, setNewRating] = useState(5)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Mock data for demonstration
-  const mockComments: Comment[] = [
-    {
-      id: "1",
-      user: {
-        id: "user1",
-        name: "Nguyễn Văn A",
-        avatar: ""
-      },
-      content: "Khóa học rất hay và bổ ích! Giảng viên giải thích rất dễ hiểu, nội dung được cập nhật mới nhất. Tôi đã học được rất nhiều kiến thức hữu ích từ khóa học này.",
-      rating: 5,
-      createdAt: "2024-11-07",
-      likes: 12,
-      isLiked: false
-    },
-    {
-      id: "2",
-      user: {
-        id: "user2",
-        name: "Trần Thị B",
-        avatar: ""
-      },
-      content: "Nội dung khóa học khá tốt, tuy nhiên tôi mong muốn có thêm nhiều bài tập thực hành hơn nữa.",
-      rating: 4,
-      createdAt: "2024-11-06",
-      likes: 8,
-      isLiked: true
-    },
-    {
-      id: "3",
-      user: {
-        id: "user3",
-        name: "Lê Văn C",
-        avatar: ""
-      },
-      content: "Excellent course! Very comprehensive and well-structured. Highly recommend to anyone wanting to learn this subject.",
-      rating: 5,
-      createdAt: "2024-11-05",
-      likes: 15,
-      isLiked: false
-    }
-  ]
-
-  const displayComments = comments.length > 0 ? comments : mockComments
+  const displayComments = comments
 
   const getInitials = (name: string) => {
     return name
@@ -139,7 +96,13 @@ const CourseComment = ({ courseId, comments = [] }: CourseCommentProps) => {
           </h3>
         </div>
 
-        {displayComments.map((comment) => (
+        {displayComments.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>Chưa có đánh giá nào cho khóa học này.</p>
+            <p className="text-sm mt-2">Hãy là người đầu tiên đánh giá khóa học!</p>
+          </div>
+        ) : (
+          displayComments.map((comment) => (
           <Card key={comment.id}>
             <CardContent className="px-6 py-2">
               <div className="flex gap-4">
@@ -191,7 +154,8 @@ const CourseComment = ({ courseId, comments = [] }: CourseCommentProps) => {
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        )}
       </div>
     </div>
   )

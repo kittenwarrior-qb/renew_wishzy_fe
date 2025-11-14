@@ -75,9 +75,15 @@ export const wishzyAuthService = {
       data: credentials,
     });
     
+    // Ensure user role is from API response, not hardcoded
+    const user = response.data.user;
+    if (!user.role) {
+      console.warn('User role is missing from API response:', user);
+    }
+    
     // Transform response to expected format
     return {
-      user: response.data.user,
+      user: user,
       accessToken: response.data.accessToken,
       message: response.message,
     };
@@ -129,7 +135,14 @@ export const wishzyAuthService = {
     const response = await apiRequest<ProfileResponse>('auth/profile', {
       method: 'GET',
     });
-    return response.data;
+    
+    // Ensure user role is from API response, not hardcoded
+    const user = response.data;
+    if (!user.role) {
+      console.warn('User role is missing from API response:', user);
+    }
+    
+    return user;
   },
 
   /**
