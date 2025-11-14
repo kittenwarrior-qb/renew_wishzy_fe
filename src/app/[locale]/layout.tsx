@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { TranslationProvider } from '@/providers/TranslationProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
+import { ThemeProvider } from '@/providers/ThemeProvider';
 import Header from '@/components/shared/layout/Header';
 import Footer from '@/components/shared/layout/Footer';
 import ScrollToTop from '@/components/shared/ScrollToTop';
@@ -60,17 +61,19 @@ export default async function LocaleLayout({
   const messages = await getMessages(locale);
 
   return (
-    <TranslationProvider locale={locale} messages={messages}>
-      <AuthProvider>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
-          <ScrollToTop />
-        </div>
-      </AuthProvider>
-    </TranslationProvider>
+    <ThemeProvider>
+      <TranslationProvider locale={locale} messages={messages}>
+        <AuthProvider>
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
+            <ScrollToTop />
+          </div>
+        </AuthProvider>
+      </TranslationProvider>
+    </ThemeProvider>
   );
 }

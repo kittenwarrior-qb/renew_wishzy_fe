@@ -59,7 +59,7 @@ const features: Feature[] = [
 
 const FeaturesSection = () => {
   return (
-    <section id="features" className="min-h-screen py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-muted/20">
+    <section id="features" className=" py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-muted/20">
       <div className="max-w-[1300px] mx-auto">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-5 py-2 bg-background rounded-full text-sm font-medium shadow-sm mb-4">

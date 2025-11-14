@@ -7,7 +7,6 @@ import FeaturesSection from "@/components/shared/sections/FeaturesSection";
 import { BannerCarousel } from "@/components/shared/banner";
 import StatSection from "@/components/shared/sections/StatSection";
 import CategoryListSection from "@/components/shared/sections/CategoryListSection";
-import ListBestSellerCourseCard from "@/components/shared/course/ListBestSellerCourseCard";
 import BlogSection from "@/components/shared/sections/BlogSection";
 import HotCourseSection from "@/components/shared/sections/HotCourseSection";
 
