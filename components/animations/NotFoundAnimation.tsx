@@ -12,7 +12,7 @@ export function NotFoundAnimation({ width = '100%', height = 360, className }: N
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { RiveComponent, rive } = useRive({
-    src: '/assets/riv/not-found.riv',
+    src: '/riv/not-found.riv',
     stateMachines: 'State Machine 1',
     autoplay: true,
   });

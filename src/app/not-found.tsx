@@ -8,8 +8,8 @@ export default function NotFound() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="container max-w-2xl mx-auto">
         <Card className="bg-card border-border text-card-foreground">
-          <CardHeader className="text-center pb-4">
-            <NotFoundAnimation width={400} height={300} />
+          <CardHeader className="flex justify-center pb-4">
+            <NotFoundAnimation width={500} height={300} />
           </CardHeader>
           <CardContent className="text-center space-y-6">
             <CardTitle className="text-3xl font-bold text-foreground">
