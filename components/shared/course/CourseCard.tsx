@@ -14,7 +14,7 @@ interface CourseCardProps {
 }
 
 const CourseCard = ({ course }: CourseCardProps) => {
-  const { cart, addToCart, wishlist, addToWishlist, removeFromWishlist } = useAppStore();
+  const { cart, addToCart, wishlist, addToWishlist, removeFromWishlist, addToOrderList, clearOrderList } = useAppStore();
   const [isHovered, setIsHovered] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [leaveTimeout, setLeaveTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -27,12 +27,22 @@ const CourseCard = ({ course }: CourseCardProps) => {
   const isInWishlist = wishlist.some(c => c.id === course.id);
 
   const originalPrice = course?.price ? Number(course.price) : 500000;
-  const salePrice = Math.floor(originalPrice * 0.7);
+  const salePrice = course?.saleInfo?.salePrice ? Number(course.saleInfo.salePrice) : null;
+  const hasSale = salePrice !== null && salePrice < originalPrice;
+  const displayPrice = hasSale ? salePrice : originalPrice;
+  const discountPercent = hasSale && salePrice ? Math.round(((originalPrice - salePrice) / originalPrice) * 100) : 0;
   
   const handleAddToCart = () => {
     if (!isInCart) {
       addToCart(course);
     }
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    clearOrderList();
+    addToOrderList(course);
+    router.push('/checkout');
   };
   
   const handleToggleWishlist = async (e: React.MouseEvent) => {
@@ -129,10 +139,12 @@ const CourseCard = ({ course }: CourseCardProps) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <Card onClick={() => router.push(`/course-detail/${course.id}`)} className="max-w-[350px] overflow-hidden hover:shadow-lg transition-shadow duration-300 group py-0 gap-2 shadow-none border-none relative">
-        <div className="absolute top-2 right-2 z-20 text-xs bg-red-500 text-white px-2 py-1 rounded font-semibold shadow-lg">
-          -30%
-        </div>
+      <Card onClick={() => router.push(`/course-detail/${course.id}`)} className="max-w-[350px] overflow-hidden hover:shadow-lg transition-shadow duration-300 group py-0 gap-2 shadow-none border-none relative cursor-pointer">
+        {hasSale && (
+          <div className="absolute top-2 right-2 z-20 text-xs bg-red-500 text-white px-2 py-1 rounded font-semibold shadow-lg">
+            -{discountPercent}%
+          </div>
+        )}
 
         <div className="relative h-[200px] w-full overflow-hidden">
           <Image
@@ -171,11 +183,13 @@ const CourseCard = ({ course }: CourseCardProps) => {
           <div className="pt-2 border-t">
             <div className="flex items-center gap-2">
               <p className="text-xl font-bold text-primary">
-                {formatPrice(salePrice)}
+                {formatPrice(displayPrice)}
               </p>
-              <p className="text-sm text-muted-foreground line-through">
-                {formatPrice(originalPrice)}
-              </p>
+              {hasSale && (
+                <p className="text-sm text-muted-foreground line-through">
+                  {formatPrice(originalPrice)}
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
@@ -222,11 +236,13 @@ const CourseCard = ({ course }: CourseCardProps) => {
             {/* Price */}
             <div className="flex items-center gap-2">
               <p className="text-xl font-bold text-primary">
-                {formatPrice(salePrice)}
+                {formatPrice(displayPrice)}
               </p>
-              <p className="text-xs text-muted-foreground line-through">
-                {formatPrice(originalPrice)}
-              </p>
+              {hasSale && (
+                <p className="text-xs text-muted-foreground line-through">
+                  {formatPrice(originalPrice)}
+                </p>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -251,6 +267,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
               </Button>
               <div className="flex gap-2">
                 <Button 
+                  onClick={handleBuyNow}
                   className="flex-1"
                   variant="outline"
                   size="sm"
