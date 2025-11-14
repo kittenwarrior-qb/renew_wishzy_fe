@@ -46,13 +46,7 @@ export function BannerCarousel({
     });
   }, [api]);
 
-  if (isLoading) {
-    return (
-      <div className={`w-full h-[400px] bg-gray-200 animate-pulse ${className}`} />
-    );
-  }
-
-  if (error || !sortedBanners || sortedBanners.length === 0) {
+  if (isLoading || error || !sortedBanners || sortedBanners.length === 0) {
     return null;
   }
 

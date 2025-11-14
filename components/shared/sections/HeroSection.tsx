@@ -94,7 +94,7 @@ const HeroSection = () => {
                   <img 
                     src={image[0]} 
                     alt="Khóa học trực tuyến" 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover  transition duration-300 hover:scale-105"
                   />
                 </div>
 
@@ -113,7 +113,7 @@ const HeroSection = () => {
                     <img 
                       src={image[1]} 
                       alt="Học tập trực tuyến" 
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover  "
                     />
                   </div>
                 </div>
@@ -122,7 +122,7 @@ const HeroSection = () => {
                   <img 
                     src={image[2]} 
                     alt="Nền tảng học trực tuyến" 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition duration-300 hover:scale-105"
                   />
                 </div>
               </div>

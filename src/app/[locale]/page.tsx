@@ -11,6 +11,7 @@ import FaqSection from "@/components/shared/sections/FaqSection";
 import FeaturesSection from "@/components/shared/sections/FeaturesSection";
 import { BannerCarousel } from "@/components/shared/banner";
 import StatSection from "@/components/shared/sections/StatSection";
+import CategoryListSection from "@/components/shared/sections/CategoryListSection";
 
 export default function Home() {
   const { data: courses } = useQueryHook<PaginationResponse<CourseItemType>>(
@@ -22,7 +23,7 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <HeroSection />
       <StatSection />
-      
+      <CategoryListSection />
       <BannerCarousel />
       
       <div className="max-w-[1300px] mx-auto px-4 py-12 space-y-16">

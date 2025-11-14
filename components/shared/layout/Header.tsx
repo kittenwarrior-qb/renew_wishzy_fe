@@ -1,11 +1,5 @@
 'use client';
 
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,13 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { 
-  User, 
   LogOut, 
   Heart, 
   BookOpen, 
   UserCircle, 
   Menu, 
-  X,
   Sun,
   Moon,
   Globe
@@ -30,12 +22,10 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
   SheetTrigger
 } from "@/components/ui/sheet"
 import React from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { ThemeSwitcherDropdownItem } from "../common/ThemeSwitcherDropdownItem"
@@ -57,14 +47,33 @@ const Header = () => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [scrollProgress, setScrollProgress] = React.useState(0);
+  const rafRef = React.useRef<number | undefined>(undefined);
   
   React.useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      
+      rafRef.current = requestAnimationFrame(() => {
+        setIsScrolled(window.scrollY > 0);
+        
+        const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = windowHeight > 0 ? (window.scrollY / windowHeight) * 100 : 0;
+        setScrollProgress(scrolled);
+      });
     };
     
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
   }, []);
 
   if (pathname?.includes('/admin') || pathname?.includes('/instructor')) {
@@ -77,6 +86,13 @@ const Header = () => {
 
   return (
     <header className={`sticky top-0 z-50 w-full bg-card text-card-foreground transition-all duration-200   ${isScrolled ? 'shadow-sm ' : 'border-b border-borderư'}`}>
+      <div 
+        className="absolute bottom-0 left-0 h-[3px] bg-primary w-full origin-left"
+        style={{ 
+          transform: `scaleX(${scrollProgress / 100})`,
+          willChange: 'transform'
+        }}
+      />
       <div className="max-w-[1300px] mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className={`flex items-center gap-4 lg:gap-6 ${isSearchExpanded ? 'w-[calc(100%-80px)]' : ''}`}>
