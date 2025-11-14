@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useBanners } from './useBanner';
+import { useBannerList } from './useBanner';
 import {
   Carousel,
   CarouselContent,
@@ -23,18 +23,17 @@ export function BannerCarousel({
   autoplayDelay = 5000,
   className = '',
 }: BannerCarouselProps) {
-  const { data: banners, isLoading, error } = useBanners();
+  const { data, isLoading, error } = useBannerList();
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
 
   const plugin = React.useRef(
     Autoplay({ delay: autoplayDelay, stopOnInteraction: true })
   );
-
   const sortedBanners = React.useMemo(() => {
-    if (!banners) return [];
-    return [...banners].sort((a, b) => a.position - b.position);
-  }, [banners]);
+    const items = data?.data ?? [];
+    return [...items].sort((a, b) => a.position - b.position);
+  }, [data]);
 
   React.useEffect(() => {
     if (!api) return;
@@ -76,7 +75,7 @@ export function BannerCarousel({
                     alt={banner.title}
                     className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                   />
-                  
+
                   {/* {banner.title && (
                     <div className="absolute bottom-6 left-6 right-6">
                       <h3 className="text-white text-2xl font-bold drop-shadow-lg">
@@ -89,22 +88,21 @@ export function BannerCarousel({
             </CarouselItem>
           ))}
         </CarouselContent>
-        
+
         {sortedBanners.length > 1 && (
           <>
             <CarouselPrevious className="left-4 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-primary/10 text-primary hover:bg-primary/20 active:scale-95 shadow-lg" />
             <CarouselNext className="right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-primary/10 text-primary hover:bg-primary/20 active:scale-95 shadow-lg" />
-            
+
             <div className="flex justify-center gap-2 mt-4">
               {sortedBanners.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => api?.scrollTo(index)}
-                  className={`h-2 rounded-full transition-all duration-300 active:scale-90 ${
-                    index === current
-                      ? 'w-8 bg-primary'
-                      : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                  }`}
+                  className={`h-2 rounded-full transition-all duration-300 active:scale-90 ${index === current
+                    ? 'w-8 bg-primary'
+                    : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                    }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}

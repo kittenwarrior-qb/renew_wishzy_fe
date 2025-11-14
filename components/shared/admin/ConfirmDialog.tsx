@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
 export interface ConfirmDialogProps {
@@ -35,11 +35,11 @@ export function ConfirmDialog({
       : undefined
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={contentClass}>
+      <DialogContent className={contentClass} {...(!description ? { ['aria-describedby']: undefined } : {})}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        {description ? <div className="text-sm text-muted-foreground">{description}</div> : null}
+        {description ? <DialogDescription className="text-sm text-muted-foreground">{description}</DialogDescription> : null}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{cancelText}</Button>
           <Button variant={confirmVariant} onClick={onConfirm} disabled={!!loading} className="cursor-pointer">

@@ -28,7 +28,6 @@ export const ProfileTabs = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-6">
             {currentTab === 'my-learning' && 'Khóa học của tôi'}

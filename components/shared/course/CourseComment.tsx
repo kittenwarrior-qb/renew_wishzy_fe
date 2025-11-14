@@ -5,74 +5,84 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Star, ThumbsUp, MessageCircle, Send } from "lucide-react"
+import { useQueryHook } from "@/src/hooks/useQueryHook"
+import { commentService, type Comment as CommentType } from "@/src/services/comment"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useAppStore } from "@/src/stores/useAppStore"
+import { toast } from "sonner"
 
-interface Comment {
-  id: string
-  user: {
+interface CommentWithUser extends CommentType {
+  user?: {
     id: string
     name: string
     avatar?: string
   }
-  content: string
-  rating: number
-  createdAt: string
-  likes: number
-  isLiked: boolean
+  isLiked?: boolean
 }
 
 interface CourseCommentProps {
   courseId: string
-  comments?: Comment[]
+  isEnrolled?: boolean
 }
 
-const CourseComment = ({ courseId, comments = [] }: CourseCommentProps) => {
+const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => {
   const [newComment, setNewComment] = useState("")
   const [newRating, setNewRating] = useState(5)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const queryClient = useQueryClient()
+  const { user } = useAppStore()
 
-  const mockComments: Comment[] = [
-    {
-      id: "1",
-      user: {
-        id: "user1",
-        name: "Nguyễn Văn A",
-        avatar: ""
-      },
-      content: "Khóa học rất hay và bổ ích! Giảng viên giải thích rất dễ hiểu, nội dung được cập nhật mới nhất. Tôi đã học được rất nhiều kiến thức hữu ích từ khóa học này.",
-      rating: 5,
-      createdAt: "2024-11-07",
-      likes: 12,
-      isLiked: false
-    },
-    {
-      id: "2",
-      user: {
-        id: "user2",
-        name: "Trần Thị B",
-        avatar: ""
-      },
-      content: "Nội dung khóa học khá tốt, tuy nhiên tôi mong muốn có thêm nhiều bài tập thực hành hơn nữa.",
-      rating: 4,
-      createdAt: "2024-11-06",
-      likes: 8,
-      isLiked: true
-    },
-    {
-      id: "3",
-      user: {
-        id: "user3",
-        name: "Lê Văn C",
-        avatar: ""
-      },
-      content: "Excellent course! Very comprehensive and well-structured. Highly recommend to anyone wanting to learn this subject.",
-      rating: 5,
-      createdAt: "2024-11-05",
-      likes: 15,
-      isLiked: false
+  // Fetch comments
+  const { data: commentsData, isLoading } = useQueryHook<{
+    items: CommentWithUser[]
+    pagination: {
+      totalItems: number
+      currentPage: number
+      itemsPerPage: number
+      totalPage: number
     }
-  ]
+  }>(
+    ['comments', courseId],
+    () => commentService.listByCourse(courseId)
+  )
 
-  const displayComments = comments.length > 0 ? comments : mockComments
+  const createCommentMutation = useMutation({
+    mutationFn: (data: { content: string; rating: number }) => {
+      if (!user?.id) {
+        throw new Error("User not authenticated")
+      }
+      return commentService.create({
+        userId: user.id,
+        courseId,
+        content: data.content,
+        rating: data.rating
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', courseId] })
+      setNewComment("")
+      setNewRating(5)
+      toast.success("Đánh giá của bạn đã được gửi thành công!")
+    },
+    onError: (error: any) => {
+      const message = error?.message === "User not authenticated" 
+        ? "Bạn cần đăng nhập để viết đánh giá"
+        : "Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!"
+      toast.error(message)
+    }
+  })
+
+  // Like comment mutation
+  const likeCommentMutation = useMutation({
+    mutationFn: (commentId: string) => commentService.like(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', courseId] })
+    },
+    onError: () => {
+      toast.error("Có lỗi xảy ra. Vui lòng thử lại!")
+    }
+  })
+
+  const displayComments = commentsData?.items || []
 
   const getInitials = (name: string) => {
     return name
@@ -104,99 +114,211 @@ const CourseComment = ({ courseId, comments = [] }: CourseCommentProps) => {
   }
 
   const handleSubmitComment = async () => {
-    if (!newComment.trim()) return
+    if (!newComment.trim()) {
+      toast.error("Vui lòng nhập nội dung đánh giá")
+      return
+    }
+    if (newComment.length > 500) {
+      toast.error("Nội dung đánh giá không được vượt quá 500 ký tự")
+      return
+    }
+    if (!user?.id) {
+      toast.error("Bạn cần đăng nhập để viết đánh giá")
+      return
+    }
     
-    setIsSubmitting(true)
-    
-    // TODO: Implement API call to submit comment
-    console.log('Submitting comment:', {
-      courseId,
+    createCommentMutation.mutate({
       content: newComment,
       rating: newRating
     })
-    
-    // Simulate API delay
-    setTimeout(() => {
-      setNewComment("")
-      setNewRating(5)
-      setIsSubmitting(false)
-    }, 1000)
   }
 
   const handleLikeComment = (commentId: string) => {
-    // TODO: Implement like functionality
-    console.log('Liking comment:', commentId)
+    if (!user?.id) {
+      toast.error("Bạn cần đăng nhập để thích đánh giá")
+      return
+    }
+    likeCommentMutation.mutate(commentId)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Comments List */}
+    <div className="space-y-8" id="feedback">
+      {/* Write Review Section */}
+      {isEnrolled && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <MessageCircle className="w-4 h-4 text-primary" />
+              Viết đánh giá của bạn
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Rating Section */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Đánh giá của bạn
+              </label>
+              <div className="flex items-center gap-1.5 p-3 bg-muted/30 rounded-lg border">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setNewRating(i + 1)}
+                    className="focus:outline-none"
+                  >
+                    <Star
+                      className={`w-5 h-5 ${
+                        i < newRating 
+                          ? 'fill-yellow-400 text-yellow-400' 
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+                <span className="ml-2 text-sm font-medium text-foreground">
+                  {newRating}/5
+                </span>
+              </div>
+            </div>
+
+            {/* Comment Textarea */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Nội dung đánh giá
+              </label>
+              <Textarea
+                placeholder="Chia sẻ trải nghiệm của bạn về khóa học này..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                rows={4}
+                maxLength={500}
+                className="resize-none"
+              />
+              <p className="text-xs text-muted-foreground">
+                {newComment.length}/500 ký tự
+              </p>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSubmitComment}
+                disabled={createCommentMutation.isPending || !newComment.trim()}
+                className="gap-2"
+              >
+                <Send className="w-4 h-4" />
+                {createCommentMutation.isPending ? 'Đang gửi...' : 'Gửi đánh giá'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Not Enrolled Message */}
+      {!isEnrolled && (
+        <Card className="bg-muted/30 border-dashed">
+          <CardContent className="py-6">
+            <div className="flex flex-col items-center justify-center gap-2 text-center">
+              <div className="p-2 bg-primary/10 rounded-full">
+                <MessageCircle className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Bạn cần đăng ký khóa học để viết đánh giá
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Hãy tham gia khóa học để chia sẻ trải nghiệm của bạn
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Comments List Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">
-            Đánh giá từ học viên ({displayComments.length})
+        <div className="flex items-center justify-between pb-2 border-b">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+            Đánh giá từ học viên
+            <Badge variant="secondary" className="ml-1">
+              {commentsData?.pagination?.totalItems || 0}
+            </Badge>
           </h3>
         </div>
 
         {displayComments.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>Chưa có đánh giá nào cho khóa học này.</p>
-            <p className="text-sm mt-2">Hãy là người đầu tiên đánh giá khóa học!</p>
-          </div>
-        ) : (
-          displayComments.map((comment) => (
-          <Card key={comment.id}>
-            <CardContent className="px-6 py-2">
-              <div className="flex gap-4">
-                {/* User Avatar */}
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={comment.user.avatar} alt={comment.user.name} />
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {getInitials(comment.user.name)}
-                  </AvatarFallback>
-                </Avatar>
-
-                {/* Comment Content */}
-                <div className="flex-1 space-y-2">
-                  {/* User Info & Rating */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">{comment.user.name}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex items-center">
-                          {renderStars(comment.rating)}
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDate(comment.createdAt)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Comment Text */}
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {comment.content}
-                  </p>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-4 pt-2">
-                    <button
-                      onClick={() => handleLikeComment(comment.id)}
-                      className={`flex items-center gap-1 text-sm transition-colors ${
-                        comment.isLiked 
-                          ? 'text-blue-600 hover:text-blue-700' 
-                          : 'text-muted-foreground hover:text-blue-600'
-                      }`}
-                    >
-                      <ThumbsUp className={`w-4 h-4 ${comment.isLiked ? 'fill-current' : ''}`} />
-                      <span>{comment.likes}</span>
-                    </button>
-                  </div>
-                </div>
+          <Card className="border-dashed">
+            <CardContent className="py-8">
+              <div className="flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+                <MessageCircle className="w-10 h-10 opacity-50" />
+                <p className="text-sm">Chưa có đánh giá nào cho khóa học này</p>
               </div>
             </CardContent>
           </Card>
-          ))
+        ) : (
+          <div className="space-y-3">
+            {displayComments.map((comment) => (
+              <Card key={comment.id}>
+                <CardContent className="p-4">
+                  <div className="flex gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={comment.user?.avatar} alt={comment.user?.name || 'User'} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                        {getInitials(comment.user?.name || 'U')}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    {/* Comment Content */}
+                    <div className="flex-1 space-y-2">
+                      <div>
+                        <h4 className="font-medium text-sm">
+                          {comment.user?.name || 'Người dùng'}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-0.5">
+                            {renderStars(comment.rating)}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            • {formatDate(comment.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Comment Text */}
+                      <p className="text-sm leading-relaxed text-foreground/90">
+                        {comment.content}
+                      </p>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleLikeComment(comment.id)}
+                          disabled={likeCommentMutation.isPending}
+                          className={`flex items-center gap-1 text-xs font-medium transition-colors rounded px-2 py-1 ${
+                            comment.isLiked 
+                              ? 'text-blue-600 bg-blue-50' 
+                              : 'text-muted-foreground hover:text-blue-600 hover:bg-blue-50'
+                          }`}
+                        >
+                          <ThumbsUp className={`w-3.5 h-3.5 ${comment.isLiked ? 'fill-current' : ''}`} />
+                          <span>{comment.likes > 0 ? comment.likes : 'Thích'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
     </div>

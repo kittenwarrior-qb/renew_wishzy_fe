@@ -36,6 +36,7 @@ interface AppState {
   // UI state
   isLoading: boolean;
   theme: 'light' | 'dark';
+  _hasHydrated: boolean;
 
   // cart state
   cart: CourseItemType[];
@@ -53,6 +54,7 @@ interface AppState {
   enrollInCourse: (course: CourseItemType) => void;
   setLoading: (loading: boolean) => void;
   toggleTheme: () => void;
+  setHasHydrated: (state: boolean) => void;
   addToCart: (course: CourseItemType) => void;
   removeFromCart: (course: CourseItemType) => void;
   removeCart: () => void;
@@ -76,6 +78,7 @@ export const useAppStore = create<AppState>()(
         enrolledCourses: [],
         isLoading: false,
         theme: 'light',
+        _hasHydrated: false,
         cart: [],
         orderListCourse: [],
         wishlist: [],
@@ -113,6 +116,8 @@ export const useAppStore = create<AppState>()(
         toggleTheme: () => set((state) => ({ 
           theme: state.theme === 'light' ? 'dark' : 'light' 
         })),
+
+        setHasHydrated: (state) => set({ _hasHydrated: state }),
 
         addToCart: (course) => {
           const { cart } = get();
@@ -184,6 +189,9 @@ export const useAppStore = create<AppState>()(
           orderListCourse: state.orderListCourse,
           wishlist: state.wishlist,
         }),
+        onRehydrateStorage: () => (state) => {
+          state?.setHasHydrated(true);
+        },
       }
     ),
     {
