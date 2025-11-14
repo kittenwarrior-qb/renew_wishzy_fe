@@ -1,7 +1,11 @@
+"use client";
+
 import { Enrollment } from "@/src/types/enrollment";
-import { Clock, BookOpen, TrendingUp } from "lucide-react";
+import { Clock, BookOpen, TrendingUp, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface CourseEnrollmentCardProps {
   enrollment: Enrollment;
@@ -11,6 +15,7 @@ export const CourseEnrollmentCard = ({
   enrollment,
 }: CourseEnrollmentCardProps) => {
   const { course, progress, status, lastAccess } = enrollment;
+  const router = useRouter();
 
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -60,16 +65,22 @@ export const CourseEnrollmentCard = ({
     }
   };
 
+  const handleFeedbackClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/course-detail/${course.id}?scrollTo=feedback`);
+  };
+
   return (
     <Link href={`/learning/${course.id}`}>
-      <div className="bg-card rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
+      <div className="bg-card rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow cursor-pointer  relative">
         <div className="flex flex-col md:flex-row">
           {/* Thumbnail */}
           <div className="md:w-64 h-48 md:h-auto relative overflow-hidden bg-muted">
             <img
               src={course.thumbnail}
               alt={course.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
             />
             {parseFloat(progress) > 0 && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700">
@@ -122,9 +133,20 @@ export const CourseEnrollmentCard = ({
                   Truy cập lần cuối:{" "}
                   {new Date(lastAccess).toLocaleDateString("vi-VN")}
                 </span>
-                <span className="text-sm font-medium text-primary group-hover:underline">
-                  {parseFloat(progress) > 0 ? "Tiếp tục học" : "Bắt đầu học"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleFeedbackClick}
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    <MessageSquare className="h-4 w-4 mr-1" />
+                    Đánh giá
+                  </Button>
+                  <span className="text-sm font-medium text-primary group-hover:underline">
+                    {parseFloat(progress) > 0 ? 'Tiếp tục học' : 'Bắt đầu học'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

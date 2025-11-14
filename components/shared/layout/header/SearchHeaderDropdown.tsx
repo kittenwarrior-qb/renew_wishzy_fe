@@ -130,7 +130,7 @@ export const SearchHeaderDropdown = ({ query, isOpen, onClose }: SearchHeaderDro
             {courses.map((course: Course) => (
               <li key={course.id}>
                 <Link 
-                  href={`/courses/${course.id}`}
+                  href={`/course-detail/${course.id}`}
                   className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   onClick={onClose}
                 >

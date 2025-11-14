@@ -25,7 +25,6 @@ const CourseCreator = ({ creator }: { creator: Creator }) => {
     )
   }
 
-  // Get initials for avatar fallback
   const getInitials = (name: string) => {
     return name
       .split(' ')
