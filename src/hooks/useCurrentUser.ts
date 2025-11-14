@@ -7,7 +7,7 @@ export const useCurrentUser = () => {
 
   // Lấy role trực tiếp từ user object, không có fallback mặc định
   // Role phải được lấy từ API response: 'admin', 'instructor', hoặc 'user'
-  const role: UserRole | null = user?.role || null;
+  const role: UserRole | string | null = user?.role || null;
 
   return {
     user,
@@ -22,12 +22,12 @@ export const useCurrentUser = () => {
   };
 };
 
-export const useHasRole = (roles: UserRole | UserRole[]) => {
+export const useHasRole = (roles: UserRole | UserRole[] | string | string[]) => {
   const { role } = useCurrentUser();
 
   if (!role) return false;
 
   const rolesArray = Array.isArray(roles) ? roles : [roles];
-  return rolesArray.includes(role);
+  return rolesArray.includes(role as any);
 };
 

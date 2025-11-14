@@ -38,6 +38,12 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      // Only try to refresh token if we have a token
+      const currentToken = TokenManager.get();
+      if (!currentToken) {
+        return Promise.reject(error);
+      }
+
       try {
         const refreshResponse = await api.post('/auth/refresh-token');
         const { accessToken } = refreshResponse.data;
@@ -52,8 +58,15 @@ api.interceptors.response.use(
       } catch (refreshError) {
         TokenManager.remove();
         
+        // Only redirect to login if user was trying to access protected routes
         if (typeof window !== 'undefined') {
-          window.location.href = '/auth/login';
+          const currentPath = window.location.pathname;
+          const protectedPaths = ['/profile', '/learning', '/instructor', '/admin', '/checkout'];
+          const isProtectedRoute = protectedPaths.some(path => currentPath.startsWith(path));
+          
+          if (isProtectedRoute) {
+            window.location.href = '/auth/login';
+          }
         }
         
         return Promise.reject(refreshError);

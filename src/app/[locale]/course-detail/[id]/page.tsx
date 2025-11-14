@@ -18,7 +18,7 @@ import { enrollmentService } from "@/src/services/enrollment";
 
 const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     const { id } = use(params);
-    const { addToCart, cart, addToOrderList, clearOrderList } = useAppStore();
+    const { addToCart, cart, addToOrderList, clearOrderList, user } = useAppStore();
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -34,7 +34,10 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
 
     const { data: enrollments } = useQueryHook(
         ['my-enrollments'],
-        () => enrollmentService.getMyLearning()
+        () => enrollmentService.getMyLearning(),
+        {
+            enabled: !!user // Only fetch enrollments if user is logged in
+        }
     );
 
     const isEnrolled = enrollments?.some(

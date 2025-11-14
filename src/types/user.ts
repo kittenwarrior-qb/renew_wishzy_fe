@@ -5,7 +5,7 @@ import type { PaginationParams } from './common';
 export type { UserRole };
 
 export interface UserListParams extends PaginationParams {
-  role?: UserRole;
+  role?: UserRole | string;
   search?: string;
   isActive?: boolean;
   verified?: boolean;

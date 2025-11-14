@@ -29,7 +29,7 @@ export const useStudents = (params?: UserListParams) => {
         // Sử dụng role từ params (lấy từ useCurrentUser)
         // Admin: role = 'admin', Instructor: role = 'instructor'
         const { role, ...restParams } = params;
-        response = await userService.getUsersByRole(role, restParams);
+        response = await userService.getUsersByRole(role as 'user' | 'instructor' | 'admin', restParams);
       } else {
         // Nếu không có role, lấy tất cả users (không filter theo role)
         response = await userService.getUsers(params);
