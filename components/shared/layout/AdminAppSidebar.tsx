@@ -90,106 +90,106 @@ export default function AdminAppSidebar() {
         {
             key: 'dashboard',
             label: 'Thống kê & báo cáo',
-            icon: <BarChart3 className="mr-2 inline" size={16} />,
+            icon: <BarChart3 className="mr-2 inline h-4 w-4" />,
             collapsible: false,
             items: [
-                { label: 'Tổng quan', href: base, icon: <Home size={18} />, isActiveKey: '.' },
+                { label: 'Tổng quan', href: base, icon: <Home className="h-[18px] w-[18px]" />, isActiveKey: '.' },
             ],
         },
         {
             key: 'users',
             label: 'Quản lý người dùng',
-            icon: <Users className="mr-2" size={16} />,
+            icon: <Users className="mr-2 h-4 w-4" />,
             collapsible: true,
             items: [
-                { label: 'Học sinh', href: `${base}/users/students`, icon: <School size={18} />, isActiveKey: 'users/students' },
-                { label: 'Giảng viên', href: `${base}/users/teachers`, icon: <GraduationCap size={18} />, isActiveKey: 'users/teachers' },
-                { label: 'Quản trị viên', href: `${base}/users/admins`, icon: <Shield size={18} />, isActiveKey: 'users/admins' },
+                { label: 'Học sinh', href: `${base}/users/students`, icon: <School className="h-[18px] w-[18px]" />, isActiveKey: 'users/students' },
+                { label: 'Giảng viên', href: `${base}/users/teachers`, icon: <GraduationCap className="h-[18px] w-[18px]" />, isActiveKey: 'users/teachers' },
+                { label: 'Quản trị viên', href: `${base}/users/admins`, icon: <Shield className="h-[18px] w-[18px]" />, isActiveKey: 'users/admins' },
             ],
         },
         {
             key: 'classes',
             label: 'Quản lý danh mục',
-            icon: <Layers3 className="mr-2" size={16} />,
+            icon: <Layers3 className="mr-2 h-4 w-4" />,
             collapsible: true,
             items: [
-                { label: 'Danh sách', href: `${base}/categories`, icon: <List size={18} />, isActiveKey: 'categories' },
-                { label: 'Thùng rác', href: `${base}/categories/trash`, icon: <Trash2 size={18} />, isActiveKey: 'categories/create' },
+                { label: 'Danh sách', href: `${base}/categories`, icon: <List className="h-[18px] w-[18px]" />, isActiveKey: 'categories' },
+                { label: 'Thùng rác', href: `${base}/categories/trash`, icon: <Trash2 className="h-[18px] w-[18px]" />, isActiveKey: 'categories/create' },
             ],
         },
         {
             key: 'courses',
             label: 'Quản lý khoá học',
-            icon: <BookOpen className="mr-2" size={16} />,
+            icon: <BookOpen className="mr-2 h-4 w-4" />,
             collapsible: true,
             items: [
-                { label: 'Khoá học', href: `${base}/courses`, icon: <BookOpen size={18} />, isActiveKey: 'courses' },
+                { label: 'Khoá học', href: `${base}/courses`, icon: <BookOpen className="h-[18px] w-[18px]" />, isActiveKey: 'courses' },
             ],
         },
         {
             key: 'exams',
             label: 'Quản lý bài kiểm tra',
-            icon: <ListChecks className="mr-2" size={16} />,
+            icon: <ListChecks className="mr-2 h-4 w-4" />,
             collapsible: true,
             items: [
-                { label: 'Bài kiểm tra', href: `${base}/exams`, icon: <ListChecks size={18} />, isActiveKey: 'exams' },
+                { label: 'Bài kiểm tra', href: `${base}/exams`, icon: <ListChecks className="h-[18px] w-[18px]" />, isActiveKey: 'exams' },
             ],
         },
         {
             key: 'communication',
             label: 'Quản lý giao tiếp',
-            icon: <MessageSquare className="mr-2" size={16} />,
+            icon: <MessageSquare className="mr-2 h-4 w-4" />,
             collapsible: true,
             items: [
-                { label: 'Đánh giá', href: `${base}/communication/reviews`, icon: <Star size={18} />, isActiveKey: 'communication/reviews' },
-                { label: 'Bình luận', href: `${base}/communication/comments`, icon: <MessageCircle size={18} />, isActiveKey: 'communication/comments' },
+                { label: 'Đánh giá', href: `${base}/communication/reviews`, icon: <Star className="h-[18px] w-[18px]" />, isActiveKey: 'communication/reviews' },
+                { label: 'Bình luận', href: `${base}/communication/comments`, icon: <MessageCircle className="h-[18px] w-[18px]" />, isActiveKey: 'communication/comments' },
             ],
         },
         {
             key: 'posts',
             label: 'Quản lý bài viết',
-            icon: <FileText className="mr-2" size={16} />,
+            icon: <FileText className="mr-2 h-4 w-4" />,
             collapsible: true,
             items: [
-                { label: 'Danh sách bài viết', href: `${base}/posts`, icon: <FileText size={18} />, isActiveKey: 'posts' },
-                { label: 'Danh mục bài viết', href: `${base}/posts/categories`, icon: <Folder size={18} />, isActiveKey: 'posts/categories' },
-                { label: 'Bình luận', href: `${base}/posts/comments`, icon: <MessageCircle size={18} />, isActiveKey: 'posts/comments' },
+                { label: 'Danh sách bài viết', href: `${base}/posts`, icon: <FileText className="h-[18px] w-[18px]" />, isActiveKey: 'posts' },
+                { label: 'Danh mục bài viết', href: `${base}/posts/categories`, icon: <Folder className="h-[18px] w-[18px]" />, isActiveKey: 'posts/categories' },
+                { label: 'Bình luận', href: `${base}/posts/comments`, icon: <MessageCircle className="h-[18px] w-[18px]" />, isActiveKey: 'posts/comments' },
             ],
         },
         {
             key: 'orders',
             label: 'Quản lý đơn hàng',
-            icon: <ShoppingCart className="mr-2" size={16} />,
+            icon: <ShoppingCart className="mr-2 h-4 w-4" />,
             collapsible: true,
             items: [
-                { label: 'Đơn hàng', href: `${base}/orders`, icon: <ShoppingCart size={18} />, isActiveKey: 'orders' },
+                { label: 'Đơn hàng', href: `${base}/orders`, icon: <ShoppingCart className="h-[18px] w-[18px]" />, isActiveKey: 'orders' },
             ],
         },
         {
             key: 'banners',
             label: 'Quản lý banner',
-            icon: <ImageIcon className="mr-2" size={16} />,
+            icon: <ImageIcon className="mr-2 h-4 w-4" />,
             collapsible: true,
             items: [
-                { label: 'Banner', href: `${base}/banners`, icon: <ImageIcon size={18} />, isActiveKey: 'banners' },
+                { label: 'Banner', href: `${base}/banners`, icon: <ImageIcon className="h-[18px] w-[18px]" />, isActiveKey: 'banners' },
             ],
         },
         {
             key: 'vouchers',
             label: 'Quản lý voucher',
-            icon: <TicketPercent className="mr-2" size={16} />,
+            icon: <TicketPercent className="mr-2 h-4 w-4" />,
             collapsible: true,
             items: [
-                { label: 'Voucher', href: `${base}/vouchers`, icon: <TicketPercent size={18} />, isActiveKey: 'vouchers' },
+                { label: 'Voucher', href: `${base}/vouchers`, icon: <TicketPercent className="h-[18px] w-[18px]" />, isActiveKey: 'vouchers' },
             ],
         },
         {
             key: 'settings',
             label: 'Cài đặt',
-            icon: <Settings className="mr-2" size={16} />,
+            icon: <Settings className="mr-2 h-4 w-4" />,
             collapsible: false,
             items: [
-                { label: 'Thiết lập', href: `${base}/settings`, icon: <Settings size={18} />, isActiveKey: 'settings' },
+                { label: 'Thiết lập', href: `${base}/settings`, icon: <Settings className="h-[18px] w-[18px]" />, isActiveKey: 'settings' },
             ],
         },
     ]
@@ -202,7 +202,7 @@ export default function AdminAppSidebar() {
                         <button type="button" onClick={() => toggle(g.key)} className="w-full flex items-center gap-2">
                             {g.icon}{g.label}
                             <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open[g.key] ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                <ChevronDown size={14} />
+                                <ChevronDown className="h-[14px] w-[14px]" />
                             </span>
                         </button>
                     ) : (
@@ -244,7 +244,7 @@ export default function AdminAppSidebar() {
                                 aria-label="Mở sidebar"
                                 className="hidden md:inline-flex h-14 w-14 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent"
                             >
-                                <ArrowRightToLine size={28} />
+                                <ArrowRightToLine className="h-7 w-7" />
                             </Button>
                         ) : (
                             <Link href={base}>
@@ -262,7 +262,7 @@ export default function AdminAppSidebar() {
                                 aria-label="Thu gọn sidebar"
                                 className="hidden md:inline-flex h-14 w-14 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent"
                             >
-                                <ArrowLeftToLine size={28} />
+                                <ArrowLeftToLine className="h-7 w-7" />
                             </Button>
                         )}
                     </div>

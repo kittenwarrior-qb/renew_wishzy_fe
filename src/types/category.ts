@@ -3,6 +3,7 @@ export interface Category {
   name: string;
   notes?: string;
   parentId?: string;
+  totalCourses?: number;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
