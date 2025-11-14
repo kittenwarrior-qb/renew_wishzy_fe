@@ -1,3 +1,10 @@
+// User Role Enum
+export enum UserRole {
+  USER = 'user',
+  INSTRUCTOR = 'instructor',
+  ADMIN = 'admin'
+}
+
 // Login Types
 export interface LoginCredentials {
   email: string;
@@ -38,7 +45,7 @@ export interface User {
   age?: number | null;
   phone?: string | null;
   loginType: string;
-  role: string;
+  role: UserRole | string;
   isInstructorActive: boolean;
   passwordModified: boolean;
   createdAt: string;

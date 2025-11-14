@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { orderService, type OrderListParams, type OrderStatus } from '@/services/order'
+import type { OrderDetailResponse } from '@/types/order-detail.types'
 
 const ENDPOINT = 'orders'
 
+export type OrderListItem = Record<string, unknown>
 export type OrderList = {
-  data: any[]
+  data: OrderListItem[]
   total: number
   page: number
   limit: number
@@ -12,7 +14,7 @@ export type OrderList = {
 }
 
 export const useOrderList = (filter?: OrderListParams) => {
-  const params: Record<string, any> = {
+  const params: Record<string, unknown> = {
     page: filter?.page ?? 1,
     limit: filter?.limit ?? 10,
     id: filter?.id,
@@ -21,10 +23,11 @@ export const useOrderList = (filter?: OrderListParams) => {
   }
   return useQuery<OrderList>({
     queryKey: [ENDPOINT, params],
-    queryFn: async () => orderService.list(params),
+    queryFn: async () => orderService.list(params as Record<string, any>),
     staleTime: 5 * 60 * 1000,
-    select: (res: any): OrderList => {
-      const payload = res?.data ?? res
+    select: (res: unknown): OrderList => {
+      const anyRes = res as any
+      const payload = anyRes?.data ?? anyRes
       const items = payload?.items ?? []
       const p = payload?.pagination ?? {}
       return {
@@ -50,14 +53,15 @@ export const useUpdateOrderStatus = () => {
 }
 
 export const useOrderDetail = (id?: string) => {
-  return useQuery<any | null>({
+  return useQuery<OrderDetailResponse | null>({
     queryKey: [ENDPOINT, id],
     queryFn: async () => (id ? orderService.getOrderById(id) : null),
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
-    select: (res: any): any | null => {
-      const payload = res?.data ?? res
-      return payload ?? null
+    select: (res: unknown): OrderDetailResponse | null => {
+      const anyRes = res as any
+      const payload = anyRes?.data ?? anyRes
+      return (payload ?? null) as OrderDetailResponse | null
     },
   })
 }

@@ -33,7 +33,7 @@ export function InlineChildrenRow({ parentId, onAddChild, onEditChild, onDeleteC
             ) : isError ? (
                 <div className="text-sm text-destructive">Không tải được danh mục con</div>
             ) : items.length > 0 ? (
-                <div className="space-y-2 max-w-[1000px] m-auto">
+                <div className="space-y-2 m-auto">
                     <div className="divide-y rounded-md border w-full mx-auto">
                         {items.map((c: Category, idx: number) => {
                             const stt = (currentPage - 1) * pageSize + idx + 1

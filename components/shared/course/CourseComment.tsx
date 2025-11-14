@@ -30,7 +30,6 @@ const CourseComment = ({ courseId, comments = [] }: CourseCommentProps) => {
   const [newRating, setNewRating] = useState(5)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Mock data for demonstration
   const mockComments: Comment[] = [
     {
       id: "1",

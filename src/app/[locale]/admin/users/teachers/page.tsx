@@ -11,6 +11,7 @@ import { useAppStore } from "@/stores/useAppStore"
 import { Bell } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 
 export default function Page() {
   const params = useParams<{ locale: string }>()
@@ -36,10 +37,17 @@ export default function Page() {
   const pTotal = pendingCountData?.total ?? 0
 
   // Pending list for modal (only when open) - fetch many and filter client-side
+  type Instructor = {
+    id: string
+    fullName?: string
+    email?: string
+    avatar?: string
+    isInstructorActive?: boolean
+  }
   const { data: pendingData, isPending: loadingPending, isFetching: fetchingPendingList, isError: errorPending, refetch: refetchPending } = useInstructorList({ page: 1, limit: 100, role: 'instructor' }, { enabled: openPending })
-  const allForModal = pendingData?.data ?? []
-  const pendingOnly = allForModal.filter((u: any) => !u?.isInstructorActive)
-    .filter((u: any) => {
+  const allForModal = (pendingData?.data ?? []) as Instructor[]
+  const pendingOnly: Instructor[] = allForModal.filter((u) => !u?.isInstructorActive)
+    .filter((u) => {
       const t = modalTerm.trim().toLowerCase()
       if (!t) return true
       const name = (u?.fullName || "").toLowerCase()
@@ -103,35 +111,27 @@ export default function Page() {
       ) : items.length === 0 ? (
         <div className="rounded-lg border p-8 text-center text-muted-foreground">Không có giảng viên</div>
       ) : (
-        <div className="rounded-lg border overflow-hidden">
-          <div className="grid grid-cols-12 px-4 py-2 text-xs text-muted-foreground border-b bg-muted/50">
-            <div className="col-span-4">Họ tên</div>
-            <div className="col-span-4">Email</div>
-            <div className="col-span-2">Trạng thái</div>
-            <div className="col-span-2 text-right">Thao tác</div>
-          </div>
-          {items.map((u: any) => (
-            <div key={u.id} className="grid grid-cols-12 px-4 py-3 border-b last:border-0 items-center">
-              <div className="col-span-4 font-medium">{u.fullName}</div>
-              <div className="col-span-4 text-sm text-muted-foreground">{u.email}</div>
-              <div className="col-span-2 text-sm">
-                {u.isInstructorActive ? 'Đã duyệt' : 'Chờ duyệt'}
-              </div>
-              <div className="col-span-2 flex justify-end gap-2">
+        (() => {
+          const columns: Column<Instructor>[] = [
+            { key: 'fullName', title: 'Họ tên', render: (row: Instructor) => row.fullName || '' },
+            { key: 'email', title: 'Email', render: (row: Instructor) => row.email || '' },
+            { key: 'isInstructorActive', title: 'Trạng thái', align: 'center', render: (row: Instructor) => (row.isInstructorActive ? 'Đã duyệt' : 'Chờ duyệt') },
+            {
+              key: 'actions', title: 'Thao tác', align: 'right', render: () => (
                 <span className="text-xs text-muted-foreground">Chỉ thao tác trong danh sách chờ</span>
-              </div>
-            </div>
-          ))}
-        </div>
+              )
+            },
+          ]
+          return (
+            <DynamicTable
+              columns={columns}
+              data={(items as Instructor[])}
+              loading={loadingAll || fetchingAll}
+              pagination={{ totalItems: total, currentPage: page, itemsPerPage: limit, onPageChange: (p) => setPage(p) }}
+            />
+          )
+        })()
       )}
-
-      {totalPages > 1 ? (
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Trước</Button>
-          <div className="text-sm">Trang {page} / {totalPages}</div>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Sau</Button>
-        </div>
-      ) : null}
 
       <Dialog open={openPending} onOpenChange={(o) => { setOpenPending(o); if (o) { setPPage(1); setModalTerm(""); refetchPending() } }}>
         <DialogContent className="w-[95vw] md:w-[90vw] max-w-[95vw] md:max-w-[90vw] h-[90vh] p-0">
@@ -166,13 +166,13 @@ export default function Page() {
                   />
                 </div>
                 <div className="flex-1 overflow-auto px-6 space-y-3 pb-4">
-                  {pItems.map((u: any) => (
+                  {(pItems as Instructor[]).map((u) => (
                     <div key={u.id} className="flex items-center justify-between gap-4 rounded-lg border p-4">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 ring-1 ring-border">
                           <AvatarImage src={u?.avatar || ""} alt={u?.fullName || "Instructor"} />
                           <AvatarFallback>
-                            {(u?.fullName || "?").split(" ").map((w: string) => w.charAt(0)).join("").slice(0,2).toUpperCase()}
+                            {(u?.fullName || "?").split(" ").map((w) => w.charAt(0)).join("").slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>

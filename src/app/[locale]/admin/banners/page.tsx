@@ -14,6 +14,7 @@ import { useAppStore } from "@/stores/useAppStore"
 import { Pencil, Trash2 } from "lucide-react"
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
+import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 
 export default function Page() {
   const params = useParams<{ locale: string }>()
@@ -89,47 +90,31 @@ export default function Page() {
 
       <LoadingOverlay show={isPending || isFetching} />
 
-      <div className="border rounded-md overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="text-left px-3 py-2">Ảnh</th>
-              <th className="text-left px-3 py-2">Tiêu đề</th>
-              <th className="text-left px-3 py-2">Liên kết</th>
-              <th className="text-left px-3 py-2">Vị trí</th>
-              <th className="text-right px-3 py-2">Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isError ? (
-              <tr><td colSpan={5} className="px-3 py-6 text-center text-destructive">Lỗi tải dữ liệu</td></tr>
-            ) : items.length === 0 ? (
-              <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">Không có dữ liệu</td></tr>
-            ) : (
-              items.map((b) => (
-                <tr key={b.id} className="border-t">
-                  <td className="px-3 py-2">
-                    {b.imageUrl ? <img src={b.imageUrl} alt={b.title} className="h-10 w-20 object-cover rounded" /> : null}
-                  </td>
-                  <td className="px-3 py-2">{b.title}</td>
-                  <td className="px-3 py-2 max-w-[260px] truncate"><a href={b.link} target="_blank" className="text-primary hover:underline">{b.link}</a></td>
-                  <td className="px-3 py-2">{b.position}</td>
-                  <td className="px-3 py-2 text-right">
-                    <div className="inline-flex items-center gap-1">
-                      <button title="Sửa" type="button" className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer" onClick={() => { setEditing(b); setForm({ title: b.title, imageUrl: b.imageUrl, link: b.link, position: b.position }); setOpenEdit(true) }}>
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button title="Xoá" type="button" className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent text-destructive cursor-pointer" onClick={() => { setTarget(b); setOpenDeleteConfirm(true) }} disabled={deleting}>
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {(() => {
+        const columns: Column<Banner & any>[] = [
+          { key: 'imageUrl', title: 'Ảnh', render: (v: string, r: Banner, _i: number) => (v ? <img src={v} alt={r.title} className="h-10 w-20 object-cover rounded" /> : null) },
+          { key: 'title', title: 'Tiêu đề' },
+          { key: 'link', title: 'Liên kết', render: (v: string, _r: Banner, _i: number) => (<a href={v} target="_blank" className="text-primary hover:underline">{v}</a>) },
+          { key: 'position', title: 'Vị trí' },
+          { key: 'actions', title: 'Hành động', align: 'right', render: (_v: unknown, r: Banner, _i: number) => (
+            <div className="inline-flex items-center gap-1">
+              <button title="Sửa" type="button" className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer" onClick={() => { setEditing(r); setForm({ title: r.title, imageUrl: r.imageUrl, link: r.link, position: r.position }); setOpenEdit(true) }}>
+                <Pencil className="h-4 w-4" />
+              </button>
+              <button title="Xoá" type="button" className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent text-destructive cursor-pointer" onClick={() => { setTarget(r); setOpenDeleteConfirm(true) }} disabled={deleting}>
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ) },
+        ]
+        return (
+          <DynamicTable
+            columns={columns}
+            data={isError ? [] : (items as any)}
+            loading={isPending || isFetching}
+          />
+        )
+      })()}
 
       <div className="mt-4 flex justify-end">
         <Pagination

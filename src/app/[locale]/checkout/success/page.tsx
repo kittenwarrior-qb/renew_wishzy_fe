@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,12 +14,24 @@ import { orderService } from "@/src/services/order"
 import { CourseItemType } from "@/src/types/course/course-item.types"
 import { formatPrice } from "@/lib/utils"
 
-const CheckoutSuccessPage = () => {
+// Loading component for Suspense fallback
+const LoadingState = () => (
+  <div className="max-w-[1300px] mx-auto px-4 py-10">
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Đang tải thông tin đơn hàng...</p>
+      </div>
+    </div>
+  </div>
+);
+
+// Main component wrapped in Suspense
+const CheckoutSuccessContent = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { clearOrderList, removeFromCart } = useAppStore()
   
-  // Get order ID from query params (backend sends as orderId)
   const orderId = searchParams.get('orderId') ?? ''
   
   const { data: orderDetails, isLoading } = useQueryHook<OrderDetailResponse>(
@@ -99,7 +111,6 @@ const CheckoutSuccessPage = () => {
 
   return (
     <div className="max-w-[1300px] mx-auto py-8 px-4">
-      {/* Success Header */}
       <Card className="mb-6 overflow-hidden">
         <div className={`p-8 text-center ${isCompleted ? 'bg-green-50 dark:bg-green-950/20' : 'bg-yellow-50 dark:bg-yellow-950/20'}`}>
           <div className={`${isCompleted ? 'text-green-500' : 'text-yellow-500'} mb-4`}>
@@ -227,7 +238,6 @@ const CheckoutSuccessPage = () => {
           </Card>
         </div>
 
-        {/* Right Column - Summary & User */}
         <div className="space-y-6">
           {/* User Info */}
           <Card>
@@ -302,4 +312,14 @@ const CheckoutSuccessPage = () => {
   )
 }
 
-export default CheckoutSuccessPage
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <CheckoutSuccessContent />
+    </Suspense>
+  );
+}
+
+// Prevent static prerendering of this page
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true

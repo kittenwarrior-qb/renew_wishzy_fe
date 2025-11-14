@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
 export type AdminActionDialogProps = {
@@ -39,11 +39,11 @@ export function AdminActionDialog({
             : "sm:max-w-lg"
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className={contentClass}>
+            <DialogContent className={contentClass} {...(!description ? { ['aria-describedby']: undefined } : {})}>
                 <DialogHeader className="border-b pb-3">
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
-                {description ? <div className="text-sm text-muted-foreground">{description}</div> : null}
+                {description ? <DialogDescription className="text-sm text-muted-foreground">{description}</DialogDescription> : null}
                 {children}
                 <DialogFooter>
                     {showCancel ? (

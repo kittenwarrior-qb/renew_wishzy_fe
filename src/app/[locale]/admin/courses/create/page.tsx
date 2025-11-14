@@ -28,7 +28,8 @@ export default function CreateCoursePage() {
             loading={isPending}
             onDirtyChange={setDirty}
             onSubmit={() => {
-                createCourse(form as any, {
+                const { status: _omitStatus, ...payload } = form
+                createCourse(payload as any, {
                     onSuccess: () => { notify({ title: "Đã tạo", variant: "success" }); setDirty(false); router.push(`/${locale}/admin/courses`) },
                     onError: (e: any) => notify({ title: "Lỗi", description: String(e?.message || "Không thể tạo"), variant: "destructive" })
                 })

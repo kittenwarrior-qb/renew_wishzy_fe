@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { TranslationProvider } from '@/providers/TranslationProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
 import Header from '@/components/shared/layout/Header';
+import Footer from '@/components/shared/layout/Footer';
 
 const locales = ['vi', 'en'];
 
@@ -60,8 +61,13 @@ export default async function LocaleLayout({
   return (
     <TranslationProvider locale={locale} messages={messages}>
       <AuthProvider>
-        <Header />
-        {children}
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </div>
       </AuthProvider>
     </TranslationProvider>
   );

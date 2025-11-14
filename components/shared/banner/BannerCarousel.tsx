@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useBanners } from './useBanner';
+import { useBannerList } from './useBanner';
 import {
   Carousel,
   CarouselContent,
@@ -22,19 +22,20 @@ export function BannerCarousel({
   autoplayDelay = 5000,
   className = '',
 }: BannerCarouselProps) {
-  const { data: banners, isLoading, error } = useBanners();
+  const { data, isPending, isError } = useBannerList({ page: 1, limit: 20 });
+  const banners = data?.data ?? [];
 
   const plugin = React.useRef(
     Autoplay({ delay: autoplayDelay, stopOnInteraction: true })
   );
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className={`w-full h-[400px] bg-gray-200 animate-pulse ${className}`} />
     );
   }
 
-  if (error || !banners || banners.length === 0) {
+  if (isError || !banners || banners.length === 0) {
     return null;
   }
 

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { useOrderDetail } from "@/components/shared/order/useOrder"
 import { Button } from "@/components/ui/button"
+import type { OrderDetailResponse, OrderDetailItem } from "@/types/order-detail.types"
 
 export default function Page() {
     const params = useParams<{ locale: string; id: string }>()
@@ -14,9 +15,9 @@ export default function Page() {
 
     const { data: order, isPending, isFetching, isError } = useOrderDetail(id)
 
-    const user = (order as any)?.user
-    const details = (order as any)?.orderDetails ?? []
-    const voucher = (order as any)?.voucher
+    const user = order?.user
+    const details: OrderDetailItem[] = order?.orderDetails ?? []
+    const voucher = order?.voucher as unknown as { code?: string; id?: string } | null
 
     return (
         <div className="relative p-4 md:p-6">
@@ -39,34 +40,34 @@ export default function Page() {
                                 <div className="mb-3 flex items-center justify-between">
                                     <div>
                                         <div className="text-sm text-muted-foreground">Khách hàng</div>
-                                        <div className="font-medium">{user?.fullName || user?.email || (order as any)?.userId}</div>
+                                        <div className="font-medium">{user?.fullName || user?.email || order?.userId}</div>
                                     </div>
                                     <div className="text-right">
                                         <div className="text-sm text-muted-foreground">Tổng tiền</div>
-                                        <div className="font-semibold">{Number((order as any)?.totalPrice).toLocaleString()}₫</div>
+                                        <div className="font-semibold">{Number(order?.totalPrice ?? 0).toLocaleString()}₫</div>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 text-sm">
                                     <div>
                                         <div className="text-muted-foreground">Trạng thái</div>
-                                        <div className="capitalize">{(order as any)?.status}</div>
+                                        <div className="capitalize">{order?.status}</div>
                                     </div>
                                     <div>
                                         <div className="text-muted-foreground">Thanh toán</div>
-                                        <div className="uppercase">{(order as any)?.paymentMethod}</div>
+                                        <div className="uppercase">{order?.paymentMethod}</div>
                                     </div>
                                     <div>
                                         <div className="text-muted-foreground">Ngày tạo</div>
-                                        <div>{new Date((order as any)?.createdAt).toLocaleString()}</div>
+                                        <div>{order?.createdAt ? new Date(order.createdAt).toLocaleString() : ''}</div>
                                     </div>
                                     <div>
                                         <div className="text-muted-foreground">Cập nhật</div>
-                                        <div>{new Date((order as any)?.updatedAt).toLocaleString()}</div>
+                                        <div>{order?.updatedAt ? new Date(order.updatedAt).toLocaleString() : ''}</div>
                                     </div>
                                     {voucher ? (
                                         <div className="col-span-2">
                                             <div className="text-muted-foreground">Voucher</div>
-                                            <div className="font-medium">{voucher?.code || voucher?.id}</div>
+                                            <div className="font-medium">{voucher.code || voucher.id}</div>
                                         </div>
                                     ) : null}
                                 </div>
@@ -78,7 +79,7 @@ export default function Page() {
                             <div className="divide-y">
                                 {details.length === 0 ? (
                                     <div className="p-4 text-sm text-muted-foreground">Không có sản phẩm</div>
-                                ) : details.map((d: any) => (
+                                ) : details.map((d) => (
                                     <div key={d.id} className="p-4 flex items-center justify-between">
                                         <div>
                                             <div className="font-medium">{d.course?.name || d.courseId}</div>
@@ -96,17 +97,17 @@ export default function Page() {
                             <div className="p-4 space-y-2 text-sm">
                                 <div className="flex items-center justify-between">
                                     <div className="text-muted-foreground">Tổng tiền</div>
-                                    <div className="font-semibold">{Number((order as any)?.totalPrice).toLocaleString()}₫</div>
+                                    <div className="font-semibold">{Number(order?.totalPrice ?? 0).toLocaleString()}₫</div>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="text-muted-foreground">Trạng thái</div>
-                                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${(order as any)?.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' : (order as any)?.status === 'pending' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>
-                                        {(order as any)?.status}
+                                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${order?.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' : order?.status === 'pending' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>
+                                        {order?.status}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="text-muted-foreground">Thanh toán</div>
-                                    <div className="uppercase">{(order as any)?.paymentMethod}</div>
+                                    <div className="uppercase">{order?.paymentMethod}</div>
                                 </div>
                             </div>
                         </div>
