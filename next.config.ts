@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
+  outputFileTracingIncludes: {
+    '/': ['./public/**/*'],
+  },
 };
 
 export default nextConfig;
