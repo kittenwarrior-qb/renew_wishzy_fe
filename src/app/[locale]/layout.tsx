@@ -61,17 +61,31 @@ export default async function LocaleLayout({
   const messages = await getMessages(locale);
 
   return (
+<<<<<<< HEAD
     <GoogleOAuthProvider>
+=======
+    <ThemeProvider>
+>>>>>>> 8e3b4483bf3371edc9a84d5d0b038ad5a717dddc
       <TranslationProvider locale={locale} messages={messages}>
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
             <Header />
+<<<<<<< HEAD
             <main className="flex-1">{children}</main>
+=======
+            <main className="flex-1">
+              {children}
+            </main>
+>>>>>>> 8e3b4483bf3371edc9a84d5d0b038ad5a717dddc
             <Footer />
             <ScrollToTop />
           </div>
         </AuthProvider>
       </TranslationProvider>
+<<<<<<< HEAD
     </GoogleOAuthProvider>
+=======
+    </ThemeProvider>
+>>>>>>> 8e3b4483bf3371edc9a84d5d0b038ad5a717dddc
   );
 }

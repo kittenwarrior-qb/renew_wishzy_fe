@@ -16,6 +16,7 @@ import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog"
 import { CategoryForm, type CategoryFormValue } from "@/components/shared/category/CategoryForm"
 import { validateCategoryName, normalizeSpaces } from "@/lib/validators"
 import { useAppStore } from "@/stores/useAppStore"
+import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 
 export default function CategoryListPage() {
     const router = useRouter()
@@ -55,7 +56,7 @@ export default function CategoryListPage() {
     }, [nameFilter])
 
     const filter = React.useMemo<CategoryFilter>(() => ({ page, limit, name: nameFilter || undefined, parentId: parentIdFilter || undefined, isSubCategory, deleted: showDeleted || undefined }), [page, limit, nameFilter, parentIdFilter, isSubCategory, showDeleted])
-    const { data, isPending, isError } = useCategoryList(filter)
+    const { data, isPending, isFetching, isError } = useCategoryList(filter)
     const { mutate: deleteCategory, isPending: deleting } = useDeleteCategory()
     const { mutate: createCategory, isPending: creating } = useCreateCategory()
     const { mutate: updateCategory, isPending: updating } = useUpdateCategory()
@@ -215,15 +216,7 @@ export default function CategoryListPage() {
                 </div>
             </div>
 
-            {isPending ? (
-                <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
-                        <img src={logoSrc} alt="Wishzy" className="h-10 w-auto opacity-90" />
-                        <div aria-label="loading" className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        <span>Đang tải dữ liệu...</span>
-                    </div>
-                </div>
-            ) : null}
+            <LoadingOverlay show={isPending || isFetching} />
 
             <div className="min-h-[300px]">
                 {isError ? (

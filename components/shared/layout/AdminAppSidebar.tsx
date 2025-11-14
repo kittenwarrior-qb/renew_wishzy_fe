@@ -35,12 +35,12 @@ import {
     Folder,
     Image as ImageIcon,
     TicketPercent,
+    ShoppingCart,
     Settings,
     ChevronDown,
     ArrowLeftToLine,
     ArrowRightToLine,
     List,
-    PlusCircle,
     Trash2,
 } from "lucide-react"
 
@@ -68,6 +68,7 @@ export default function AdminAppSidebar() {
             exams: isActive('exams'),
             communication: isActive('communication/'),
             posts: isActive('posts/'),
+            orders: isActive('orders'),
             banners: isActive('banners'),
             vouchers: isActive('vouchers'),
             settings: isActive('settings'),
@@ -75,6 +76,154 @@ export default function AdminAppSidebar() {
     }, [pathname])
 
     const toggle = (key: string) => setOpen(prev => ({ ...prev, [key]: !prev[key] }))
+
+    type MenuItem = { label: string; href: string; icon: React.ReactNode; isActiveKey: string }
+    type MenuGroup = {
+        key: string
+        label: string
+        icon: React.ReactNode
+        collapsible?: boolean
+        items: MenuItem[]
+    }
+
+    const menuGroups: MenuGroup[] = [
+        {
+            key: 'dashboard',
+            label: 'Thống kê & báo cáo',
+            icon: <BarChart3 className="mr-2 inline h-4 w-4" />,
+            collapsible: false,
+            items: [
+                { label: 'Tổng quan', href: base, icon: <Home className="h-[18px] w-[18px]" />, isActiveKey: '.' },
+            ],
+        },
+        {
+            key: 'users',
+            label: 'Quản lý người dùng',
+            icon: <Users className="mr-2 h-4 w-4" />,
+            collapsible: true,
+            items: [
+                { label: 'Học sinh', href: `${base}/users/students`, icon: <School className="h-[18px] w-[18px]" />, isActiveKey: 'users/students' },
+                { label: 'Giảng viên', href: `${base}/users/teachers`, icon: <GraduationCap className="h-[18px] w-[18px]" />, isActiveKey: 'users/teachers' },
+                { label: 'Quản trị viên', href: `${base}/users/admins`, icon: <Shield className="h-[18px] w-[18px]" />, isActiveKey: 'users/admins' },
+            ],
+        },
+        {
+            key: 'classes',
+            label: 'Quản lý danh mục',
+            icon: <Layers3 className="mr-2 h-4 w-4" />,
+            collapsible: true,
+            items: [
+                { label: 'Danh sách', href: `${base}/categories`, icon: <List className="h-[18px] w-[18px]" />, isActiveKey: 'categories' },
+                { label: 'Thùng rác', href: `${base}/categories/trash`, icon: <Trash2 className="h-[18px] w-[18px]" />, isActiveKey: 'categories/create' },
+            ],
+        },
+        {
+            key: 'courses',
+            label: 'Quản lý khoá học',
+            icon: <BookOpen className="mr-2 h-4 w-4" />,
+            collapsible: true,
+            items: [
+                { label: 'Khoá học', href: `${base}/courses`, icon: <BookOpen className="h-[18px] w-[18px]" />, isActiveKey: 'courses' },
+            ],
+        },
+        {
+            key: 'exams',
+            label: 'Quản lý bài kiểm tra',
+            icon: <ListChecks className="mr-2 h-4 w-4" />,
+            collapsible: true,
+            items: [
+                { label: 'Bài kiểm tra', href: `${base}/exams`, icon: <ListChecks className="h-[18px] w-[18px]" />, isActiveKey: 'exams' },
+            ],
+        },
+        {
+            key: 'communication',
+            label: 'Quản lý giao tiếp',
+            icon: <MessageSquare className="mr-2 h-4 w-4" />,
+            collapsible: true,
+            items: [
+                { label: 'Đánh giá', href: `${base}/communication/reviews`, icon: <Star className="h-[18px] w-[18px]" />, isActiveKey: 'communication/reviews' },
+                { label: 'Bình luận', href: `${base}/communication/comments`, icon: <MessageCircle className="h-[18px] w-[18px]" />, isActiveKey: 'communication/comments' },
+            ],
+        },
+        {
+            key: 'posts',
+            label: 'Quản lý bài viết',
+            icon: <FileText className="mr-2 h-4 w-4" />,
+            collapsible: true,
+            items: [
+                { label: 'Danh sách bài viết', href: `${base}/posts`, icon: <FileText className="h-[18px] w-[18px]" />, isActiveKey: 'posts' },
+                { label: 'Danh mục bài viết', href: `${base}/posts/categories`, icon: <Folder className="h-[18px] w-[18px]" />, isActiveKey: 'posts/categories' },
+                { label: 'Bình luận', href: `${base}/posts/comments`, icon: <MessageCircle className="h-[18px] w-[18px]" />, isActiveKey: 'posts/comments' },
+            ],
+        },
+        {
+            key: 'orders',
+            label: 'Quản lý đơn hàng',
+            icon: <ShoppingCart className="mr-2 h-4 w-4" />,
+            collapsible: true,
+            items: [
+                { label: 'Đơn hàng', href: `${base}/orders`, icon: <ShoppingCart className="h-[18px] w-[18px]" />, isActiveKey: 'orders' },
+            ],
+        },
+        {
+            key: 'banners',
+            label: 'Quản lý banner',
+            icon: <ImageIcon className="mr-2 h-4 w-4" />,
+            collapsible: true,
+            items: [
+                { label: 'Banner', href: `${base}/banners`, icon: <ImageIcon className="h-[18px] w-[18px]" />, isActiveKey: 'banners' },
+            ],
+        },
+        {
+            key: 'vouchers',
+            label: 'Quản lý voucher',
+            icon: <TicketPercent className="mr-2 h-4 w-4" />,
+            collapsible: true,
+            items: [
+                { label: 'Voucher', href: `${base}/vouchers`, icon: <TicketPercent className="h-[18px] w-[18px]" />, isActiveKey: 'vouchers' },
+            ],
+        },
+        {
+            key: 'settings',
+            label: 'Cài đặt',
+            icon: <Settings className="mr-2 h-4 w-4" />,
+            collapsible: false,
+            items: [
+                { label: 'Thiết lập', href: `${base}/settings`, icon: <Settings className="h-[18px] w-[18px]" />, isActiveKey: 'settings' },
+            ],
+        },
+    ]
+
+    const renderGroup = (g: MenuGroup) => {
+        const content = (
+            <SidebarGroup key={g.key}>
+                <SidebarGroupLabel asChild={g.collapsible} className="text-[16px] font-semibold tracking-wide text-foreground truncate">
+                    {g.collapsible ? (
+                        <button type="button" onClick={() => toggle(g.key)} className="w-full flex items-center gap-2">
+                            {g.icon}{g.label}
+                            <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open[g.key] ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+                                <ChevronDown className="h-[14px] w-[14px]" />
+                            </span>
+                        </button>
+                    ) : (
+                        <span className="flex items-center gap-2">{g.icon}{g.label}</span>
+                    )}
+                </SidebarGroupLabel>
+                <SidebarGroupContent className={((g.collapsible ? (open[g.key] || state === 'collapsed') : true) ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
+                    <SidebarMenu>
+                        {g.items.map(it => (
+                            <SidebarMenuItem key={it.href}>
+                                <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive(it.isActiveKey)} tooltip={it.label}>
+                                    <Link href={it.href}>{it.icon}{state !== 'collapsed' && <span>{it.label}</span>}</Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </SidebarGroupContent>
+            </SidebarGroup>
+        )
+        return content
+    }
 
     return (
         <Sidebar
@@ -122,239 +271,12 @@ export default function AdminAppSidebar() {
             <SidebarContent className="scrollbar-thin py-1 overflow-x-hidden">
                 {hydrated && (
                     <>
-                        <SidebarGroup>
-                            <SidebarGroupLabel className="text-[16px] font-semibold tracking-wide text-foreground truncate">
-                                <BarChart3 className="mr-2 inline h-4 w-4" /> Thống kê & báo cáo
-                            </SidebarGroupLabel>
-                            <SidebarGroupContent className={state === 'collapsed' ? '' : 'pl-6'}>
-                                <SidebarMenu>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('.')} tooltip="Tổng quan">
-                                            <Link href={base}><Home className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Tổng quan</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-
-                        <SidebarSeparator />
-                        <SidebarGroup>
-                            <SidebarGroupLabel asChild className="text-[16px] font-semibold tracking-wide text-foreground truncate">
-                                <button type="button" onClick={() => toggle('users')} className="w-full flex items-center gap-2">
-                                    <Users className="mr-2 h-4 w-4" />Quản lý người dùng
-                                    <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open.users ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                    </span>
-                                </button>
-                            </SidebarGroupLabel>
-                            <SidebarGroupContent className={(open.users || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
-                                <SidebarMenu>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('users/students')} tooltip="Học sinh">
-                                            <Link href={`${base}/users/students`}><School className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Học sinh</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('users/teachers')} tooltip="Giảng viên">
-                                            <Link href={`${base}/users/teachers`}><GraduationCap className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Giảng viên</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('users/admins')} tooltip="Quản trị viên">
-                                            <Link href={`${base}/users/admins`}><Shield className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Quản trị viên</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-
-                        <SidebarSeparator />
-                        <SidebarGroup>
-                            <SidebarGroupLabel asChild className="text-[16px] font-semibold tracking-wide text-foreground truncate">
-                                <button type="button" onClick={() => toggle('classes')} className="w-full flex items-center gap-2">
-                                    <Layers3 className="mr-2 h-4 w-4" />Quản lý danh mục
-                                    <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open.classes ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                    </span>
-                                </button>
-                            </SidebarGroupLabel>
-                            <SidebarGroupContent className={(open.classes || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
-                                <SidebarMenu>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('categories')} tooltip="Danh sách">
-                                            <Link href={`${base}/categories`}><List className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Danh sách</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    {/* <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('categories/create')} tooltip="Tạo">
-                                            <Link href={`${base}/categories/trash`}><Trash2 size={18} />{state !== 'collapsed' && <span>Thùng rác</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem> */}
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-
-                        <SidebarSeparator />
-                        <SidebarGroup>
-                            <SidebarGroupLabel asChild className="text-[16px] font-semibold tracking-wide text-foreground truncate">
-                                <button type="button" onClick={() => toggle('courses')} className="w-full flex items-center gap-2">
-                                    <BookOpen className="mr-2 h-4 w-4" />Quản lý khoá học
-                                    <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open.courses ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                    </span>
-                                </button>
-                            </SidebarGroupLabel>
-                            <SidebarGroupContent className={(open.courses || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
-                                <SidebarMenu>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('courses')} tooltip="Khoá học">
-                                            <Link href={`${base}/courses`}><BookOpen className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Khoá học</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-
-                        <SidebarSeparator />
-                        <SidebarGroup>
-                            <SidebarGroupLabel asChild className="text-[16px] font-semibold tracking-wide text-foreground truncate">
-                                <button type="button" onClick={() => toggle('exams')} className="w-full flex items-center gap-2">
-                                    <ListChecks className="mr-2 h-4 w-4" />Quản lý bài kiểm tra
-                                    <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open.exams ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                    </span>
-                                </button>
-                            </SidebarGroupLabel>
-                            <SidebarGroupContent className={(open.exams || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
-                                <SidebarMenu>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('exams')} tooltip="Bài kiểm tra">
-                                            <Link href={`${base}/exams`}><ListChecks className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Bài kiểm tra</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-
-                        <SidebarSeparator />
-                        <SidebarGroup>
-                            <SidebarGroupLabel asChild className="text-[16px] font-semibold tracking-wide text-foreground truncate">
-                                <button type="button" onClick={() => toggle('communication')} className="w-full flex items-center gap-2">
-                                    <MessageSquare className="mr-2 h-4 w-4" />Quản lý giao tiếp
-                                    <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open.communication ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                    </span>
-                                </button>
-                            </SidebarGroupLabel>
-                            <SidebarGroupContent className={(open.communication || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
-                                <SidebarMenu>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('communication/reviews')} tooltip="Đánh giá">
-                                            <Link href={`${base}/communication/reviews`}><Star className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Đánh giá</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('communication/comments')} tooltip="Bình luận">
-                                            <Link href={`${base}/communication/comments`}><MessageCircle className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Bình luận</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-
-                        <SidebarSeparator />
-                        <SidebarGroup>
-                            <SidebarGroupLabel asChild className="text-[16px] font-semibold tracking-wide text-foreground truncate">
-                                <button type="button" onClick={() => toggle('posts')} className="w-full flex items-center gap-2">
-                                    <FileText className="mr-2 h-4 w-4" />Quản lý bài viết
-                                    <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open.posts ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                    </span>
-                                </button>
-                            </SidebarGroupLabel>
-                            <SidebarGroupContent className={(open.posts || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
-                                <SidebarMenu>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('posts')} tooltip="Danh sách bài viết">
-                                            <Link href={`${base}/posts`}><FileText className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Danh sách bài viết</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('posts/categories')} tooltip="Danh mục bài viết">
-                                            <Link href={`${base}/posts/categories`}><Folder className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Danh mục bài viết</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('posts/comments')} tooltip="Bình luận">
-                                            <Link href={`${base}/posts/comments`}><MessageCircle className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Bình luận</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-
-                        <SidebarSeparator />
-                        <SidebarGroup>
-                            <SidebarGroupLabel asChild className="text-[16px] font-semibold tracking-wide text-foreground truncate">
-                                <button type="button" onClick={() => toggle('banners')} className="w-full flex items-center gap-2">
-                                    <ImageIcon className="mr-2 h-4 w-4" />Quản lý banner
-                                    <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open.banners ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                    </span>
-                                </button>
-                            </SidebarGroupLabel>
-                            <SidebarGroupContent className={(open.banners || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
-                                <SidebarMenu>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('banners')} tooltip="Banner">
-                                            <Link href={`${base}/banners`}><ImageIcon className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Banner</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-
-                        <SidebarSeparator />
-                        <SidebarGroup>
-                            <SidebarGroupLabel asChild className="text-[16px] font-semibold tracking-wide text-foreground truncate">
-                                <button type="button" onClick={() => toggle('vouchers')} className="w-full flex items-center gap-2">
-                                    <TicketPercent className="mr-2 h-4 w-4" />Quản lý voucher
-                                    <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open.vouchers ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                    </span>
-                                </button>
-                            </SidebarGroupLabel>
-                            <SidebarGroupContent className={(open.vouchers || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
-                                <SidebarMenu>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('vouchers')} tooltip="Voucher">
-                                            <Link href={`${base}/vouchers`}><TicketPercent className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Voucher</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
-
-                        <SidebarSeparator />
-                        <SidebarGroup>
-                            <SidebarGroupLabel asChild className="text-[16px] font-semibold tracking-wide text-foreground truncate">
-                                <button type="button" onClick={() => toggle('settings')} className="w-full flex items-center gap-2">
-                                    <Settings className="mr-2 h-4 w-4" />Cài đặt
-                                    <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open.settings ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                    </span>
-                                </button>
-                            </SidebarGroupLabel>
-                            <SidebarGroupContent className={(open.settings || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
-                                <SidebarMenu>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('settings')} tooltip="Thiết lập">
-                                            <Link href={`${base}/settings`}><Settings className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Thiết lập</span>}</Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                </SidebarMenu>
-                            </SidebarGroupContent>
-                        </SidebarGroup>
+                        {menuGroups.map((g, idx) => (
+                            <React.Fragment key={g.key}>
+                                {idx > 0 && <SidebarSeparator />}
+                                {renderGroup(g)}
+                            </React.Fragment>
+                        ))}
                     </>
                 )}
             </SidebarContent>

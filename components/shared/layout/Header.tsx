@@ -43,7 +43,8 @@ const Header = () => {
   const t = useTranslations();
   const { user, isAuthenticated } = useAuthStatus();
   const logoutMutation = useLogout();
-  const { theme } = useAppStore();
+  const theme = useAppStore((state) => state.theme);
+  const hasHydrated = useAppStore((state) => state._hasHydrated);
   const [isOpen, setIsOpen] = React.useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
@@ -98,13 +99,17 @@ const Header = () => {
           <div className={`flex items-center gap-4 lg:gap-6 ${isSearchExpanded ? 'w-[calc(100%-80px)]' : ''}`}>
             {!isSearchExpanded && (
               <Link href="/" className="flex items-center shrink-0">
-                <img
-                  src={theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"}
-                  alt="Wishzy logo"
-                  width={100}
-                  height={90}
-                  className="hidden sm:block object-contain"
-                />
+                {hasHydrated ? (
+                  <img
+                    src={theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"}
+                    alt="Wishzy logo"
+                    width={100}
+                    height={90}
+                    className="hidden sm:block object-contain"
+                  />
+                ) : (
+                  <div className="hidden sm:block w-[100px] h-[90px]" />
+                )}
                 
                 <img
                   src="/images/simple-logo.png"

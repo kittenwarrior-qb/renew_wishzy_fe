@@ -13,9 +13,9 @@ const CategoryListSection = () => {
   const categories = data?.data || [];
 
   return (
-    <section className="relative w-full overflow-hidden bg-background py-16 md:py-20">
+    <section className="relative w-full overflow-hidden bg-background pt-16">
       <div className="max-w-[1300px] mx-auto px-4">
-        <div className="mb-16">
+        <div className="mb-4">
           <h2 className="text-3xl font-bold mb-2 text-foreground">
             Danh mục nổi
           </h2>

@@ -54,27 +54,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <SidebarProvider style={{ ["--sidebar-width"]: "20rem", ["--sidebar-width-icon"]: "3.75rem" } as React.CSSProperties}>
-      <AdminAppSidebar />
-      <SidebarInset className="md:!m-0 md:!ml-0 md:!rounded-none md:!shadow-none">
-        <HeaderAdmin />
-        <main className="flex-1 overflow-auto p-4 md:p-6">
-          {children}
-        </main>
-      </SidebarInset>
-      <Notifications />
-      <ConfirmDialog
-        open={openLeaveConfirm}
-        onOpenChange={setOpenLeaveConfirm}
-        title="Rời trang?"
-        description={<span>Bạn có thay đổi chưa lưu. Rời trang?</span>}
-        confirmText="Rời trang"
-        position="top"
-        onConfirm={() => {
-          setOpenLeaveConfirm(false)
-          leaveProceedRef.current?.()
-        }}
-      />
-    </SidebarProvider>
+    <div className="min-h-dvh">
+      <SidebarProvider style={{ ["--sidebar-width"]: "20rem", ["--sidebar-width-icon"]: "3.75rem" } as React.CSSProperties}>
+        <AdminAppSidebar />
+        <SidebarInset className="md:!m-0 md:!ml-0 md:!rounded-none md:!shadow-none flex flex-col min-h-dvh">
+          <HeaderAdmin />
+          <main className="flex-1 overflow-auto p-4 md:p-6">
+            {children}
+          </main>
+        </SidebarInset>
+        <Notifications />
+        <ConfirmDialog
+          open={openLeaveConfirm}
+          onOpenChange={setOpenLeaveConfirm}
+          title="Rời trang?"
+          description={<span>Bạn có thay đổi chưa lưu. Rời trang?</span>}
+          confirmText="Rời trang"
+          position="top"
+          onConfirm={() => {
+            setOpenLeaveConfirm(false)
+            leaveProceedRef.current?.()
+          }}
+        />
+      </SidebarProvider>
+    </div>
   )
 }

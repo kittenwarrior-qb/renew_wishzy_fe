@@ -1,7 +1,6 @@
 export { BannerCarousel } from './BannerCarousel';
 export {
-  useBanners,
-  useBanner,
+  useBannerList,
   useCreateBanner,
   useUpdateBanner,
   useDeleteBanner,

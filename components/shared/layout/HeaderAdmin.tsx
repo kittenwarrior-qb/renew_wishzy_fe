@@ -73,6 +73,7 @@ function mapAdminPathToLabel(subpath: string): string {
     "posts": "Danh sách bài viết",
     "posts/categories": "Danh mục bài viết",
     "posts/comments": "Bình luận bài viết",
+    "orders": "Lịch sử thanh toán",
     "banners": "Banner",
     "vouchers": "Voucher",
     "settings": "Thiết lập",

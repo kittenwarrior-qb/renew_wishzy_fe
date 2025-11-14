@@ -1,8 +1,3 @@
-/**
- * Banner Types
- * Đồng bộ với backend Banner entity
- */
-
 export interface Banner {
   id: string;
   title: string;
