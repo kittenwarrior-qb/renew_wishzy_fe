@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { courseService } from '@/services/course'
 import { UserRole } from '@/types/auth'
+import { CourseItemType } from '@/types/course/course-item.types'
 
 export type Course = {
   id: string
@@ -93,6 +94,25 @@ export const useCourseDetail = (id?: string) => {
       const payload = res?.data ?? res
       const item = (payload && typeof payload === 'object' && 'data' in payload) ? (payload as any).data : payload
       return item as Course
+    },
+  })
+}
+
+export const useBestSellerCourses = (limit: number = 3) => {
+  return useQuery<CourseItemType[]>({
+    queryKey: [ENDPOINT, '', limit],
+    queryFn: async () => {
+      const response = await courseService.list({ 
+        limit,
+      });
+      return response.data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    select: (res: any): CourseItemType[] => {
+      const payload = res?.data ?? res;
+      if (Array.isArray(payload)) return payload as CourseItemType[];
+      const items = payload?.items ?? [];
+      return items as CourseItemType[];
     },
   })
 }

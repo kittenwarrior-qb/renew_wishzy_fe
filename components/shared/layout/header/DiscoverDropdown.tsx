@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { categoryService } from '@/services/category';
 import { Category } from '@/types/category';
+import { useAllCategories } from '@/components/shared/category/useCategory';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,19 +22,9 @@ interface CategoryWithChildren extends Category {
   children: CategoryWithChildren[];
 }
 
-const useCategoriesQuery = () => {
-  return useQuery({
-    queryKey: ['all-categories'],
-    queryFn: async () => {
-      const res = await categoryService.list({ limit: 1000 });
-      return res;
-    },
-    staleTime: 5 * 60 * 1000, 
-  });
-};
-
-const CourseHeader = () => {
-  const { data: categoriesData, isLoading } = useCategoriesQuery();
+const DiscoverDropdown = () => {
+  const router = useRouter();
+  const { data: categoriesData, isLoading } = useAllCategories();
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
   
   const { parentCategories, categoriesByParent } = useMemo(() => {
@@ -48,16 +38,7 @@ const CourseHeader = () => {
     
     if (!categoriesData) return result;
     
-    const allCategories: Category[] = [];
-    if (Array.isArray(categoriesData?.data?.items)) {
-      allCategories.push(...categoriesData.data.items);
-    } else if (Array.isArray(categoriesData?.items)) {
-      allCategories.push(...categoriesData.items);
-    } else if (Array.isArray(categoriesData?.data)) {
-      allCategories.push(...categoriesData.data);
-    } else if (Array.isArray(categoriesData)) {
-      allCategories.push(...categoriesData);
-    }
+    const allCategories: Category[] = categoriesData.data || [];
     
     const withChildren = allCategories.map(cat => ({
       ...cat,
@@ -103,9 +84,9 @@ const CourseHeader = () => {
   };
 
   return (
-    <DropdownMenu onOpenChange={handleOpenChange}>
-      <DropdownMenuTrigger className="text-foreground text-sm hover:text-primary transition-colors cursor-pointer px-4 py-2 rounded-md flex items-center gap-1">
-        Khóa học <ChevronDown className='h-4 w-4 ml-1' />
+    <DropdownMenu onOpenChange={handleOpenChange} modal={false}>
+      <DropdownMenuTrigger className="text-foreground text-sm hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer px-4 py-2 rounded-md flex items-center gap-1">
+        Khám phá <ChevronDown className='h-4 w-4 ml-1' />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-white dark:bg-gray-900">
         <DropdownMenuGroup>
@@ -120,15 +101,23 @@ const CourseHeader = () => {
                   key={category.id}
                   onOpenChange={(open) => handleSubMenuOpen(category.id, open)}
                 >
-                  <DropdownMenuSubTrigger className="cursor-pointer">
-                    <span className="flex-1">{category.name}</span>
+                  <DropdownMenuSubTrigger 
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push(`/search?categoryId=${category.id}`);
+                    }}
+                  >
+                    <span className="flex-1">
+                      {category.name}{category.totalCourses !== undefined && ` (${category.totalCourses})`}
+                    </span>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="bg-white dark:bg-gray-900">
                     {openCategoryId === category.id && 
                       categoriesByParent[category.id]?.map((subCategory) => (
                         <DropdownMenuItem key={subCategory.id} asChild>
                           <Link href={`/search?categoryId=${subCategory.id}`} className="w-full">
-                            {subCategory.name}
+                            {subCategory.name}{subCategory.totalCourses !== undefined && ` (${subCategory.totalCourses})`}
                           </Link>
                         </DropdownMenuItem>
                       ))
@@ -143,7 +132,7 @@ const CourseHeader = () => {
               ) : (
                 <DropdownMenuItem key={category.id} asChild>
                   <Link href={`/search?categoryId=${category.id}`} className="w-full">
-                    {category.name}
+                    {category.name}{category.totalCourses !== undefined && ` (${category.totalCourses})`}
                   </Link>
                 </DropdownMenuItem>
               )
@@ -159,4 +148,4 @@ const CourseHeader = () => {
   );
 };
 
-export default CourseHeader;
+export default DiscoverDropdown;

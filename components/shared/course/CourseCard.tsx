@@ -183,24 +183,13 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
       {isHovered && (
         <div 
-          className={`absolute top-1/2 -translate-y-1/2 z-50 hidden lg:block w-80 bg-white dark:bg-gray-900 p-4 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-lg transition-opacity duration-200 ${
-            isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          } ${
+          className={`absolute top-1/2 -translate-y-1/2 z-50 hidden lg:block w-80 bg-white dark:bg-gray-900 p-4 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-lg transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-2 ${
             popupPosition === 'right' ? 'left-full ml-2' : 'right-full mr-2'
           }`}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
           <div className="space-y-3">
-            <div className="relative h-[120px] w-full overflow-hidden rounded">
-              <Image
-                src={course?.thumbnail || '/images/course-placeholder.jpg'} 
-                alt={course?.name || 'Khóa học'} 
-                fill
-                className="object-cover"
-              />
-            </div>
-
             <h3 className="font-bold text-lg leading-tight text-gray-900 dark:text-gray-100">
               {course?.name || 'Khóa học'}
             </h3>

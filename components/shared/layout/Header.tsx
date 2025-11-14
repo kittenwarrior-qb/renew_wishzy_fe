@@ -1,11 +1,5 @@
 'use client';
 
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,13 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { 
-  User, 
   LogOut, 
   Heart, 
   BookOpen, 
   UserCircle, 
   Menu, 
-  X,
   Sun,
   Moon,
   Globe
@@ -30,12 +22,10 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
   SheetTrigger
 } from "@/components/ui/sheet"
 import React from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { ThemeSwitcherDropdownItem } from "../common/ThemeSwitcherDropdownItem"
@@ -45,7 +35,7 @@ import { useTranslations } from "@/providers/TranslationProvider"
 import { useAppStore } from "@/stores/useAppStore"
 import CartPopover from "../cart/CartPopover"
 import SearchHeader from "./header/SearchHeader"
-import CourseHeader from "./header/CourseHeader"
+import DiscoverDropdown from "./header/DiscoverDropdown"
 
 const Header = () => {
   const pathname = usePathname();
@@ -57,14 +47,33 @@ const Header = () => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [scrollProgress, setScrollProgress] = React.useState(0);
+  const rafRef = React.useRef<number | undefined>(undefined);
   
   React.useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      
+      rafRef.current = requestAnimationFrame(() => {
+        setIsScrolled(window.scrollY > 0);
+        
+        const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = windowHeight > 0 ? (window.scrollY / windowHeight) * 100 : 0;
+        setScrollProgress(scrolled);
+      });
     };
     
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
   }, []);
 
   if (pathname?.includes('/admin') || pathname?.includes('/instructor')) {
@@ -77,6 +86,13 @@ const Header = () => {
 
   return (
     <header className={`sticky top-0 z-50 w-full bg-card text-card-foreground transition-all duration-200   ${isScrolled ? 'shadow-sm ' : 'border-b border-borderư'}`}>
+      <div 
+        className="absolute bottom-0 left-0 h-[3px] bg-primary w-full origin-left"
+        style={{ 
+          transform: `scaleX(${scrollProgress / 100})`,
+          willChange: 'transform'
+        }}
+      />
       <div className="max-w-[1300px] mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className={`flex items-center gap-4 lg:gap-6 ${isSearchExpanded ? 'w-[calc(100%-80px)]' : ''}`}>
@@ -100,6 +116,8 @@ const Header = () => {
               </Link>
             )}
             
+            {!isSearchExpanded && <DiscoverDropdown />}
+            
             <div className="hidden md:block">
               <SearchHeader />
             </div>
@@ -108,18 +126,30 @@ const Header = () => {
               <SearchHeader onExpand={setIsSearchExpanded} isMobile={true} />
             </div>
 
-            <NavigationMenu className={`hidden ${isSearchExpanded ? 'md:hidden' : 'md:block'}`}>
-              <NavigationMenuList className="">
-                <CourseHeader />
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link href="/dashboard" className="text-foreground hover:text-primary transition-colors cursor-pointer">
-                      Bài kiểm tra
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <div className="hidden md:flex items-center gap-6">
+              <a 
+                href="#features" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
+              >
+                Tính năng
+                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </a>
+              <a 
+                href="#faq" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
+              >
+                FAQ
+                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </a>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -216,23 +246,38 @@ const Header = () => {
                   <SheetTitle className="text-lg font-medium">
                     Menu
                   </SheetTitle>
-                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                    <X className="h-5 w-5" />
-                  </Button>
                 </div>
                 
                 <div className="flex flex-col p-4 space-y-6">
                   <div className="flex flex-col space-y-4">
-                    <div className="py-2">
-                      <div className="flex items-center justify-between hover:text-primary transition-colors">
-                        <Link href="/courses" className="flex-1" onClick={() => setIsOpen(false)}>
-                          Khóa học
-                        </Link>
-                      </div>
-                    </div>
-                    <Link href="/dashboard" className="flex items-center py-2 hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
-                      Bài kiểm tra
-                    </Link>
+                    <a 
+                      href="#features" 
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsOpen(false);
+                        setTimeout(() => {
+                          document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                        }, 300);
+                      }}
+                    >
+                      Tính năng
+                      <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a 
+                      href="#faq" 
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsOpen(false);
+                        setTimeout(() => {
+                          document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+                        }, 300);
+                      }}
+                    >
+                      FAQ
+                      <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
                   </div>
                   
                   <div className="border-t pt-4">

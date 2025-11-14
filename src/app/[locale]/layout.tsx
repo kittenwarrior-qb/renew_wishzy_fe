@@ -3,6 +3,7 @@ import { TranslationProvider } from '@/providers/TranslationProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
 import Header from '@/components/shared/layout/Header';
 import Footer from '@/components/shared/layout/Footer';
+import ScrollToTop from '@/components/shared/ScrollToTop';
 
 const locales = ['vi', 'en'];
 
@@ -67,6 +68,7 @@ export default async function LocaleLayout({
             {children}
           </main>
           <Footer />
+          <ScrollToTop />
         </div>
       </AuthProvider>
     </TranslationProvider>

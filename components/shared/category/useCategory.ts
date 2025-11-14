@@ -195,20 +195,46 @@ export const useSubCategoriesCount = (parentId: string) => {
   });
 };
 
-export const usePopularCategories = (limit = 10) => {
+export const useAllCategories = () => {
   return useQuery<CategoryListResponse>({
-    queryKey: [`${CATEGORY_ENDPOINTS.list}/popular`, { limit }],
-    queryFn: async () => categoryService.popular(limit),
+    queryKey: ['all-categories'],
+    queryFn: async () => categoryService.list({ limit: 1000 }),
     staleTime: 60 * 60 * 1000,
     select: (res: any): CategoryListResponse => {
-      const items: Category[] = res?.items ?? [];
-      const p = res?.pagination ?? {};
+      const payload = res?.data ?? res;
+      const items: Category[] = payload?.items ?? [];
+      const p = payload?.pagination ?? {};
       return {
         data: items,
         total: p?.totalItems ?? 0,
         page: p?.currentPage ?? 1,
-        limit: p?.itemsPerPage ?? 10,
+        limit: p?.itemsPerPage ?? 1000,
         totalPages: p?.totalPage ?? 0,
+      } as CategoryListResponse;
+    },
+  });
+};
+
+export const usePopularCategories = (limit = 8) => {
+  return useQuery<CategoryListResponse>({
+    queryKey: ['all-categories'],
+    queryFn: async () => categoryService.list({ limit: 1000 }),
+    staleTime: 60 * 60 * 1000,
+    select: (res: any): CategoryListResponse => {
+      const payload = res?.data ?? res;
+      const allItems: Category[] = payload?.items ?? [];
+      
+      // Sort by totalCourses descending and take top limit
+      const sortedItems = [...allItems]
+        .sort((a, b) => (b.totalCourses ?? 0) - (a.totalCourses ?? 0))
+        .slice(0, limit);
+      
+      return {
+        data: sortedItems,
+        total: sortedItems.length,
+        page: 1,
+        limit: limit,
+        totalPages: 1,
       } as CategoryListResponse;
     },
   });
