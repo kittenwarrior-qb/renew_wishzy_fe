@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   FileText, 
-  Download, 
   ExternalLink, 
   Clock,
   User,
@@ -148,9 +147,6 @@ export function LectureInfo({ lecture, chapter, onMarkComplete }: LectureInfoPro
                   <div className="text-xs text-muted-foreground">PDF • 2.3 MB</div>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">
-                <Download className="w-4 h-4" />
-              </Button>
             </div>
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -178,9 +174,6 @@ export function LectureInfo({ lecture, chapter, onMarkComplete }: LectureInfoPro
                   <div className="text-xs text-muted-foreground">ZIP • 5.1 MB</div>
                 </div>
               </div>
-              <Button variant="ghost" size="sm">
-                <Download className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </CardContent>

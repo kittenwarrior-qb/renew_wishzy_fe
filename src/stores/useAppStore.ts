@@ -25,7 +25,6 @@ interface User {
 }
 
 interface AppState {
-  // User state
   user: User | null;
   isAuthenticated: boolean;
   
@@ -70,7 +69,6 @@ export const useAppStore = create<AppState>()(
   devtools(
     persist(
       (set, get) => ({
-        // Initial state
         user: null,
         isAuthenticated: false,
         courses: [],
@@ -82,7 +80,6 @@ export const useAppStore = create<AppState>()(
         orderListCourse: [],
         wishlist: [],
 
-        // Actions
         setUser: (user) => set({ user, isAuthenticated: !!user }),
         
         login: (user) => set({ 

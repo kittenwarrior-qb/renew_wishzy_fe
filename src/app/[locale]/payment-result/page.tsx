@@ -1,11 +1,23 @@
 'use client'
 
-import { useEffect } from "react"
+import { useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useParams } from "next/navigation"
 
-const PaymentResultPage = () => {
+// Loading component for Suspense fallback
+const LoadingState = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+      <p className="text-muted-foreground">Đang xử lý kết quả thanh toán...</p>
+      <p className="text-xs text-muted-foreground mt-2">Vui lòng không đóng trang...</p>
+    </div>
+  </div>
+);
+
+// Main component wrapped in Suspense
+const PaymentResultContent = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const params = useParams()
@@ -50,4 +62,14 @@ const PaymentResultPage = () => {
   )
 }
 
-export default PaymentResultPage
+export default function PaymentResultPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <PaymentResultContent />
+    </Suspense>
+  );
+}
+
+// Prevent static prerendering of this page
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true

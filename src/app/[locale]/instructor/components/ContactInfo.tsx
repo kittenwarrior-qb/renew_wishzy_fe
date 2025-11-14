@@ -27,6 +27,7 @@ export const ContactInfo = ({ student }: ContactInfoProps) => {
             </p>
             <p className="text-sm font-medium">{student.email}</p>
           </div>
+
         </div>
         <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
           <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -56,4 +57,5 @@ export const ContactInfo = ({ student }: ContactInfoProps) => {
     </div>
   );
 };
+
 

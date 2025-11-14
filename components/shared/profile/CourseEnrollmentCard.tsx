@@ -1,7 +1,10 @@
+"use client";
+
 import { Enrollment } from "@/src/types/enrollment";
 import { Clock, BookOpen, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface CourseEnrollmentCardProps {
   enrollment: Enrollment;
@@ -9,6 +12,11 @@ interface CourseEnrollmentCardProps {
 
 export const CourseEnrollmentCard = ({ enrollment }: CourseEnrollmentCardProps) => {
   const { course, progress, status, lastAccess } = enrollment;
+  const pathname = usePathname();
+  const isInstructorContext = pathname?.includes('/instructor');
+  const courseLink = isInstructorContext 
+    ? `/instructor/course/${course.id}` 
+    : `/course/${course.id}`;
 
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -59,7 +67,7 @@ export const CourseEnrollmentCard = ({ enrollment }: CourseEnrollmentCardProps) 
   };
 
   return (
-    <Link href={`/course/${course.id}`}>
+    <Link href={courseLink}>
       <div className="bg-card rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
         <div className="flex flex-col md:flex-row">
           {/* Thumbnail */}

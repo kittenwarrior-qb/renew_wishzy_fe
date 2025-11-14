@@ -13,7 +13,20 @@ export const courseService = {
     },
 
     async list(params?: Record<string, any>) {
-        const res = await api.get(BASE, { params });
+        const cleanParams: Record<string, any> = {};
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    if ((key === 'minPrice' || key === 'maxPrice') && value === 0) {
+                        cleanParams[key] = 0.000001;
+                    } else {
+                        cleanParams[key] = value;
+                    }
+                }
+            });
+        }
+        
+        const res = await api.get(BASE, { params: cleanParams });
         return res.data;
     },
     async get(id: string) {

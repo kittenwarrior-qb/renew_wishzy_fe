@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useTranslations } from "@/providers/TranslationProvider";
 import type { Enrollment } from "@/types/enrollment";
-import { CourseCard } from "./CourseCard";
+import { CourseEnrollmentCard } from "@/components/shared/profile/CourseEnrollmentCard";
 
 interface CoursesSectionProps {
   enrollments: Enrollment[];
@@ -32,23 +32,23 @@ export const CoursesSection = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {inProgressCourses.length > 0 && (
         <div className="space-y-4">
-          <h4 className="font-semibold text-lg flex items-center gap-2">
+          <h4 className="font-semibold text-lg flex items-center gap-2 mb-4">
             <BookOpen className="h-5 w-5 text-primary" />
             {translate("continueLearning")}
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+          <div className="flex flex-col gap-4">
             {inProgressCourses.map((enrollment) => (
-              <CourseCard key={enrollment.id} enrollment={enrollment} />
+              <CourseEnrollmentCard key={enrollment.id} enrollment={enrollment} />
             ))}
           </div>
         </div>
       )}
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <h4 className="font-semibold text-lg flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
             {translate("allMaterials")}
@@ -60,9 +60,9 @@ export const CoursesSection = ({
             <p>{translate("noCoursesEnrolled")}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+          <div className="flex flex-col gap-4">
             {allCourses.map((enrollment) => (
-              <CourseCard key={enrollment.id} enrollment={enrollment} />
+              <CourseEnrollmentCard key={enrollment.id} enrollment={enrollment} />
             ))}
           </div>
         )}

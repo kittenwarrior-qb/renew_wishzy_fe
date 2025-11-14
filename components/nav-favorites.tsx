@@ -1,7 +1,7 @@
 "use client"
 
 import {
-  ArrowUpRight,
+  ExternalLink,
   Link,
   MoreHorizontal,
   StarOff,
@@ -70,7 +70,7 @@ export function NavFavorites({
                   <span>Copy Link</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <ArrowUpRight className="text-muted-foreground" />
+                  <ExternalLink className="text-muted-foreground" />
                   <span>Open in New Tab</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

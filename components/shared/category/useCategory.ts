@@ -9,7 +9,6 @@ import type {
 } from '@/types/category';
  
 
-// Category endpoints
 const CATEGORY_ENDPOINTS = {
   list: 'categories',
   detail: 'categories',
@@ -48,7 +47,6 @@ export const useCategoryList = (filter?: CategoryFilter) => {
   });
 };
 
-// Trash (deleted categories)
 export const useDeletedCategories = (filter?: Pick<CategoryFilter, 'page' | 'limit' | 'name'>) => {
   const params: Record<string, any> = {
     page: filter?.page,
@@ -90,7 +88,6 @@ export const useCategoryDetail = (id: string) => {
   });
 };
 
-// Create category hook
 export const useCreateCategory = () => {
   const qc = useQueryClient();
   return useMutation<any, unknown, CreateCategoryRequest>({
@@ -101,7 +98,6 @@ export const useCreateCategory = () => {
   });
 };
 
-// Update category hook
 export const useUpdateCategory = () => {
   const queryClient = useQueryClient();
   return useMutation<any, unknown, UpdateCategoryRequest>({
@@ -118,7 +114,6 @@ export const useUpdateCategory = () => {
   });
 };
 
-// Delete category hook
 export const useDeleteCategory = () => {
   const queryClient = useQueryClient();
   return useMutation<any, unknown, { id: string }>({
@@ -129,7 +124,6 @@ export const useDeleteCategory = () => {
   });
 };
 
-// Restore deleted category hook
 export const useRestoreCategory = () => {
   const queryClient = useQueryClient();
   return useMutation<any, unknown, { id: string }>({
@@ -160,7 +154,6 @@ export const useParentCategories = () => {
   });
 };
 
-// Subcategories hook (categories with specific parent)
 export const useSubCategories = (parentId: string, page: number = 1, limit: number = 10) => {
   return useQuery<CategoryListResponse>({
     queryKey: [CATEGORY_ENDPOINTS.list, { parentId, page, limit }],
@@ -182,7 +175,6 @@ export const useSubCategories = (parentId: string, page: number = 1, limit: numb
   });
 };
 
-// Subcategories count hook (lightweight count via pagination total)
 export const useSubCategoriesCount = (parentId: string) => {
   return useQuery<CategoryListResponse>({
     queryKey: [CATEGORY_ENDPOINTS.list, { parentId, limit: 1 }],
@@ -203,27 +195,51 @@ export const useSubCategoriesCount = (parentId: string) => {
   });
 };
 
-// Popular categories hook
-export const usePopularCategories = (limit = 10) => {
+export const useAllCategories = () => {
   return useQuery<CategoryListResponse>({
-    queryKey: [`${CATEGORY_ENDPOINTS.list}/popular`, { limit }],
-    queryFn: async () => categoryService.popular(limit),
+    queryKey: ['all-categories'],
+    queryFn: async () => categoryService.list({ limit: 1000 }),
     staleTime: 60 * 60 * 1000,
     select: (res: any): CategoryListResponse => {
-      const items: Category[] = res?.items ?? [];
-      const p = res?.pagination ?? {};
+      const payload = res?.data ?? res;
+      const items: Category[] = payload?.items ?? [];
+      const p = payload?.pagination ?? {};
       return {
         data: items,
         total: p?.totalItems ?? 0,
         page: p?.currentPage ?? 1,
-        limit: p?.itemsPerPage ?? 10,
+        limit: p?.itemsPerPage ?? 1000,
         totalPages: p?.totalPage ?? 0,
       } as CategoryListResponse;
     },
   });
 };
 
-// Search categories hook
+export const usePopularCategories = (limit = 8) => {
+  return useQuery<CategoryListResponse>({
+    queryKey: ['all-categories'],
+    queryFn: async () => categoryService.list({ limit: 1000 }),
+    staleTime: 60 * 60 * 1000,
+    select: (res: any): CategoryListResponse => {
+      const payload = res?.data ?? res;
+      const allItems: Category[] = payload?.items ?? [];
+      
+      // Sort by totalCourses descending and take top limit
+      const sortedItems = [...allItems]
+        .sort((a, b) => (b.totalCourses ?? 0) - (a.totalCourses ?? 0))
+        .slice(0, limit);
+      
+      return {
+        data: sortedItems,
+        total: sortedItems.length,
+        page: 1,
+        limit: limit,
+        totalPages: 1,
+      } as CategoryListResponse;
+    },
+  });
+};
+
 export const useSearchCategories = (searchTerm?: string) => {
   return useQuery<CategoryListResponse>({
     queryKey: [`${CATEGORY_ENDPOINTS.list}/search`, { q: searchTerm }],

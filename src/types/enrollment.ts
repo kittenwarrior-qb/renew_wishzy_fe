@@ -1,3 +1,5 @@
+import { CourseItemType } from "./course/course-item.types";
+
 export interface Enrollment {
   id: string;
   userId: string;
@@ -10,7 +12,7 @@ export interface Enrollment {
   certificateUrl: string | null;
   createdAt: string;
   updatedAt: string;
-  course: EnrollmentCourse;
+  course: CourseItemType;
   user: EnrollmentUser;
 }
 

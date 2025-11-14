@@ -76,7 +76,7 @@ export const useApiMutation = <TData = unknown, TVariables = unknown, TError = E
         params,
       });
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, context, unknown) => {
       if (invalidateQueries) {
         invalidateQueries.forEach(queryKey => {
           queryClient.invalidateQueries({ queryKey: [queryKey] });
@@ -85,6 +85,7 @@ export const useApiMutation = <TData = unknown, TVariables = unknown, TError = E
         queryClient.invalidateQueries({ queryKey: [endpoint] });
       }
 
+      // @ts-ignore - Handling different versions of react-query
       mutationOptions.onSuccess?.(data, variables, context);
     },
     ...mutationOptions,

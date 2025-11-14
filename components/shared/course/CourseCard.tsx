@@ -22,24 +22,19 @@ const CourseCard = ({ course }: CourseCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  // Check if course is already in cart
   const isInCart = cart.some(c => c.id === course.id);
   
-  // Check if course is already in wishlist
   const isInWishlist = wishlist.some(c => c.id === course.id);
 
-  // Calculate sale price (placeholder logic)
   const originalPrice = course?.price ? Number(course.price) : 500000;
-  const salePrice = Math.floor(originalPrice * 0.7); // 30% discount
+  const salePrice = Math.floor(originalPrice * 0.7);
   
-  // Handle add to cart
   const handleAddToCart = () => {
     if (!isInCart) {
       addToCart(course);
     }
   };
   
-  // Handle toggle wishlist
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
@@ -52,7 +47,6 @@ const CourseCard = ({ course }: CourseCardProps) => {
       }
     } catch (error) {
       console.error('Failed to toggle wishlist:', error);
-      // Revert on error
       if (isInWishlist) {
         addToWishlist(course);
       } else {
@@ -87,7 +81,6 @@ const CourseCard = ({ course }: CourseCardProps) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (hoverTimeout) clearTimeout(hoverTimeout);
@@ -96,13 +89,11 @@ const CourseCard = ({ course }: CourseCardProps) => {
   }, [hoverTimeout, leaveTimeout]);
 
   const handleMouseEnter = () => {
-    // Clear any pending leave timeout
     if (leaveTimeout) {
       clearTimeout(leaveTimeout);
       setLeaveTimeout(null);
     }
 
-    // If already hovered, don't set another timeout
     if (isHovered) {
       return;
     }
@@ -125,7 +116,6 @@ const CourseCard = ({ course }: CourseCardProps) => {
       setHoverTimeout(null);
     }
 
-    // Add delay before closing to allow mouse to reach modal
     const timeout = setTimeout(() => {
       setIsHovered(false);
     }, 300);
@@ -140,7 +130,6 @@ const CourseCard = ({ course }: CourseCardProps) => {
       onMouseLeave={handleMouseLeave}
     >
       <Card onClick={() => router.push(`/course-detail/${course.id}`)} className="max-w-[350px] overflow-hidden hover:shadow-lg transition-shadow duration-300 group py-0 gap-2 shadow-none border-none relative">
-        {/* Discount Badge */}
         <div className="absolute top-2 right-2 z-20 text-xs bg-red-500 text-white px-2 py-1 rounded font-semibold shadow-lg">
           -30%
         </div>
@@ -192,34 +181,19 @@ const CourseCard = ({ course }: CourseCardProps) => {
         </CardContent>
       </Card>
 
-      {/* Hover Modal */}
       {isHovered && (
         <div 
-          className={`absolute top-1/2 -translate-y-1/2 z-50 hidden lg:block w-80 bg-white dark:bg-gray-900 p-4 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-lg transition-opacity duration-200 ${
-            isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          } ${
+          className={`absolute top-1/2 -translate-y-1/2 z-50 hidden lg:block w-80 bg-white dark:bg-gray-900 p-4 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-lg transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-2 ${
             popupPosition === 'right' ? 'left-full ml-2' : 'right-full mr-2'
           }`}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
           <div className="space-y-3">
-            {/* Course Image */}
-            <div className="relative h-[120px] w-full overflow-hidden rounded">
-              <Image
-                src={course?.thumbnail || '/images/course-placeholder.jpg'} 
-                alt={course?.name || 'Khóa học'} 
-                fill
-                className="object-cover"
-              />
-            </div>
-
-            {/* Full Course Name */}
             <h3 className="font-bold text-lg leading-tight text-gray-900 dark:text-gray-100">
               {course?.name || 'Khóa học'}
             </h3>
 
-            {/* Description */}
             <p className="text-sm text-muted-foreground line-clamp-2">
               {course?.description || 'Mô tả khóa học sẽ được cập nhật sau'}
             </p>
