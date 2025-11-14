@@ -7,7 +7,9 @@ interface CourseEnrollmentCardProps {
   enrollment: Enrollment;
 }
 
-export const CourseEnrollmentCard = ({ enrollment }: CourseEnrollmentCardProps) => {
+export const CourseEnrollmentCard = ({
+  enrollment,
+}: CourseEnrollmentCardProps) => {
   const { course, progress, status, lastAccess } = enrollment;
 
   const formatDuration = (seconds: number) => {
@@ -21,12 +23,12 @@ export const CourseEnrollmentCard = ({ enrollment }: CourseEnrollmentCardProps) 
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'not_started':
-        return 'Chưa bắt đầu';
-      case 'in_progress':
-        return 'Đang học';
-      case 'completed':
-        return 'Hoàn thành';
+      case "not_started":
+        return "Chưa bắt đầu";
+      case "in_progress":
+        return "Đang học";
+      case "completed":
+        return "Hoàn thành";
       default:
         return status;
     }
@@ -34,32 +36,32 @@ export const CourseEnrollmentCard = ({ enrollment }: CourseEnrollmentCardProps) 
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'not_started':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'completed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+      case "not_started":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+      case "in_progress":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+      case "completed":
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getLevelLabel = (level: string) => {
     switch (level) {
-      case 'beginner':
-        return 'Cơ bản';
-      case 'intermediate':
-        return 'Trung cấp';
-      case 'advanced':
-        return 'Nâng cao';
+      case "beginner":
+        return "Cơ bản";
+      case "intermediate":
+        return "Trung cấp";
+      case "advanced":
+        return "Nâng cao";
       default:
         return level;
     }
   };
 
   return (
-    <Link href={`/course/${course.id}`}>
+    <Link href={`/learning/${course.id}`}>
       <div className="bg-card rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
         <div className="flex flex-col md:flex-row">
           {/* Thumbnail */}
@@ -71,7 +73,7 @@ export const CourseEnrollmentCard = ({ enrollment }: CourseEnrollmentCardProps) 
             />
             {parseFloat(progress) > 0 && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700">
-                <div 
+                <div
                   className="h-full bg-primary transition-all"
                   style={{ width: `${progress}%` }}
                 />
@@ -117,10 +119,11 @@ export const CourseEnrollmentCard = ({ enrollment }: CourseEnrollmentCardProps) 
               {/* Footer */}
               <div className="flex items-center justify-between pt-4 border-t border-border">
                 <span className="text-sm text-muted-foreground">
-                  Truy cập lần cuối: {new Date(lastAccess).toLocaleDateString('vi-VN')}
+                  Truy cập lần cuối:{" "}
+                  {new Date(lastAccess).toLocaleDateString("vi-VN")}
                 </span>
                 <span className="text-sm font-medium text-primary group-hover:underline">
-                  {parseFloat(progress) > 0 ? 'Tiếp tục học' : 'Bắt đầu học'}
+                  {parseFloat(progress) > 0 ? "Tiếp tục học" : "Bắt đầu học"}
                 </span>
               </div>
             </div>
