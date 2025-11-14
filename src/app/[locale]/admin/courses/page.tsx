@@ -5,7 +5,6 @@ import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
-import { Pagination } from "@/components/shared/common/Pagination"
 import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog"
 import Link from "next/link"
 import { notify } from "@/components/shared/admin/Notifications"
@@ -13,6 +12,8 @@ import { useAppStore } from "@/stores/useAppStore"
 import { useCourseList, useToggleCourseStatus, useDeleteCourse, useCreateCourse, useUpdateCourse, type Course } from "@/components/shared/course/useCourse"
 import { useParentCategories } from "@/components/shared/category/useCategory"
 import { Plus, Pencil, Trash2, Inbox } from "lucide-react"
+import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
+import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 
 type CourseFormValue = Partial<Pick<Course, "name" | "price" | "level" | "totalDuration" | "categoryId" | "description" | "notes" | "thumbnail">>
 
@@ -58,7 +59,7 @@ export default function Page() {
     courseLevel: level !== '__all' ? (level as 'beginner' | 'intermediate' | 'advanced') : undefined,
     categoryId: categoryId !== '__all' ? categoryId : undefined,
   }), [page, limit, name, status, level, categoryId])
-  const { data, isPending, isError } = useCourseList(filter)
+  const { data, isPending, isFetching, isError } = useCourseList(filter)
   const { data: parentsData } = useParentCategories()
   const categories = (parentsData?.data ?? []) as Array<{ id: string; name: string }>
   const items = (data?.data ?? []) as Course[]
@@ -108,27 +109,13 @@ export default function Page() {
             </Select>
           </div>
           <div className="flex items-center gap-2 justify-end">
-            <Pagination
-              pagination={{ totalItems: total, totalPages, currentPage, itemsPerPage: pageSize }}
-              onPageChange={(p) => setPage(p)}
-              className="m-0"
-              size="sm"
-            />
             <Link href={`/${locale}/admin/courses/create`} className="inline-flex"><Button className="h-9 gap-2"><Plus className="h-4 w-4" />Thêm khoá học</Button></Link>
           </div>
         </div>
       </div>
 
       <div className="relative min-h-[300px]">
-        {isPending ? (
-          <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
-              <img src={logoSrc} alt="Wishzy" className="h-10 w-auto opacity-90" />
-              <div aria-label="loading" className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              <span>Đang tải dữ liệu...</span>
-            </div>
-          </div>
-        ) : null}
+        <LoadingOverlay show={isPending || isFetching} />
 
         {isError ? (
           <div className="py-16 text-center text-sm text-destructive">Lỗi tải dữ liệu</div>
@@ -140,48 +127,43 @@ export default function Page() {
             </div>
           </div>
         ) : (
-          <div className="rounded-md border overflow-x-auto">
-            <table className="min-w-[920px] w-full text-sm">
-              <thead className="bg-muted/40">
-                <tr>
-                  <th className="p-2 text-left">Tên</th>
-                  <th className="p-2 text-left">Danh mục</th>
-                  <th className="p-2 text-right">Giá</th>
-                  <th className="p-2 text-center">Cấp độ</th>
-                  <th className="p-2 text-center">Trạng thái</th>
-                  <th className="p-2 text-center">Ngày tạo</th>
-                  <th className="p-2 text-center">Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((c) => (
-                  <tr key={String(c.id)} className="border-t">
-                    <td className="p-2 whitespace-nowrap">
-                      <Link href={`/${locale}/admin/courses/${c.id}`} className="text-primary hover:underline cursor-pointer">
-                        {c.name}
-                      </Link>
-                    </td>
-                    <td className="p-2">{(c as any).category?.name || "-"}</td>
-                    <td className="p-2 text-right">{Number(c.price).toLocaleString()}</td>
-                    <td className="p-2 text-center capitalize">{c.level}</td>
-                    <td className="p-2 text-center">
-                      <Button variant={c.status ? "secondary" : "outline"} size="sm" disabled={toggling}
-                        onClick={() => toggleStatus({ id: String(c.id) }, { onError: (e: any) => notify({ title: "Lỗi", description: String(e?.message || "Không thể cập nhật"), variant: "destructive" }) })}>
-                        {c.status ? "Xuất bản" : "Nháp"}
-                      </Button>
-                    </td>
-                    <td className="p-2 text-center">{new Date(c.createdAt).toLocaleDateString()}</td>
-                    <td className="p-2 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Link href={`/${locale}/admin/courses/edit/${c.id}`} className="inline-flex"><Button variant="outline" size="sm" className="gap-1 cursor-pointer"><Pencil className="h-4 w-4" />Sửa</Button></Link>
-                        <Button variant="destructive" size="sm" className="gap-1 cursor-pointer" onClick={() => onConfirmDelete(c)} disabled={deleting}><Trash2 className="h-4 w-4" />Xoá</Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          (() => {
+            const columns: Column<Course & any>[] = [
+              {
+                key: 'name', title: 'Tên', render: (row: Course) => (
+                  <Link href={`/${locale}/admin/courses/${row.id}`} className="text-primary hover:underline cursor-pointer">{row.name}</Link>
+                )
+              },
+              { key: 'category', title: 'Danh mục', render: (row: Course) => row.category?.name || '-' },
+              { key: 'price', title: 'Giá', align: 'right', render: (row: Course) => Number(row.price).toLocaleString() },
+              { key: 'level', title: 'Cấp độ', align: 'center', render: (row: Course) => String(row.level || '').toLowerCase() },
+              {
+                key: 'status', title: 'Trạng thái', align: 'center', render: (row: Course) => (
+                  <Button variant={row.status ? "secondary" : "outline"} size="sm" disabled={toggling}
+                    onClick={() => toggleStatus({ id: String(row.id) }, { onError: (e: any) => notify({ title: "Lỗi", description: String(e?.message || "Không thể cập nhật"), variant: "destructive" }) })}>
+                    {row.status ? "Xuất bản" : "Nháp"}
+                  </Button>
+                )
+              },
+              { key: 'createdAt', title: 'Ngày tạo', align: 'center', render: (row: Course) => new Date(row.createdAt).toLocaleDateString() },
+              {
+                key: 'actions', title: 'Hành động', align: 'center', render: (row: Course) => (
+                  <div className="flex items-center justify-center gap-2">
+                    <Link href={`/${locale}/admin/courses/edit/${row.id}`} className="inline-flex"><Button variant="outline" size="sm" className="gap-1 cursor-pointer"><Pencil className="h-4 w-4" />Sửa</Button></Link>
+                    <Button variant="destructive" size="sm" className="gap-1 cursor-pointer" onClick={() => onConfirmDelete(row)} disabled={deleting}><Trash2 className="h-4 w-4" />Xoá</Button>
+                  </div>
+                )
+              },
+            ]
+            return (
+              <DynamicTable
+                columns={columns}
+                data={items as any}
+                loading={isPending || isFetching}
+                pagination={{ totalItems: total, currentPage, itemsPerPage: pageSize, onPageChange: (p) => setPage(p) }}
+              />
+            )
+          })()
         )}
       </div>
 

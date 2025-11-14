@@ -57,3 +57,124 @@ export const validateCategoryName = (raw: string): string => {
   if (hasLetter && t === t.toUpperCase()) return "Tên không được toàn chữ IN HOA"
   return ""
 }
+
+// Generic validators
+export type Validator = (value: string, values?: Record<string, string>) => string | undefined
+
+export const compose = (...rules: Validator[]): Validator => (v, values) => {
+  for (const r of rules) {
+    const err = r(v, values)
+    if (err) return err
+  }
+  return undefined
+}
+
+export const required = (msg = "Trường này là bắt buộc"): Validator => (v) => {
+  return (v ?? "").trim() ? undefined : msg
+}
+
+export const noWhitespaceOnly = (msg = "Không được chỉ chứa khoảng trắng"): Validator => (v) => {
+  return (v ?? "").trim().length === 0 && (v ?? "").length > 0 ? msg : undefined
+}
+
+export const pattern = (re: RegExp, msg = "Giá trị không hợp lệ"): Validator => (v) => {
+  const s = (v ?? "").trim()
+  return s === "" || re.test(s) ? undefined : msg
+}
+
+export const minLength = (n: number, msg?: string): Validator => (v) => {
+  const s = (v ?? "").trim()
+  return s.length >= n || s.length === 0 ? undefined : (msg || `Phải có ít nhất ${n} ký tự`)
+}
+
+export const maxLength = (n: number, msg?: string): Validator => (v) => {
+  const s = (v ?? "").trim()
+  return s.length <= n ? undefined : (msg || `Không được vượt quá ${n} ký tự`)
+}
+
+export const lettersOnly = (msg = "Chỉ cho phép chữ cái"): Validator => (v) => {
+  const s = (v ?? "").trim()
+  return s === "" || /^[\p{L}\p{M} ]+$/u.test(s) ? undefined : msg
+}
+
+export const digitsOnly = (msg = "Chỉ cho phép số"): Validator => (v) => {
+  const s = (v ?? "").trim()
+  return s === "" || /^\d+$/.test(s) ? undefined : msg
+}
+
+export const isNumber = (msg = "Phải là số"): Validator => (v) => {
+  if ((v ?? "").trim() === "") return undefined
+  return Number.isFinite(Number(v)) ? undefined : msg
+}
+
+export const greaterThan = (min: number, msg?: string): Validator => (v) => {
+  if ((v ?? "").trim() === "") return undefined
+  const n = Number(v)
+  if (!Number.isFinite(n)) return msg || "Phải là số"
+  return n > min ? undefined : (msg || `Phải lớn hơn ${min}`)
+}
+
+export const greaterOrEqual = (min: number, msg?: string): Validator => (v) => {
+  if ((v ?? "").trim() === "") return undefined
+  const n = Number(v)
+  if (!Number.isFinite(n)) return msg || "Phải là số"
+  return n >= min ? undefined : (msg || `Phải lớn hơn hoặc bằng ${min}`)
+}
+
+export const inRange = (min: number, max: number, msg?: string): Validator => (v) => {
+  if ((v ?? "").trim() === "") return undefined
+  const n = Number(v)
+  if (!Number.isFinite(n)) return msg || "Phải là số"
+  return (n >= min && n <= max) ? undefined : (msg || `Giá trị phải trong khoảng ${min} - ${max}`)
+}
+
+export const percentRange = (msg?: string): Validator => inRange(1, 100, msg || "Phần trăm giảm phải từ 1 đến 100")
+
+export const selectRequired = (msg = "Vui lòng chọn giá trị"): Validator => (v) => {
+  const s = String(v ?? "").trim()
+  return s ? undefined : msg
+}
+
+export const datesOrder = (startKey: string, endKey: string, msg = "Ngày kết thúc phải sau ngày bắt đầu"): Validator => (_v, values) => {
+  if (!values) return undefined
+  const start = values[startKey]
+  const end = values[endKey]
+  if (!start || !end) return undefined
+  const sd = new Date(start)
+  const ed = new Date(end)
+  if (isNaN(sd.getTime()) || isNaN(ed.getTime())) return undefined
+  return ed.getTime() > sd.getTime() ? undefined : msg
+}
+
+// File validators
+export type FileValidator = (file: File | null | undefined) => string | undefined
+
+export const fileRequired = (msg = "Bắt buộc chọn file"): FileValidator => (f) => {
+  return f ? undefined : msg
+}
+
+export const fileTypes = (mimes: string[], msg = "File không hợp lệ"): FileValidator => (f) => {
+  if (!f) return undefined
+  return mimes.includes(f.type) ? undefined : msg
+}
+
+export const fileMaxSize = (bytes: number, msg?: string): FileValidator => (f) => {
+  if (!f) return undefined
+  return f.size <= bytes ? undefined : (msg || "File quá lớn")
+}
+
+// Formatters
+export type Formatter = (value: string, values?: Record<string, string>) => string
+
+export const trim: Formatter = (v) => (v || "").trim()
+export const collapseSpaces: Formatter = (v) => (v || "").replace(/\s+/g, " ")
+export const toUpper: Formatter = (v) => (v || "").toUpperCase()
+export const toUpperNoSpaces: Formatter = (v) => (v || "").toUpperCase().replace(/\s+/g, "")
+export const onlyDigits: Formatter = (v) => (v || "").replace(/[^0-9]/g, "")
+export const stripSpecial = (allowed: RegExp = /[\p{L}\p{M}0-9 ]/u): Formatter => (v) => Array.from(v || "").filter(ch => allowed.test(ch)).join("")
+export const clampPercent: Formatter = (v) => {
+  const d = onlyDigits(v)
+  if (d === "") return d
+  const n = Math.max(1, Math.min(100, Number(d)))
+  return String(n)
+}

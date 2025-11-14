@@ -57,13 +57,12 @@ export const useCourseList = (filter?: CourseFilter, options?: { enabled?: boole
     createdBy: filter?.createdBy,
     rating: filter?.rating,
     courseLevel: filter?.courseLevel,
-    minPrice: filter?.minPrice !== undefined ? 
-              (filter.minPrice === 0 ? 0.000001 : filter.minPrice) : 
-              undefined,
+    minPrice: filter?.minPrice !== undefined ?
+      (filter.minPrice === 0 ? 0.000001 : filter.minPrice) :
+      undefined,
     maxPrice: filter?.maxPrice !== undefined ? filter.maxPrice : undefined,
     status: typeof filter?.status === 'boolean' ? filter?.status : undefined,
   }
-  
   return useQuery<CourseListResponse>({
     queryKey: [ENDPOINT, params],
     queryFn: async () => courseService.list(params),
@@ -85,7 +84,7 @@ export const useCourseList = (filter?: CourseFilter, options?: { enabled?: boole
 }
 
 export const useCourseDetail = (id?: string) => {
-  return useQuery<Course>({
+  return useQuery<any, unknown, Course>({
     queryKey: [ENDPOINT, id],
     queryFn: async () => courseService.get(id as string),
     enabled: !!id,
@@ -236,35 +235,35 @@ export const useInstructorSearch = (filter?: InstructorFilter, options?: { enabl
     specialties: filter?.specialties,
     rating: filter?.rating,
   };
-  
+
   return useQuery<InstructorListResponse>({
     queryKey: ['instructors', 'search', params],
     queryFn: async () => {
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       const filtered = mockInstructors.filter(instructor => {
         if (params.fullName && !instructor.fullName.toLowerCase().includes(params.fullName.toLowerCase())) {
           return false;
         }
-        
+
         if (params.rating && instructor.rating !== undefined && instructor.rating < params.rating) {
           return false;
         }
-        
+
         if (params.specialties && params.specialties.length > 0) {
-          const hasSpecialty = params.specialties.some((specialty: string) => 
+          const hasSpecialty = params.specialties.some((specialty: string) =>
             instructor.specialties?.includes(specialty)
           );
           if (!hasSpecialty) return false;
         }
-        
+
         return true;
       });
-      
+
       const start = (params.page - 1) * params.limit;
       const end = start + params.limit;
       const paginatedItems = filtered.slice(start, end);
-      
+
       return {
         data: paginatedItems,
         total: filtered.length,
@@ -273,7 +272,7 @@ export const useInstructorSearch = (filter?: InstructorFilter, options?: { enabl
         totalPages: Math.ceil(filtered.length / params.limit)
       };
     },
-    staleTime: 5 * 60 * 1000, 
+    staleTime: 5 * 60 * 1000,
     enabled: options?.enabled,
   });
 };

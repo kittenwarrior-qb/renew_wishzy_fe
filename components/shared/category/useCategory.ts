@@ -7,7 +7,7 @@ import type {
   CreateCategoryRequest,
   UpdateCategoryRequest
 } from '@/types/category';
- 
+
 
 const CATEGORY_ENDPOINTS = {
   list: 'categories',
@@ -28,7 +28,7 @@ export const useCategoryList = (filter?: CategoryFilter) => {
   if (filter?.search) params.search = filter.search;
   else if (filter?.name) params.name = filter.name;
 
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [CATEGORY_ENDPOINTS.list, params],
     queryFn: async () => categoryService.list(params),
     staleTime: 10 * 60 * 1000,
@@ -54,7 +54,7 @@ export const useDeletedCategories = (filter?: Pick<CategoryFilter, 'page' | 'lim
   };
   if (filter?.name) params.name = filter.name;
 
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [`${CATEGORY_ENDPOINTS.list}/trash`, params],
     queryFn: async () => categoryService.trash(params),
     staleTime: 5 * 60 * 1000,
@@ -75,7 +75,7 @@ export const useDeletedCategories = (filter?: Pick<CategoryFilter, 'page' | 'lim
 
 
 export const useCategoryDetail = (id: string) => {
-  return useQuery<Category>({
+  return useQuery<any, unknown, Category>({
     queryKey: [CATEGORY_ENDPOINTS.detail, id],
     queryFn: async () => categoryService.get(id),
     enabled: !!id,
@@ -135,7 +135,7 @@ export const useRestoreCategory = () => {
 };
 
 export const useParentCategories = () => {
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [CATEGORY_ENDPOINTS.list, { limit: 1000 }],
     queryFn: async () => categoryService.parents({ limit: 1000 }),
     staleTime: 30 * 60 * 1000,
@@ -155,7 +155,7 @@ export const useParentCategories = () => {
 };
 
 export const useSubCategories = (parentId: string, page: number = 1, limit: number = 10) => {
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [CATEGORY_ENDPOINTS.list, { parentId, page, limit }],
     queryFn: async () => categoryService.subcategories(parentId, { page, limit }),
     enabled: !!parentId,
@@ -176,7 +176,7 @@ export const useSubCategories = (parentId: string, page: number = 1, limit: numb
 };
 
 export const useSubCategoriesCount = (parentId: string) => {
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [CATEGORY_ENDPOINTS.list, { parentId, limit: 1 }],
     queryFn: async () => categoryService.subcategories(parentId, { limit: 1 }),
     enabled: !!parentId,
@@ -194,7 +194,6 @@ export const useSubCategoriesCount = (parentId: string) => {
     },
   });
 };
-
 export const useAllCategories = () => {
   return useQuery<CategoryListResponse>({
     queryKey: ['all-categories'],
@@ -223,12 +222,12 @@ export const usePopularCategories = (limit = 8) => {
     select: (res: any): CategoryListResponse => {
       const payload = res?.data ?? res;
       const allItems: Category[] = payload?.items ?? [];
-      
+
       // Sort by totalCourses descending and take top limit
       const sortedItems = [...allItems]
         .sort((a, b) => (b.totalCourses ?? 0) - (a.totalCourses ?? 0))
         .slice(0, limit);
-      
+
       return {
         data: sortedItems,
         total: sortedItems.length,
@@ -241,7 +240,7 @@ export const usePopularCategories = (limit = 8) => {
 };
 
 export const useSearchCategories = (searchTerm?: string) => {
-  return useQuery<CategoryListResponse>({
+  return useQuery<any, unknown, CategoryListResponse>({
     queryKey: [`${CATEGORY_ENDPOINTS.list}/search`, { q: searchTerm }],
     queryFn: async () => (searchTerm && searchTerm.length > 2 ? categoryService.search(searchTerm) : Promise.resolve({} as any)),
     enabled: !!searchTerm && searchTerm.length > 2,
