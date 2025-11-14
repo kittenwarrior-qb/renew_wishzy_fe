@@ -13,7 +13,7 @@ const image = [
   "https://res.cloudinary.com/djuksxdrw/image/upload/v1763030028/QmZKSgTAvsNo9tMZcMvMMQoYLAUMqiGfPVbQgj9YKEmW8y_l7c3at.avif",
   "https://res.cloudinary.com/djuksxdrw/image/upload/v1763030307/z6859109728630_0a19fc6f5477fe33038f87e95c653a13-Photoroom_psx2ld.png",
   "https://res.cloudinary.com/djuksxdrw/image/upload/v1763029064/2c43debb-0cc1-4d34-a923-8fac68aedaba_vbw6vq.png"
-  
+
 ]
 
 const HeroSection = () => {
@@ -91,9 +91,9 @@ const HeroSection = () => {
             <div className="flex items-end gap-4 relative w-full">
               <div className="self-stretch flex flex-col items-start gap-4 relative flex-1">
                 <div className="relative flex-1 w-full grow rounded-lg overflow-hidden">
-                  <img 
-                    src={image[0]} 
-                    alt="Khóa học trực tuyến" 
+                  <img
+                    src={image[0]}
+                    alt="Khóa học trực tuyến"
                     className="w-full h-full object-cover  transition duration-300 hover:scale-105"
                   />
                 </div>
@@ -110,18 +110,18 @@ const HeroSection = () => {
                   </div>
 
                   <div className="absolute top-3 left-[calc(50.00%-140px)] w-[270px] h-[300px] rounded-t-full overflow-hidden transition duration-300 hover:scale-105 hover:-translate-y-2">
-                    <img 
-                      src={image[1]} 
-                      alt="Học tập trực tuyến" 
+                    <img
+                      src={image[1]}
+                      alt="Học tập trực tuyến"
                       className="w-full h-full object-cover  "
                     />
                   </div>
                 </div>
 
                 <div className="relative w-full aspect-[277/224] rounded-lg overflow-hidden">
-                  <img 
-                    src={image[2]} 
-                    alt="Nền tảng học trực tuyến" 
+                  <img
+                    src={image[2]}
+                    alt="Nền tảng học trực tuyến"
                     className="w-full h-full object-cover transition duration-300 hover:scale-105"
                   />
                 </div>

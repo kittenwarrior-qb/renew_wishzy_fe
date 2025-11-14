@@ -15,29 +15,14 @@ const CategoryListSection = () => {
   return (
     <section className="relative w-full overflow-hidden bg-background py-16 md:py-20">
       <div className="max-w-[1300px] mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-          <div>
-            {/* <div className="inline-flex items-center gap-2 px-5 py-2 bg-background rounded-full text-sm font-medium shadow-sm mb-4">
-              <span className="text-primary">✦</span>
-              <span>Danh mục khóa học</span>
-            </div> */}
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Danh Mục Phổ biến</h2>
-            <p className="text-muted-foreground">
-              Khám phá các khóa học phong phú được thiết kế để giúp bạn đạt được mục tiêu học tập.
-            </p>
-          </div>
-          <Button
-            asChild
-            size="lg"
-            className="rounded-full px-7 h-[40px] text-[14px] transition-transform hover:-translate-y-1"
-          >
-            <Link href="/search" className="flex items-center gap-2">
-              Xem tất cả
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </Button>
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold mb-2 text-foreground">
+            Danh mục nổi
+          </h2>
+          <p className="text-muted-foreground">
+            Khám phá những khóa học mới được cập nhật
+          </p>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {categories.map((category, index) => {
             const Icon = categoryIcons[index % categoryIcons.length];

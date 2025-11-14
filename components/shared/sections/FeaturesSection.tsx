@@ -78,8 +78,8 @@ const FeaturesSection = () => {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card 
-                key={index} 
+              <Card
+                key={index}
                 className="border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
                 <CardContent className="px-6">
