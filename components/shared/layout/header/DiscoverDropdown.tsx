@@ -33,7 +33,7 @@ const useCategoriesQuery = () => {
   });
 };
 
-const CourseHeader = () => {
+const DiscoverDropdown = () => {
   const { data: categoriesData, isLoading } = useCategoriesQuery();
   const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
   
@@ -103,9 +103,9 @@ const CourseHeader = () => {
   };
 
   return (
-    <DropdownMenu onOpenChange={handleOpenChange}>
-      <DropdownMenuTrigger className="text-foreground text-sm hover:text-primary transition-colors cursor-pointer px-4 py-2 rounded-md flex items-center gap-1">
-        Khóa học <ChevronDown className='h-4 w-4 ml-1' />
+    <DropdownMenu onOpenChange={handleOpenChange} modal={false}>
+      <DropdownMenuTrigger className="text-foreground text-sm hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer px-4 py-2 rounded-md flex items-center gap-1">
+        Khám phá <ChevronDown className='h-4 w-4 ml-1' />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-white dark:bg-gray-900">
         <DropdownMenuGroup>
@@ -159,4 +159,4 @@ const CourseHeader = () => {
   );
 };
 
-export default CourseHeader;
+export default DiscoverDropdown;

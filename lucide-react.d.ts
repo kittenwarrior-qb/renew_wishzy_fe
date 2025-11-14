@@ -11,7 +11,9 @@ declare module 'lucide-react' {
   export const ArrowRight: Icon
   export const ArrowRightToLine: Icon
   export const AudioWaveform: Icon
+  export const Award: Icon
   export const BadgeCheck: Icon
+  export const BarChart: Icon
   export const BarChart3: Icon
   export const Bell: Icon
   export const Blocks: Icon
@@ -113,7 +115,7 @@ declare module 'lucide-react' {
   export const X: Icon
   export const XCircle: Icon
   export const XIcon: Icon
-  
+  export const ArrowUp: Icon
   interface Icons {
     [key: string]: Icon
   }

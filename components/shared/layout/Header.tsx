@@ -45,7 +45,7 @@ import { useTranslations } from "@/providers/TranslationProvider"
 import { useAppStore } from "@/stores/useAppStore"
 import CartPopover from "../cart/CartPopover"
 import SearchHeader from "./header/SearchHeader"
-import CourseHeader from "./header/CourseHeader"
+import DiscoverDropdown from "./header/DiscoverDropdown"
 
 const Header = () => {
   const pathname = usePathname();
@@ -100,6 +100,8 @@ const Header = () => {
               </Link>
             )}
             
+            {!isSearchExpanded && <DiscoverDropdown />}
+            
             <div className="hidden md:block">
               <SearchHeader />
             </div>
@@ -108,18 +110,30 @@ const Header = () => {
               <SearchHeader onExpand={setIsSearchExpanded} isMobile={true} />
             </div>
 
-            <NavigationMenu className={`hidden ${isSearchExpanded ? 'md:hidden' : 'md:block'}`}>
-              <NavigationMenuList className="">
-                <CourseHeader />
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link href="/dashboard" className="text-foreground hover:text-primary transition-colors cursor-pointer">
-                      Bài kiểm tra
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <div className="hidden md:flex items-center gap-6">
+              <a 
+                href="#features" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
+              >
+                Tính năng
+                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </a>
+              <a 
+                href="#faq" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
+              >
+                FAQ
+                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </a>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -216,23 +230,38 @@ const Header = () => {
                   <SheetTitle className="text-lg font-medium">
                     Menu
                   </SheetTitle>
-                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                    <X className="h-5 w-5" />
-                  </Button>
                 </div>
                 
                 <div className="flex flex-col p-4 space-y-6">
                   <div className="flex flex-col space-y-4">
-                    <div className="py-2">
-                      <div className="flex items-center justify-between hover:text-primary transition-colors">
-                        <Link href="/courses" className="flex-1" onClick={() => setIsOpen(false)}>
-                          Khóa học
-                        </Link>
-                      </div>
-                    </div>
-                    <Link href="/dashboard" className="flex items-center py-2 hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
-                      Bài kiểm tra
-                    </Link>
+                    <a 
+                      href="#features" 
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsOpen(false);
+                        setTimeout(() => {
+                          document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                        }, 300);
+                      }}
+                    >
+                      Tính năng
+                      <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a 
+                      href="#faq" 
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsOpen(false);
+                        setTimeout(() => {
+                          document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+                        }, 300);
+                      }}
+                    >
+                      FAQ
+                      <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
                   </div>
                   
                   <div className="border-t pt-4">

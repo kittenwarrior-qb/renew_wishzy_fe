@@ -1,9 +1,6 @@
 "use client";
 
-import React from "react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 
 const featuresData = [
@@ -21,11 +18,11 @@ const image = [
 
 const HeroSection = () => {
   return (
-    <section className="relative w-full overflow-hidden bg-background py-16 md:py-24">
+    <section className="relative w-full overflow-hidden bg-background py-16 md:py-20">
       <div className="max-w-[1300px] mx-auto px-4">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <div className="flex flex-col space-y-8">
-            <div className="inline-flex items-center self-start gap-2 px-5 py-2 bg-muted/80 rounded-full text-sm font-medium shadow-sm">
+            <div className="inline-flex items-center self-start gap-2 px-5 py-2 bg-background rounded-full text-sm font-medium shadow-sm">
               <span className="text-primary">✦</span>
               <span>Nền tảng học trực tuyến</span>
             </div>
@@ -90,10 +87,10 @@ const HeroSection = () => {
             </div>
           </div>
 
-          <div className="relative hidden lg:block">
-            <div className="inline-flex items-end gap-4 relative">
-              <div className="self-stretch inline-flex flex-col items-start gap-4 relative flex-[0_0_auto]">
-                <div className="relative flex-1 w-[277px] grow rounded-lg overflow-hidden">
+          <div className="relative hidden lg:block w-full">
+            <div className="flex items-end gap-4 relative w-full">
+              <div className="self-stretch flex flex-col items-start gap-4 relative flex-1">
+                <div className="relative flex-1 w-full grow rounded-lg overflow-hidden">
                   <img 
                     src={image[0]} 
                     alt="Khóa học trực tuyến" 
@@ -101,18 +98,18 @@ const HeroSection = () => {
                   />
                 </div>
 
-                <div className="relative w-[277px] h-[188px] overflow-hidden">
+                <div className="relative w-full aspect-[277/188] overflow-hidden">
                   <div className="absolute inset-0 bg-primary rounded-bl-[200px] rounded-2xl" />
                 </div>
               </div>
 
-              <div className="inline-flex flex-col items-start gap-4 relative flex-[0_0_auto]">
-                <div className="relative w-[277px] h-[270px] rounded-lg overflow-hidden">
-                  <div className="absolute left-[calc(50.00%-138px)] bottom-0 w-[277px] h-[188px] overflow-hidden">
+              <div className="flex flex-col items-start gap-4 relative flex-1">
+                <div className="relative w-full aspect-[277/270] rounded-lg overflow-hidden">
+                  <div className="absolute left-[calc(50.00%-150px)] bottom-0 w-[297px] h-[188px] overflow-hidden">
                     <div className="absolute inset-0 bg-primary rounded-tr-[200px] rounded-2xl" />
                   </div>
 
-                  <div className="absolute top-7 left-[calc(50.00%-112px)] w-[213px] h-[242px] rounded-t-full overflow-hidden">
+                  <div className="absolute top-3 left-[calc(50.00%-140px)] w-[270px] h-[300px] rounded-t-full overflow-hidden transition duration-300 hover:scale-105 hover:-translate-y-2">
                     <img 
                       src={image[1]} 
                       alt="Học tập trực tuyến" 
@@ -121,7 +118,7 @@ const HeroSection = () => {
                   </div>
                 </div>
 
-                <div className="relative self-stretch w-full h-56 rounded-lg overflow-hidden">
+                <div className="relative w-full aspect-[277/224] rounded-lg overflow-hidden">
                   <img 
                     src={image[2]} 
                     alt="Nền tảng học trực tuyến" 

@@ -6,10 +6,10 @@ import { NotFoundAnimation } from '@/components/animations/NotFoundAnimation';
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="container max-w-2xl mx-auto">
+      <div className="container max-w-4xl mx-auto">
         <Card className="bg-card border-border text-card-foreground">
           <CardHeader className="flex justify-center pb-4">
-            <NotFoundAnimation width={500} height={300} />
+            <NotFoundAnimation width={600} height={400} />
           </CardHeader>
           <CardContent className="text-center space-y-6">
             <CardTitle className="text-3xl font-bold text-foreground">

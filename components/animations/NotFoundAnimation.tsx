@@ -8,7 +8,7 @@ export type NotFoundAnimationProps = {
   className?: string;
 };
 
-export function NotFoundAnimation({ width = '100%', height = 360, className }: NotFoundAnimationProps) {
+export function NotFoundAnimation({ width = '100%', height = 600, className }: NotFoundAnimationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { RiveComponent, rive } = useRive({
