@@ -9,11 +9,13 @@ import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog"
 import Link from "next/link"
 import { notify } from "@/components/shared/admin/Notifications"
 import { useAppStore } from "@/stores/useAppStore"
-import { useCourseList, useToggleCourseStatus, useDeleteCourse, useCreateCourse, useUpdateCourse, type Course } from "@/components/shared/course/useCourse"
+import { useCourseList, useToggleCourseStatus, useDeleteCourse, type Course } from "@/components/shared/course/useCourse"
 import { useParentCategories } from "@/components/shared/category/useCategory"
-import { Plus, Pencil, Trash2, Inbox } from "lucide-react"
+import { Plus, Pencil, Trash2, Inbox, ExternalLink, Image as ImageIcon } from "lucide-react"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
+import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 type CourseFormValue = Partial<Pick<Course, "name" | "price" | "level" | "totalDuration" | "categoryId" | "description" | "notes" | "thumbnail">>
 
@@ -130,29 +132,153 @@ export default function Page() {
           (() => {
             const columns: Column<Course & any>[] = [
               {
-                key: 'name', title: 'Tên', render: (row: Course) => (
-                  <Link href={`/${locale}/admin/courses/${row.id}`} className="text-primary hover:underline cursor-pointer">{row.name}</Link>
-                )
+                key: 'thumbnail',
+                label: 'Ảnh',
+                type: 'short',
+                render: (row: Course) => (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        className="group inline-flex h-12 w-16 items-center justify-center overflow-hidden rounded-md bg-muted/40 hover:bg-muted"
+                      >
+                        {row.thumbnail ? (
+                          <img
+                            src={row.thumbnail as any}
+                            alt={row.name || "Thumbnail"}
+                            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                          />
+                        ) : (
+                          <span className="flex flex-col items-center gap-1 text-[10px] text-muted-foreground">
+                            <ImageIcon className="h-4 w-4" />
+                            <span>Không có</span>
+                          </span>
+                        )}
+                      </button>
+                    </DialogTrigger>
+                    {row.thumbnail ? (
+                      <DialogContent className="sm:max-w-xl md:max-w-2xl border-none p-3 sm:p-4 bg-background/95">
+                        <div className="mb-2 text-xs text-muted-foreground line-clamp-2">
+                          {row.name || "Ảnh khoá học"}
+                        </div>
+                        <div className="rounded-md bg-muted flex items-center justify-center">
+                          <img
+                            src={row.thumbnail as any}
+                            alt={row.name || "Thumbnail"}
+                            className="max-h-[70vh] w-full object-contain rounded-md"
+                          />
+                        </div>
+                      </DialogContent>
+                    ) : null}
+                  </Dialog>
+                ),
               },
-              { key: 'category', title: 'Danh mục', render: (row: Course) => row.category?.name || '-' },
-              { key: 'price', title: 'Giá', align: 'right', render: (row: Course) => Number(row.price).toLocaleString() },
-              { key: 'level', title: 'Cấp độ', align: 'center', render: (row: Course) => String(row.level || '').toLowerCase() },
               {
-                key: 'status', title: 'Trạng thái', align: 'center', render: (row: Course) => (
-                  <Button variant={row.status ? "secondary" : "outline"} size="sm" disabled={toggling}
-                    onClick={() => toggleStatus({ id: String(row.id) }, { onError: (e: any) => notify({ title: "Lỗi", description: String(e?.message || "Không thể cập nhật"), variant: "destructive" }) })}>
+                key: 'name',
+                label: 'Tên',
+                type: 'text',
+                render: (row: Course) => (
+                  <Link
+                    href={`/${locale}/admin/courses/${row.id}`}
+                    className="hover:underline flex items-center gap-2 cursor-pointer"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+
+                    <TruncateTooltipWrapper lineClamp={1} maxWidth={260}>
+                      <span>{row.name}</span>
+                    </TruncateTooltipWrapper>
+                  </Link>
+                ),
+              },
+              {
+                key: 'category',
+                label: 'Danh mục',
+                type: 'short',
+                render: (row: Course) => row.category?.name || '-',
+              },
+              {
+                key: 'price',
+                label: 'Giá',
+                type: 'number',
+                render: (row: Course) => Number(row.price).toLocaleString() + ' VNĐ',
+              },
+              {
+                key: 'level',
+                label: 'Cấp độ',
+                type: 'short',
+                render: (row: Course) => {
+                  const level = String(row.level || '').toLowerCase()
+                  const base = "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                  const color = level === 'beginner'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : level === 'intermediate'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : level === 'advanced'
+                        ? 'bg-sky-50 text-sky-700 border-sky-200'
+                        : 'bg-muted text-muted-foreground border-transparent'
+
+                  return (
+                    <span className={`${base} ${color}`}>
+                      {level || '-'}
+                    </span>
+                  )
+                },
+              },
+              {
+                key: 'status',
+                label: 'Trạng thái',
+                type: 'short',
+                render: (row: Course) => (
+                  <Button
+                    variant={row.status ? "secondary" : "outline"}
+                    size="sm"
+                    disabled={toggling}
+                    onClick={() =>
+                      toggleStatus(
+                        { id: String(row.id) },
+                        {
+                          onError: (e: any) =>
+                            notify({
+                              title: "Lỗi",
+                              description: String(e?.message || "Không thể cập nhật"),
+                              variant: "destructive",
+                            }),
+                        },
+                      )
+                    }
+                  >
                     {row.status ? "Xuất bản" : "Nháp"}
                   </Button>
-                )
+                ),
               },
-              { key: 'createdAt', title: 'Ngày tạo', align: 'center', render: (row: Course) => new Date(row.createdAt).toLocaleDateString() },
               {
-                key: 'actions', title: 'Hành động', align: 'center', render: (row: Course) => (
-                  <div className="flex items-center justify-center gap-2">
-                    <Link href={`/${locale}/admin/courses/edit/${row.id}`} className="inline-flex"><Button variant="outline" size="sm" className="gap-1 cursor-pointer"><Pencil className="h-4 w-4" />Sửa</Button></Link>
-                    <Button variant="destructive" size="sm" className="gap-1 cursor-pointer" onClick={() => onConfirmDelete(row)} disabled={deleting}><Trash2 className="h-4 w-4" />Xoá</Button>
+                key: 'createdAt',
+                label: 'Ngày tạo',
+                type: 'short',
+                render: (row: Course) => new Date(row.createdAt).toLocaleDateString(),
+              },
+              {
+                key: 'actions',
+                label: 'Hành động',
+                type: 'action',
+                render: (row: Course) => (
+                  <div className="flex items-center justify-center gap-3">
+                    <Link
+                      href={`/${locale}/admin/courses/${row.id}`}
+                      className="inline-flex text-muted-foreground hover:text-foreground"
+                    >
+                      <Pencil className="h-5 w-5" />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => onConfirmDelete(row)}
+                      disabled={deleting}
+                      className="inline-flex text-destructive hover:text-destructive/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
                   </div>
-                )
+                ),
               },
             ]
             return (
@@ -160,7 +286,17 @@ export default function Page() {
                 columns={columns}
                 data={items as any}
                 loading={isPending || isFetching}
-                pagination={{ totalItems: total, currentPage, itemsPerPage: pageSize, onPageChange: (p) => setPage(p) }}
+                pagination={{
+                  totalItems: total,
+                  currentPage,
+                  itemsPerPage: pageSize,
+                  onPageChange: (p) => setPage(p),
+                  pageSizeOptions: [10, 20, 50],
+                  onPageSizeChange: (sz) => {
+                    setLimit(sz)
+                    setPage(1)
+                  },
+                }}
               />
             )
           })()
@@ -185,58 +321,6 @@ export default function Page() {
           })
         }}
       />
-    </div>
-  )
-}
-
-function CourseForm({ form, setForm, categories }: { form: CourseFormValue; setForm: (v: CourseFormValue) => void; categories: Array<{ id: string; name: string }> }) {
-  const onField = (k: keyof CourseFormValue) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm({ ...form, [k]: e.target.value })
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-      <div>
-        <label className="mb-1 block text-sm font-medium">Tên</label>
-        <Input value={form.name || ""} onChange={onField("name")} placeholder="Tên khoá học" />
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium">Danh mục</label>
-        <Select value={form.categoryId || ""} onValueChange={(v) => setForm({ ...form, categoryId: v })}>
-          <SelectTrigger><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
-          <SelectContent>
-            {categories.map((c) => (<SelectItem key={String((c as any).id)} value={String((c as any).id)}>{(c as any).name}</SelectItem>))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium">Giá</label>
-        <Input type="number" value={form.price as any} onChange={onField("price")} placeholder="0" />
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium">Cấp độ</label>
-        <Select value={form.level || "beginner"} onValueChange={(v) => setForm({ ...form, level: v as any })}>
-          <SelectTrigger><SelectValue placeholder="Chọn cấp độ" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="beginner">Beginner</SelectItem>
-            <SelectItem value="intermediate">Intermediate</SelectItem>
-            <SelectItem value="advanced">Advanced</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium">Tổng thời lượng (phút)</label>
-        <Input type="number" value={form.totalDuration as any} onChange={onField("totalDuration")} placeholder="0" />
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium">Thumbnail (URL)</label>
-        <Input value={form.thumbnail || ""} onChange={onField("thumbnail")} placeholder="https://...jpg" />
-      </div>
-      <div className="md:col-span-2">
-        <label className="mb-1 block text-sm font-medium">Mô tả</label>
-        <Input value={form.description || ""} onChange={onField("description")} placeholder="Mô tả ngắn" />
-      </div>
-      <div className="md:col-span-2">
-        <label className="mb-1 block text-sm font-medium">Ghi chú</label>
-        <Input value={form.notes || ""} onChange={onField("notes")} placeholder="Ghi chú..." />
-      </div>
     </div>
   )
 }
