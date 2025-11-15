@@ -35,16 +35,36 @@ const CheckoutPage = () => {
     },
   })
 
-  // Calculate totals
+  // Calculate totals with sale info
+  const calculateFinalPrice = (course: CourseItemType) => {
+    const originalPrice = course?.price ? Number(course.price) : 500000
+    
+    if (!course.saleInfo) return originalPrice
+    
+    const now = new Date()
+    const saleStart = course.saleInfo.saleStartDate ? new Date(course.saleInfo.saleStartDate) : null
+    const saleEnd = course.saleInfo.saleEndDate ? new Date(course.saleInfo.saleEndDate) : null
+    
+    const isWithinSalePeriod = (!saleStart || now >= saleStart) && (!saleEnd || now <= saleEnd)
+    
+    if (!isWithinSalePeriod || !course.saleInfo.value) return originalPrice
+    
+    if (course.saleInfo.saleType === 'percent') {
+      return originalPrice * (1 - course.saleInfo.value / 100)
+    } else if (course.saleInfo.saleType === 'fixed') {
+      return originalPrice - course.saleInfo.value
+    }
+    
+    return originalPrice
+  }
+  
   const totalOriginal = orderListCourse.reduce((sum, course) => {
     const originalPrice = course?.price ? Number(course.price) : 500000
     return sum + originalPrice
   }, 0)
   
   const totalSale = orderListCourse.reduce((sum, course) => {
-    const originalPrice = course?.price ? Number(course.price) : 500000
-    const salePrice = Math.floor(originalPrice * 0.7)
-    return sum + salePrice
+    return sum + calculateFinalPrice(course)
   }, 0)
 
   const discount = totalOriginal - totalSale
@@ -57,7 +77,7 @@ const CheckoutPage = () => {
 
     const orderItems = orderListCourse.map(course => ({
       courseId: course.id,
-      price: course?.price ? Math.floor(Number(course.price) * 0.7) : 350000
+      price: calculateFinalPrice(course)
     }))
 
     const orderData: CreateOrderRequest = {
@@ -123,14 +143,9 @@ const CheckoutPage = () => {
                 {orderListCourse.length === 0 ? (
                   <p className="text-muted-foreground text-center py-4">Chưa có khóa học nào được chọn</p>
                 ) : (
-                  orderListCourse.map((course) => {
-                    const originalPrice = course?.price ? Number(course.price) : 500000
-                    const salePrice = Math.floor(originalPrice * 0.7)
-                    
-                    return (
-                      <CheckoutCourseItem key={course.id} course={course} />
-                    )
-                  })
+                  orderListCourse.map((course) => (
+                    <CheckoutCourseItem key={course.id} course={course} />
+                  ))
                 )}
               </div>
             </CardContent>
@@ -143,10 +158,12 @@ const CheckoutPage = () => {
             <span>Giá gốc:</span>
             <span>{formatPrice(totalOriginal)}</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span>Giảm giá (30%):</span>
-            <span className="text-red-500">-{formatPrice(discount)}</span>
-          </div>
+          {discount > 0 && (
+            <div className="flex items-center justify-between">
+              <span>Giảm giá:</span>
+              <span className="text-red-500">-{formatPrice(discount)}</span>
+            </div>
+          )}
           <hr className="my-2"/>
           <div className="flex items-center justify-between font-bold text-lg">
             <span>Tổng cộng:</span>
@@ -167,7 +184,25 @@ const CheckoutPage = () => {
 
 const CheckoutCourseItem = ({course}: {course: CourseItemType}) => {
   const originalPrice = course?.price ? Number(course.price) : 500000
-  const salePrice = Math.floor(originalPrice * 0.7)
+  
+  // Calculate final price with sale info
+  let finalPrice = originalPrice
+  
+  if (course.saleInfo) {
+    const now = new Date()
+    const saleStart = course.saleInfo.saleStartDate ? new Date(course.saleInfo.saleStartDate) : null
+    const saleEnd = course.saleInfo.saleEndDate ? new Date(course.saleInfo.saleEndDate) : null
+    
+    const isWithinSalePeriod = (!saleStart || now >= saleStart) && (!saleEnd || now <= saleEnd)
+    
+    if (isWithinSalePeriod && course.saleInfo.value) {
+      if (course.saleInfo.saleType === 'percent') {
+        finalPrice = originalPrice * (1 - course.saleInfo.value / 100)
+      } else if (course.saleInfo.saleType === 'fixed') {
+        finalPrice = originalPrice - course.saleInfo.value
+      }
+    }
+  }
   
   return (
     <div key={course.id} className="flex gap-3 pb-3 border-b last:border-b-0">
@@ -186,11 +221,13 @@ const CheckoutCourseItem = ({course}: {course: CourseItemType}) => {
         </p>
         <div className="flex items-center gap-2 mt-1">
           <span className="text-sm font-bold text-primary">
-            {formatPrice(salePrice)}
+            {formatPrice(finalPrice)}
           </span>
-          <span className="text-xs text-muted-foreground line-through">
-            {formatPrice(originalPrice)}
-          </span>
+          {finalPrice < originalPrice && (
+            <span className="text-xs text-muted-foreground line-through">
+              {formatPrice(originalPrice)}
+            </span>
+          )}
         </div>
       </div>
     </div>
