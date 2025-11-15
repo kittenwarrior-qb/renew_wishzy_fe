@@ -139,19 +139,6 @@ export function CourseForm({
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Khoá học</h2>
-                <Button onClick={() => {
-                    setTouched({ name: true, categoryId: true, level: true, price: true, totalDuration: true })
-                    if (Object.keys(errors).length > 0) {
-                        notify({ title: 'Thiếu/không hợp lệ', description: 'Vui lòng kiểm tra các trường bắt buộc', variant: 'destructive' })
-                        return
-                    }
-                    onSubmit()
-                }} disabled={loading || uploading}>
-                    Lưu
-                </Button>
-            </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-4 rounded-lg border p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

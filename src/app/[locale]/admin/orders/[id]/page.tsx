@@ -4,7 +4,7 @@ import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { useOrderDetail } from "@/components/shared/order/useOrder"
-import { Button } from "@/components/ui/button"
+import { BackButton } from "@/components/shared/common/BackButton"
 import type { OrderDetailResponse, OrderDetailItem } from "@/types/order-detail.types"
 
 export default function Page() {
@@ -20,14 +20,14 @@ export default function Page() {
     const voucher = order?.voucher as unknown as { code?: string; id?: string } | null
 
     return (
-        <div className="relative p-4 md:p-6">
+        <div className="relative">
             <LoadingOverlay show={isPending || isFetching} />
 
-            <div className="mb-4 flex items-center justify-between">
-                <h1 className="text-lg font-semibold">Đơn hàng #{id}</h1>
+            <div className="mb-4 flex items-center gap-2">
                 <div className="inline-flex gap-2">
-                    <Button variant="outline" onClick={() => router.push(`/${locale}/admin/orders`)}>Quay lại</Button>
+                    <BackButton fallbackHref={`/${locale}/admin/orders`} />
                 </div>
+                <h1 className="text-lg font-semibold">Đơn hàng #{id}</h1>
             </div>
 
             {isError ? (
@@ -44,7 +44,7 @@ export default function Page() {
                                     </div>
                                     <div className="text-right">
                                         <div className="text-sm text-muted-foreground">Tổng tiền</div>
-                                        <div className="font-semibold">{Number(order?.totalPrice ?? 0).toLocaleString()}₫</div>
+                                        <div className="font-semibold">{Number(order?.totalPrice ?? 0).toLocaleString()} VNĐ</div>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -85,7 +85,7 @@ export default function Page() {
                                             <div className="font-medium">{d.course?.name || d.courseId}</div>
                                             <div className="text-xs text-muted-foreground">Mã chi tiết: {d.id}</div>
                                         </div>
-                                        <div className="font-medium">{Number(d.price).toLocaleString()}₫</div>
+                                        <div className="font-medium">{Number(d.price).toLocaleString()} VNĐ</div>
                                     </div>
                                 ))}
                             </div>
@@ -97,7 +97,7 @@ export default function Page() {
                             <div className="p-4 space-y-2 text-sm">
                                 <div className="flex items-center justify-between">
                                     <div className="text-muted-foreground">Tổng tiền</div>
-                                    <div className="font-semibold">{Number(order?.totalPrice ?? 0).toLocaleString()}₫</div>
+                                    <div className="font-semibold">{Number(order?.totalPrice ?? 0).toLocaleString()} VNĐ</div>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="text-muted-foreground">Trạng thái</div>

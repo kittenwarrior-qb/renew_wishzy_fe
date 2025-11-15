@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Users, GraduationCap, Layers, FolderTree, Image as ImageIcon } from "lucide-react"
+import { Users, GraduationCap, Layers3, Folder, Image as ImageIcon } from "lucide-react"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { useUserList, useInstructorList } from "@/components/shared/user/useUser"
 import { useCourseList } from "@/components/shared/course/useCourse"
@@ -36,8 +36,8 @@ export default function Page() {
   const cards: Array<{ title: string; value: number; icon: React.ReactNode; hint?: string }> = [
     { title: "Người dùng", value: totalUsers, icon: <Users className="h-5 w-5" /> },
     { title: "Giảng viên", value: totalInstructors, icon: <GraduationCap className="h-5 w-5" /> },
-    { title: "Khoá học", value: totalCourses, icon: <Layers className="h-5 w-5" /> },
-    { title: "Danh mục", value: totalCategories, icon: <FolderTree className="h-5 w-5" /> },
+    { title: "Khoá học", value: totalCourses, icon: <Layers3 className="h-5 w-5" /> },
+    { title: "Danh mục", value: totalCategories, icon: <Folder className="h-5 w-5" /> },
     { title: "Banner", value: totalBanners, icon: <ImageIcon className="h-5 w-5" /> },
   ]
 

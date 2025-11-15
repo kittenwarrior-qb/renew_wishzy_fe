@@ -6,12 +6,14 @@ import { useParentCategories } from "@/components/shared/category/useCategory"
 import { useCourseDetail, useUpdateCourse } from "@/components/shared/course/useCourse"
 import { CourseForm, type CourseFormValue, useUnsavedChanges } from "@/components/shared/course/CourseForm"
 import { notify } from "@/components/shared/admin/Notifications"
+import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 
 export default function EditCoursePage() {
   const params = useParams<{ locale: string; id: string }>()
   const locale = params?.locale || "vi"
   const id = params?.id as string
   const router = useRouter()
+  const { setPrimaryAction } = useAdminHeaderStore()
 
   const { data: parentsData } = useParentCategories()
   const categories = (parentsData?.data ?? []) as Array<{ id: string; name: string }>
@@ -39,6 +41,40 @@ export default function EditCoursePage() {
     }
   }, [data])
 
+  const handleSubmit = React.useCallback(() => {
+    if (isPending || updating) return
+    const errors: string[] = []
+    if (!form.name?.trim()) errors.push("Tên khoá học là bắt buộc")
+    if (!form.categoryId) errors.push("Danh mục là bắt buộc")
+    if (!form.level) errors.push("Cấp độ là bắt buộc")
+    if (form.price == null || form.price < 0) errors.push("Giá không hợp lệ")
+    if (form.totalDuration == null || form.totalDuration < 0) errors.push("Thời lượng không hợp lệ")
+    if (errors.length) {
+      notify({ title: "Thiếu/không hợp lệ", description: errors[0], variant: "destructive" })
+      return
+    }
+    updateCourse({ id, ...(form as any) }, {
+      onSuccess: () => {
+        notify({ title: "Đã cập nhật", variant: "success" })
+        setDirty(false)
+        router.push(`/${locale}/admin/courses`)
+      },
+      onError: (e: any) =>
+        notify({ title: "Lỗi", description: String(e?.message || "Không thể cập nhật"), variant: "destructive" }),
+    })
+  }, [isPending, updating, updateCourse, form, id, router, locale])
+
+  React.useEffect(() => {
+    setPrimaryAction({
+      label: updating ? "Đang lưu..." : "Lưu thay đổi",
+      variant: "default",
+      disabled: updating,
+      onClick: handleSubmit,
+    })
+
+    return () => setPrimaryAction(null)
+  }, [setPrimaryAction, updating, handleSubmit])
+
   return (
     <div className="p-4 md:p-6 space-y-4">
       <CourseForm
@@ -47,12 +83,7 @@ export default function EditCoursePage() {
         categories={categories}
         loading={isPending || updating}
         onDirtyChange={setDirty}
-        onSubmit={() => {
-          updateCourse({ id, ...(form as any) }, {
-            onSuccess: () => { notify({ title: "Đã cập nhật", variant: "success" }); setDirty(false); router.push(`/${locale}/admin/courses`) },
-            onError: (e: any) => notify({ title: "Lỗi", description: String(e?.message || "Không thể cập nhật"), variant: "destructive" })
-          })
-        }}
+        onSubmit={handleSubmit}
       />
     </div>
   )

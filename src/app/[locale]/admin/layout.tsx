@@ -4,8 +4,8 @@ import React from "react"
 import HeaderAdmin from "@/components/shared/layout/HeaderAdmin"
 import AdminAppSidebar from "@/components/shared/layout/AdminAppSidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
 import { Notifications } from "@/components/shared/admin/Notifications"
+import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
 import { useAppStore } from "@/stores/useAppStore"
 import { useParams, useRouter } from "next/navigation"
 import { useAdminGuard } from "@/hooks/useAdminGuard"
@@ -59,7 +59,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <AdminAppSidebar />
         <SidebarInset className="md:!m-0 md:!ml-0 md:!rounded-none md:!shadow-none flex flex-col min-h-dvh">
           <HeaderAdmin />
-          <main className="flex-1 overflow-auto p-4 md:p-6">
+          <main className="flex-1 overflow-auto">
             {children}
           </main>
         </SidebarInset>

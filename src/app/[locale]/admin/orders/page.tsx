@@ -47,7 +47,7 @@ export default function Page() {
   const totalPages = data?.totalPages ?? Math.ceil((total || 0) / (pageSize || 10))
 
   return (
-    <div className="relative p-4 md:p-6">
+    <div className="relative">
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
           <Input placeholder="Mã đơn" value={orderId} onChange={(e) => setOrderId(e.target.value)} className="w-[240px]" />
@@ -60,16 +60,16 @@ export default function Page() {
 
         {(() => {
           const columns: Column<OrderListRow>[] = [
-            { key: 'id', title: 'Mã đơn', render: (row: OrderListRow) => (<Link href={`/${locale}/admin/orders/${row.id}`} className="text-primary hover:underline">{row.id}</Link>) },
+            { key: 'id', title: 'Mã đơn', render: (row: OrderListRow) => (<Link href={`/${locale}/admin/orders/${row.id}`} className="hover:underline">{row.id}</Link>) },
             { key: 'user', title: 'Khách hàng', render: (row: OrderListRow) => row.user?.fullName || row.user?.email || row.userId || '' },
             { key: 'totalPrice', title: 'Tổng tiền', align: 'right', render: (row: OrderListRow) => `${Number(row.totalPrice ?? 0).toLocaleString()}₫` },
             {
-              key: 'status', title: 'Trạng thái', render: (row: OrderListRow) => (
+              key: 'status', title: 'Trạng thái', align: 'center', render: (row: OrderListRow) => (
                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${row.status === 'completed' ? 'bg-emerald-500/10 text-emerald-600' : row.status === 'pending' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>{row.status}</span>
               )
             },
-            { key: 'paymentMethod', title: 'Thanh toán', render: (row: OrderListRow) => String(row.paymentMethod || '').toUpperCase() },
-            { key: 'createdAt', title: 'Ngày tạo', render: (row: OrderListRow) => row.createdAt ? new Date(row.createdAt).toLocaleString() : '' },
+            { key: 'paymentMethod', title: 'Thanh toán', align: 'center', render: (row: OrderListRow) => String(row.paymentMethod || '').toUpperCase() },
+            { key: 'createdAt', title: 'Ngày tạo', align: 'center', render: (row: OrderListRow) => row.createdAt ? new Date(row.createdAt).toLocaleString() : '' },
           ]
           return (
             <DynamicTable

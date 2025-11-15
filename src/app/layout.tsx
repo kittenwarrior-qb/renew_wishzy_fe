@@ -9,7 +9,9 @@ const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
-
+if (typeof window !== "undefined") {
+  throw new Error("TEST GLOBAL ERROR")
+}
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
@@ -32,9 +34,9 @@ export default function RootLayout({
       >
         <QueryProvider>
           {children}
-          <Toaster 
-            position="top-center" 
-            richColors 
+          <Toaster
+            position="top-center"
+            richColors
             expand={true}
             duration={4000}
           />

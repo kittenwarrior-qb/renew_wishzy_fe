@@ -16,6 +16,7 @@ import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 
 type CourseFormValue = Partial<Pick<Course, "name" | "price" | "level" | "totalDuration" | "categoryId" | "description" | "notes" | "thumbnail">>
 
@@ -26,6 +27,7 @@ export default function Page() {
   const searchParams = useSearchParams()
   const { theme } = useAppStore()
   const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
+  const { setPrimaryAction } = useAdminHeaderStore()
 
   const [page, setPage] = React.useState<number>(Number(searchParams.get("page") || 1))
   const [limit, setLimit] = React.useState<number>(Number(searchParams.get("limit") || 10))
@@ -77,6 +79,16 @@ export default function Page() {
   const [deletingTarget, setDeletingTarget] = React.useState<Course | null>(null)
   const onConfirmDelete = (c: Course) => { setDeletingTarget(c); setOpenDelete(true) }
 
+  React.useEffect(() => {
+    setPrimaryAction({
+      label: "Thêm khoá học",
+      variant: "default",
+      onClick: () => router.push(`/${locale}/admin/courses/create`),
+    })
+
+    return () => setPrimaryAction(null)
+  }, [setPrimaryAction, router, locale])
+
   return (
     <div className="">
       <div className="mb-4">
@@ -109,9 +121,6 @@ export default function Page() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="flex items-center gap-2 justify-end">
-            <Link href={`/${locale}/admin/courses/create`} className="inline-flex"><Button className="h-9 gap-2"><Plus className="h-4 w-4" />Thêm khoá học</Button></Link>
           </div>
         </div>
       </div>
@@ -264,7 +273,7 @@ export default function Page() {
                 render: (row: Course) => (
                   <div className="flex items-center justify-center gap-3">
                     <Link
-                      href={`/${locale}/admin/courses/${row.id}`}
+                      href={`/${locale}/admin/courses/edit/${row.id}`}
                       className="inline-flex text-muted-foreground hover:text-foreground"
                     >
                       <Pencil className="h-5 w-5" />
