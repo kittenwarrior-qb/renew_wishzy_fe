@@ -9,6 +9,9 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAppStore } from "@/stores/useAppStore"
+import { useQueryHook } from "@/src/hooks/useQueryHook"
+import { courseService } from "@/src/services/course"
+import { CourseItemType } from "@/src/types/course/course-item.types"
 
 export default function HeaderAdmin() {
   const pathname = usePathname() || ""
@@ -19,11 +22,22 @@ export default function HeaderAdmin() {
     if (user?.email) return user.email[0]?.toUpperCase() ?? "U"
     return "U"
   }, [user])
+
+  // Extract course ID from pathname if in instructor/course/[id]
+  // Handle both with and without locale prefix
+  const courseIdMatch = pathname.match(/(?:\/[^/]+)?\/instructor\/course\/([^/]+)/)
+  const courseId = courseIdMatch?.[1]
+
+  const { data: course } = useQueryHook<CourseItemType>(
+    courseId ? ['course', courseId, 'header'] : ['course', 'header', 'disabled'],
+    () => courseService.getCourseById(courseId!),
+    { enabled: !!courseId }
+  )
   return (
     <header className="sticky top-0 z-20 h-14 border-b bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center gap-3 px-3 md:px-6">
       <SidebarTrigger className="mr-2 md:hidden" />
       <div className="hidden md:block text-base font-semibold text-foreground">
-        <HeaderTitle pathname={pathname} />
+        <HeaderTitle pathname={pathname} courseName={course?.name} />
       </div>
       <div className="ml-auto flex items-center gap-2">
         {primaryAction ? (
@@ -95,12 +109,42 @@ function mapAdminPathToLabel(subpath: string): string {
   return subpath
 }
 
-function HeaderTitle({ pathname }: { pathname: string }) {
+function mapInstructorPathToLabel(subpath: string): string {
+  const map: Record<string, string> = {
+    "user/students": "Học viên",
+    "courses": "Khoá học",
+  }
+  const keys = Object.keys(map).sort((a, b) => b.length - a.length)
+  for (const k of keys) if (subpath.startsWith(k)) return map[k]
+  return subpath
+}
+
+function HeaderTitle({ pathname, courseName }: { pathname: string; courseName?: string }) {
   const parts = pathname.split("/").filter(Boolean)
   const adminIndex = parts.indexOf("admin")
-  if (adminIndex === -1) return <span>Admin</span>
-  const rest = parts.slice(adminIndex + 1)
-  if (rest.length === 0) return <span>Tổng quan</span>
-  const label = mapAdminPathToLabel(rest.join("/"))
-  return <span>{label}</span>
+  const instructorIndex = parts.indexOf("instructor")
+  
+  // Check if we're in instructor/course/[id] route
+  if (instructorIndex !== -1) {
+    const rest = parts.slice(instructorIndex + 1)
+    if (rest[0] === "course" && rest[1] && courseName) {
+      return <span>{courseName}</span>
+    }
+  }
+  
+  if (adminIndex !== -1) {
+    const rest = parts.slice(adminIndex + 1)
+    if (rest.length === 0) return <span>Tổng quan</span>
+    const label = mapAdminPathToLabel(rest.join("/"))
+    return <span>{label}</span>
+  }
+  
+  if (instructorIndex !== -1) {
+    const rest = parts.slice(instructorIndex + 1)
+    if (rest.length === 0) return <span>Tổng quan</span>
+    const label = mapInstructorPathToLabel(rest.join("/"))
+    return <span>{label}</span>
+  }
+  
+  return <span>Admin</span>
 }

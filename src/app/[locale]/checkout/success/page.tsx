@@ -13,6 +13,7 @@ import { useQueryHook } from "@/src/hooks/useQueryHook"
 import { orderService } from "@/src/services/order"
 import { CourseItemType } from "@/src/types/course/course-item.types"
 import { formatPrice } from "@/lib/utils"
+import { useQueryClient } from "@tanstack/react-query"
 
 // Loading component for Suspense fallback
 const LoadingState = () => (
@@ -31,6 +32,7 @@ const CheckoutSuccessContent = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { clearOrderList, removeFromCart } = useAppStore()
+  const queryClient = useQueryClient()
   
   const orderId = searchParams.get('orderId') ?? ''
   
@@ -51,8 +53,12 @@ const CheckoutSuccessContent = () => {
       orderDetails.orderDetails.forEach((item) => {
         removeFromCart(item.course as unknown as CourseItemType);
       });
+
+      // Invalidate enrollments cache để fetch lại danh sách khóa học đã mua
+      queryClient.invalidateQueries({ queryKey: ['my-enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['my-learning'] });
     }
-  }, [orderDetails, clearOrderList, removeFromCart])
+  }, [orderDetails, clearOrderList, removeFromCart, queryClient])
 
   if (isLoading) {
     return (

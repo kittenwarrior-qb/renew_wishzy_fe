@@ -116,6 +116,13 @@ declare module 'lucide-react' {
   export const XCircle: Icon
   export const XIcon: Icon
   export const ArrowUp: Icon
+  export const Layers: Icon
+  export const FolderTree: Icon
+  export const Mail: Icon
+  export const Phone: Icon
+  export const Calendar: Icon
+  export const AlertCircle: Icon
+  
   interface Icons {
     [key: string]: Icon
   }
