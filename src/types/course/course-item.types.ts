@@ -5,7 +5,7 @@ export interface CourseItemType {
   notes: string
   thumbnail: string
   price: string
-  saleInfo: Record<string, unknown>
+  saleInfo:any
   rating: number
   status: boolean
   averageRating: string

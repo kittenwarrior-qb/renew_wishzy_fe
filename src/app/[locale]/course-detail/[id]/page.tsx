@@ -64,6 +64,33 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     const totalLessons = course.chapters?.length || 0;
     const durationHours = Math.round(course.totalDuration / 60);
     
+    const originalPrice = course?.price ? Number(course.price) : 0;
+    
+    // Calculate sale price from saleInfo
+    let salePrice = null;
+    let discountPercent = 0;
+    
+    if (course.saleInfo) {
+        const now = new Date();
+        const saleStart = course.saleInfo.saleStartDate ? new Date(course.saleInfo.saleStartDate) : null;
+        const saleEnd = course.saleInfo.saleEndDate ? new Date(course.saleInfo.saleEndDate) : null;
+        
+        const isWithinSalePeriod = (!saleStart || now >= saleStart) && (!saleEnd || now <= saleEnd);
+        
+        if (isWithinSalePeriod && course.saleInfo.value) {
+            if (course.saleInfo.saleType === 'percent') {
+                discountPercent = course.saleInfo.value;
+                salePrice = originalPrice * (1 - course.saleInfo.value / 100);
+            } else if (course.saleInfo.saleType === 'fixed') {
+                salePrice = originalPrice - course.saleInfo.value;
+                discountPercent = Math.round(((originalPrice - salePrice) / originalPrice) * 100);
+            }
+        }
+    }
+    
+    const hasSale = salePrice !== null && salePrice > 0 && salePrice < originalPrice;
+    const displayPrice = hasSale ? salePrice : originalPrice;
+    
     const isInCart = cart.some(c => c.id === course.id);
 
     const handleBuyCourse = () => {
@@ -134,11 +161,27 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div className="lg:col-span-1">
                         <div className="border rounded-lg p-6 sticky top-8 space-y-6">
                             {/* Price */}
-                            <div className="flex items-center justify-between border-b pb-4">
-                                <span className="text-lg font-semibold">Giá ưu đãi</span>
-                                <span className="text-3xl font-bold">
-                                    {formatPrice(course.price)}
-                                </span>
+                            <div className="border-b pb-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-lg font-semibold">
+                                        {hasSale ? 'Giá ưu đãi' : 'Giá khóa học'}
+                                    </span>
+                                    {hasSale && (
+                                        <span className="text-sm bg-red-500 text-white px-2 py-1 rounded font-semibold">
+                                            -{discountPercent}%
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-3xl font-bold text-primary">
+                                        {formatPrice(displayPrice || '')}
+                                    </span>
+                                    {hasSale && (
+                                        <span className="text-xl text-muted-foreground line-through">
+                                            {formatPrice(originalPrice)}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* What you'll get */}

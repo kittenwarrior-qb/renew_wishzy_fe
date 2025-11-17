@@ -17,7 +17,7 @@ export const orderService = {
     },
     async getOrderById(orderId: string) {
         const response = await api.get(`/orders/${orderId}`)
-        return response.data
+        return response.data.data
     },
     async updateStatus(orderId: string, status: OrderStatus) {
         const res = await api.patch(`/orders/${orderId}`, { status })
