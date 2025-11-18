@@ -71,8 +71,8 @@ export default async function LocaleLayout({
               <MaintenanceGuard>{children}</MaintenanceGuard>
             </main>
             <Footer />
-            <ScrollToTop />
           </div>
+          <ScrollToTop />
         </AuthProvider>
       </TranslationProvider>
     </GoogleOAuthProvider>
