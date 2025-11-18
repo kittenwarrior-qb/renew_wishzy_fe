@@ -57,12 +57,6 @@ export function LectureInfo({ lecture, chapter, onMarkComplete }: LectureInfoPro
               </div>
             </div>
             
-            {!lecture.isCompleted && (
-              <Button onClick={onMarkComplete} size="sm">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Mark Complete
-              </Button>
-            )}
           </div>
         </CardHeader>
 
@@ -129,55 +123,6 @@ export function LectureInfo({ lecture, chapter, onMarkComplete }: LectureInfoPro
         </CardContent>
       </Card>
 
-      {/* Resources (if any) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Resources</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {/* Sample resources - you can make this dynamic */}
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <div className="font-medium text-sm">Lecture Notes</div>
-                  <div className="text-xs text-muted-foreground">PDF • 2.3 MB</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded bg-green-100 flex items-center justify-center">
-                  <ExternalLink className="w-4 h-4 text-green-600" />
-                </div>
-                <div>
-                  <div className="font-medium text-sm">Source Code</div>
-                  <div className="text-xs text-muted-foreground">GitHub Repository</div>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm">
-                <ExternalLink className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded bg-purple-100 flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-purple-600" />
-                </div>
-                <div>
-                  <div className="font-medium text-sm">Exercise Files</div>
-                  <div className="text-xs text-muted-foreground">ZIP • 5.1 MB</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

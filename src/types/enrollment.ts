@@ -1,15 +1,34 @@
 import { CourseItemType } from "./course/course-item.types";
 
+export interface LectureQuality {
+  [quality: string]: string;
+}
+
+export interface LectureOnLearning {
+  lectureId: string;
+  duration: number;
+  currentTime: number;
+  lastWatchedAt: string;
+  quality: LectureQuality;
+  volume: number;
+}
+
+export interface EnrollmentAttributes {
+  finishedLectures?: string[];
+  lectureOnlearning?: LectureOnLearning;
+}
+
 export interface Enrollment {
   id: string;
   userId: string;
   detailOrderId: string;
   courseId: string;
   enrollmentDate: string;
-  status: 'not_started' | 'in_progress' | 'completed';
-  progress: string;
+  status: 'not_started' | 'ongoing' | 'completed';
+  progress: number;
   lastAccess: string;
   certificateUrl: string | null;
+  attributes?: EnrollmentAttributes;
   createdAt: string;
   updatedAt: string;
   course: CourseItemType;

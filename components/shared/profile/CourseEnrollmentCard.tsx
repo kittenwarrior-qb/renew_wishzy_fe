@@ -26,11 +26,11 @@ export const CourseEnrollmentCard = ({
     return `${minutes}m`;
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: Enrollment['status']) => {
     switch (status) {
       case "not_started":
         return "Chưa bắt đầu";
-      case "in_progress":
+      case "ongoing":
         return "Đang học";
       case "completed":
         return "Hoàn thành";
@@ -39,11 +39,11 @@ export const CourseEnrollmentCard = ({
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: Enrollment['status']) => {
     switch (status) {
       case "not_started":
         return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
-      case "in_progress":
+      case "ongoing":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
       case "completed":
         return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
@@ -71,8 +71,13 @@ export const CourseEnrollmentCard = ({
     router.push(`/course-detail/${course.id}?scrollTo=feedback`);
   };
 
+  const lectureId = enrollment.attributes?.lectureOnlearning?.lectureId;
+  const learningUrl = lectureId 
+    ? `/learning/${course.id}/${lectureId}` 
+    : `/learning/${course.id}`;
+
   return (
-    <Link href={`/learning/${course.id}`}>
+    <Link href={learningUrl}>
       <div className="bg-card rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow cursor-pointer  relative">
         <div className="flex flex-col md:flex-row">
           {/* Thumbnail */}
@@ -82,7 +87,7 @@ export const CourseEnrollmentCard = ({
               alt={course.name}
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
             />
-            {parseFloat(progress) > 0 && (
+            {progress > 0 && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700">
                 <div
                   className="h-full bg-primary transition-all"
@@ -122,7 +127,7 @@ export const CourseEnrollmentCard = ({
                   </div>
                   <div className="flex items-center gap-1.5">
                     <TrendingUp className="h-4 w-4" />
-                    <span>Tiến độ: {parseFloat(progress).toFixed(0)}%</span>
+                    <span>Tiến độ: {Number(progress).toFixed(0)}%</span>
                   </div>
                 </div>
               </div>
@@ -144,7 +149,7 @@ export const CourseEnrollmentCard = ({
                     Đánh giá
                   </Button>
                   <span className="text-sm font-medium text-primary group-hover:underline">
-                    {parseFloat(progress) > 0 ? 'Tiếp tục học' : 'Bắt đầu học'}
+                    {progress > 0 ? 'Tiếp tục học' : 'Bắt đầu học'}
                   </span>
                 </div>
               </div>

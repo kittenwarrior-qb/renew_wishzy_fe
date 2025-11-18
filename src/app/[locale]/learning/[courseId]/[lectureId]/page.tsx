@@ -1,19 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { CourseSidebar } from '@/components/shared/learning/CourseSidebar';
 import { VideoPlayer } from '@/components/shared/learning/VideoPlayer';
 import { LectureInfo } from '@/components/shared/learning/LectureInfo';
-import { 
-  fakeCourse, 
-  fakeLectureProgress,
-  getLectureById, 
-  getChapterByLectureId, 
-  getNextLecture, 
-  getPreviousLecture
-} from '@/src/app/[locale]/learning/[courseId]/[lectureId]/fakeData';
-import type { Lecture, Chapter, LectureProgress, UpdateLectureProgressDto } from '@/types/learning';
+import { useChapterList } from '@/components/shared/chapter/useChapter';
+import { useCourseDetail } from '@/components/shared/course/useCourse';
+import { enrollmentService } from '@/services/enrollment';
+import type { Lecture, Chapter, LectureProgress, UpdateLectureProgressDto, Course } from '@/types/learning';
 
 export default function LearningPage() {
   const params = useParams();
@@ -21,33 +16,136 @@ export default function LearningPage() {
   const courseId = params.courseId as string;
   const lectureId = params.lectureId as string;
   
-  const [lecture, setLecture] = useState<Lecture | null>(null);
-  const [chapter, setChapter] = useState<Chapter | null>(null);
   const [progress, setProgress] = useState<LectureProgress | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
+  const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
 
+  // Fetch enrollment ID
   useEffect(() => {
-    const foundLecture = getLectureById(lectureId);
-    const foundChapter = getChapterByLectureId(lectureId);
-    const foundProgress = fakeLectureProgress[lectureId];
+    const fetchEnrollment = async () => {
+      try {
+        const enrollment = await enrollmentService.getEnrollmentByCourseId(courseId);
+        console.log('Fetched enrollment:', enrollment);
+        if (enrollment) {
+          setEnrollmentId(enrollment.id);
+        } else {
+          console.warn('No enrollment found for course:', courseId);
+        }
+      } catch (error) {
+        console.error('Failed to fetch enrollment:', error);
+      }
+    };
+    if (courseId) {
+      fetchEnrollment();
+    }
+  }, [courseId]);
+
+  // Fetch course data
+  const { data: courseData, isLoading: isCourseLoading } = useCourseDetail(courseId);
+  
+  // Fetch chapters with lectures
+  const { data: chaptersData, isLoading: isChaptersLoading } = useChapterList(courseId);
+
+  // Process data to find current lecture and chapter
+  const { lecture, chapter, course, allLectures } = useMemo((): {
+    lecture: Lecture | null;
+    chapter: Chapter | null;
+    course: Course | null;
+    allLectures: Array<{ lecture: Lecture; chapter: Chapter }>;
+  } => {
+    if (!chaptersData?.items || !courseData) {
+      return { lecture: null, chapter: null, course: null, allLectures: [] };
+    }
+
+    const chaptersRaw = chaptersData.items;
+    let foundLecture: Lecture | null = null;
+    let foundChapter: Chapter | null = null;
+    const lectures: Array<{ lecture: Lecture; chapter: Chapter }> = [];
+
+    // Transform chapters data to match expected format
+    const transformedChapters: Chapter[] = chaptersRaw.map((ch) => {
+      const chapterLectures: Lecture[] = (ch.lecture || []).map((lec, index) => ({
+        id: lec.id,
+        title: lec.name,
+        description: '',
+        videoUrl: lec.fileUrl || undefined,
+        duration: lec.duration,
+        chapterId: ch.id,
+        order: lec.orderIndex || index,
+        isCompleted: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+
+      return {
+        id: ch.id,
+        name: ch.name,
+        description: ch.description,
+        duration: ch.duration,
+        courseId: ch.courseId,
+        order: 0,
+        lectures: chapterLectures,
+        createdAt: new Date(ch.createdAt),
+        updatedAt: new Date(ch.updatedAt),
+      };
+    });
+
+    // Build flat list of all lectures with their chapters
+    transformedChapters.forEach((ch) => {
+      ch.lectures.forEach((lec) => {
+        lectures.push({ lecture: lec, chapter: ch });
+        if (lec.id === lectureId) {
+          foundLecture = lec;
+          foundChapter = ch;
+        }
+      });
+    });
+
+    // Build course object
+    const totalLessons = lectures.length;
+    const completedLessons = lectures.filter(l => l.lecture.isCompleted).length;
     
-    setLecture(foundLecture || null);
-    setChapter(foundChapter || null);
-    setProgress(foundProgress);
-    setIsLoading(false);
-  }, [lectureId]);
+    const courseObj: Course = {
+      id: courseData.id,
+      title: courseData.name,
+      description: courseData.description || '',
+      chapters: transformedChapters,
+      totalLessons,
+      completedLessons,
+      progressPercentage: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
+    };
+
+    return { 
+      lecture: foundLecture, 
+      chapter: foundChapter, 
+      course: courseObj,
+      allLectures: lectures 
+    };
+  }, [chaptersData, courseData, lectureId]);
+
+  const isLoading = isCourseLoading || isChaptersLoading;
+
+  // Navigation helpers
+  const { nextLecture, prevLecture } = useMemo(() => {
+    const currentIndex = allLectures.findIndex(l => l.lecture.id === lectureId);
+    return {
+      nextLecture: currentIndex >= 0 && currentIndex < allLectures.length - 1 
+        ? allLectures[currentIndex + 1] 
+        : null,
+      prevLecture: currentIndex > 0 
+        ? allLectures[currentIndex - 1] 
+        : null,
+    };
+  }, [allLectures, lectureId]);
 
   const handleNext = () => {
-    const nextLecture = getNextLecture(lectureId);
     if (nextLecture) {
-      router.push(`/learning/${courseId}/${nextLecture.id}`);
+      router.push(`/learning/${courseId}/${nextLecture.lecture.id}`);
     }
   };
 
   const handlePrevious = () => {
-    const prevLecture = getPreviousLecture(lectureId);
     if (prevLecture) {
-      router.push(`/learning/${courseId}/${prevLecture.id}`);
+      router.push(`/learning/${courseId}/${prevLecture.lecture.id}`);
     }
   };
 
@@ -77,9 +175,8 @@ export default function LearningPage() {
       };
     });
     
-    if (lecture) {
-      setLecture({ ...lecture, isCompleted: true });
-    }
+    // Note: In a real implementation, you would update the lecture completion status
+    // via an API call here
   };
 
   const handleMarkComplete = () => {
@@ -120,9 +217,6 @@ export default function LearningPage() {
     );
   }
 
-  const nextLecture = getNextLecture(lectureId);
-  const prevLecture = getPreviousLecture(lectureId);
-
   return (
     <div className="min-h-screen bg-background">
       {/* Main Container with max-width */}
@@ -130,11 +224,13 @@ export default function LearningPage() {
         <div className="flex">
           {/* Sidebar - Hidden on mobile, shown on desktop */}
           <aside className="hidden lg:block lg:w-80 shrink-0">
-            <CourseSidebar 
-              course={fakeCourse}
-              courseId={courseId}
-              currentLectureId={lectureId} 
-            />
+            {course && (
+              <CourseSidebar 
+                course={course}
+                courseId={courseId}
+                currentLectureId={lectureId} 
+              />
+            )}
           </aside>
 
           {/* Main Content Area */}
@@ -142,18 +238,28 @@ export default function LearningPage() {
             {/* Video Player Section */}
             <div className="w-full bg-black/5 dark:bg-black/20">
               <div className="px-4 sm:px-6 lg:px-8 py-6">
-                <VideoPlayer
-                  lectureId={lectureId}
-                  videoUrl={lecture.videoUrl || ''}
-                  title={lecture.title}
-                  initialProgress={progress}
-                  onProgressUpdate={handleProgressUpdate}
-                  onComplete={handleComplete}
-                  onNext={nextLecture ? handleNext : undefined}
-                  onPrevious={prevLecture ? handlePrevious : undefined}
-                  hasNext={!!nextLecture}
-                  hasPrevious={!!prevLecture}
-                />
+                {!enrollmentId ? (
+                  <div className="relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center shadow-2xl">
+                    <div className="text-white text-center p-4">
+                      <p className="mb-2">Enrollment not found</p>
+                      <p className="text-sm text-gray-400">Please enroll in this course first</p>
+                    </div>
+                  </div>
+                ) : lecture ? (
+                  <VideoPlayer
+                    enrollmentId={enrollmentId}
+                    lectureId={lectureId}
+                    videoUrl={lecture.videoUrl || ''}
+                    title={lecture.title}
+                    initialProgress={progress}
+                    onProgressUpdate={handleProgressUpdate}
+                    onComplete={handleComplete}
+                    onNext={nextLecture ? handleNext : undefined}
+                    onPrevious={prevLecture ? handlePrevious : undefined}
+                    hasNext={!!nextLecture}
+                    hasPrevious={!!prevLecture}
+                  />
+                ) : null}
               </div>
             </div>
 
@@ -162,11 +268,12 @@ export default function LearningPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Content */}
                 <div className="lg:col-span-2">
-                  <LectureInfo
-                    lecture={lecture}
-                    chapter={chapter}
-                    onMarkComplete={handleMarkComplete}
-                  />
+                  {lecture && chapter && (
+                    <LectureInfo
+                      lecture={lecture}
+                      chapter={chapter}
+                    />
+                  )}
                 </div>
 
                 {/* Right Sidebar - Additional Info */}

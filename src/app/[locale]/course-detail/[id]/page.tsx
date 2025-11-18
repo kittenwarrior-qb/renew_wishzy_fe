@@ -40,9 +40,12 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
         }
     );
 
-    const isEnrolled = enrollments?.some(
+    const currentEnrollment = enrollments?.find(
         (enrollment: any) => enrollment.courseId === id
-    ) || false;
+    );
+    
+    const isEnrolled = !!currentEnrollment;
+    const progress = currentEnrollment ? Number(currentEnrollment.progress) || 0 : 0;
 
     useEffect(() => {
         if (searchParams.get('scrollTo') === 'feedback') {
@@ -285,7 +288,12 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                                 className={`w-full transition-all hover:bg-primary/90 hover:scale-105 `}
                                 onClick={handleBuyCourse}
                             >
-                                {isEnrolled ? 'Tiếp tục học' : 'Mua khóa học ngay'}
+                                {isEnrolled 
+                                    ? progress > 0 
+                                        ? `Tiếp tục học (${progress.toFixed(0)}%)` 
+                                        : 'Bắt đầu học'
+                                    : 'Mua khóa học ngay'
+                                }
                             </Button>
                         </div>
                     </div>

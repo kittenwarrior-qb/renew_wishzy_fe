@@ -1,6 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { chapterService } from '@/services/chapter'
 
+export type ChapterLecture = {
+  id: string
+  name: string
+  duration?: number
+  isPreview?: boolean
+  orderIndex: number
+  fileUrl?: string | null
+}
+
 export type Chapter = {
   id: string
   name: string
@@ -11,6 +20,7 @@ export type Chapter = {
   createdAt: string
   updatedAt: string
   deletedAt?: string | null
+  lecture?: ChapterLecture[]
 }
 
 const ENDPOINT = 'chapters'
