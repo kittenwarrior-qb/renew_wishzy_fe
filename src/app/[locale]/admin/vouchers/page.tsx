@@ -40,6 +40,7 @@ export default function Page() {
                 ? undefined
                 : filter.isActive === "true",
     })
+    const [editInitialForm, setEditInitialForm] = React.useState<VoucherFormValue | null>(null)
     const { mutate: createVoucher, isPending: creating } = useCreateVoucher()
     const { mutate: updateVoucher, isPending: updating } = useUpdateVoucher()
     const { mutate: deleteVoucher, isPending: deleting } = useDeleteVoucher()
@@ -48,6 +49,7 @@ export default function Page() {
     const [openEdit, setOpenEdit] = React.useState(false)
     const [editing, setEditing] = React.useState<Voucher | null>(null)
     const [openDeleteConfirm, setOpenDeleteConfirm] = React.useState(false)
+    const [openUnsavedConfirm, setOpenUnsavedConfirm] = React.useState(false)
     const [target, setTarget] = React.useState<Voucher | null>(null)
 
     const [form, setForm] = React.useState<VoucherFormValue>({
@@ -98,17 +100,8 @@ export default function Page() {
             e.discountValue = "Nhập giá trị hợp lệ"
         if (v.perUserLimit === "" || Number(v.perUserLimit) < 1)
             e.perUserLimit = "Giới hạn/người phải >= 1"
-        if (v.startDate && v.endDate && new Date(v.endDate) < new Date(v.startDate))
-            e.endDate = "Ngày kết thúc phải sau ngày bắt đầu"
         if (v.applyScope === "category" && !v.categoryId) e.categoryId = "Chọn danh mục"
         if (v.applyScope === "course" && !v.courseId) e.courseId = "Chọn khoá học"
-        const minAmt = v.minOrderAmount === "" || v.minOrderAmount == null ? null : Number(v.minOrderAmount)
-        const maxDisc = v.maxDiscountAmount === "" || v.maxDiscountAmount == null ? null : Number(v.maxDiscountAmount)
-        if (minAmt != null && maxDisc != null && !Number.isNaN(minAmt) && !Number.isNaN(maxDisc)) {
-            if (minAmt > maxDisc) {
-                e.minOrderAmount = "Đơn tối thiểu không được lớn hơn Giảm tối đa"
-            }
-        }
         return e
     }
 
@@ -130,6 +123,30 @@ export default function Page() {
             endDate: null,
         })
         setErrors({})
+        setEditInitialForm(null)
+    }
+
+    const isEditDirty = React.useMemo(() => {
+        if (!openEdit || !editInitialForm) return false
+        try {
+            return JSON.stringify(editInitialForm) !== JSON.stringify(form)
+        } catch {
+            return false
+        }
+    }, [openEdit, editInitialForm, form])
+
+    const handleEditOpenChange = (open: boolean) => {
+        if (!open) {
+            if (isEditDirty) {
+                setOpenUnsavedConfirm(true)
+                return
+            }
+            setOpenEdit(false)
+            setEditing(null)
+            setEditInitialForm(null)
+            return
+        }
+        setOpenEdit(true)
     }
 
     React.useEffect(() => {
@@ -149,12 +166,12 @@ export default function Page() {
             label: "Thêm voucher",
             variant: "default",
             onClick: () => {
-                router.push(`/${locale}/admin/vouchers/create`)
+                resetForm()
+                setOpenCreate(true)
             },
         })
 
         return () => setPrimaryAction(null)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const items = data?.data ?? []
@@ -168,6 +185,7 @@ export default function Page() {
         {
             key: "discountType",
             title: "Loại",
+            align: "center",
             render: (row: Voucher) => String(row.discountType || "").toLowerCase(),
         },
         {
@@ -201,6 +219,7 @@ export default function Page() {
         {
             key: "time",
             title: "Thời gian",
+            align: "center",
             render: (row: Voucher) => (
                 <span className="text-xs">
                     {row.startDate ? formatDateDDMMYYYY(row.startDate) : "—"} {" "}→{" "}
@@ -235,7 +254,7 @@ export default function Page() {
                         className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer"
                         onClick={() => {
                             setEditing(row)
-                            setForm({
+                            const nextForm: VoucherFormValue = {
                                 code: row.code,
                                 name: row.name || "",
                                 discountType: row.discountType || "percent",
@@ -250,7 +269,9 @@ export default function Page() {
                                 isActive: !!row.isActive,
                                 startDate: row.startDate || null,
                                 endDate: row.endDate || null,
-                            })
+                            }
+                            setForm(nextForm)
+                            setEditInitialForm(nextForm)
                             setOpenEdit(true)
                         }}
                     >
@@ -275,13 +296,7 @@ export default function Page() {
 
     return (
         <div className="relative p-4 md:p-6">
-            <div className="flex items-center justify-between mb-4">
-                <h1 className="text-lg font-semibold">Voucher</h1>
-                <Button onClick={() => router.push(`/${locale}/admin/vouchers/create`)}>Thêm voucher</Button>
-            </div>
-
             <LoadingOverlay show={isPending || isFetching} />
-
             <QueryController
                 initial={{ code: filter.code || "", isActive: filter.isActive || "" }}
                 debounceMs={300}
@@ -340,13 +355,10 @@ export default function Page() {
 
             {/* Create Dialog */}
             <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-                <DialogContent className="sm:max-w-lg">
+                <DialogContent className="sm:max-w-lg h-screen sm:left-auto sm:right-0 sm:top-0 sm:translate-x-0 sm:translate-y-0">
                     <DialogHeader className="border-b pb-3">
                         <DialogTitle>Thêm voucher</DialogTitle>
                     </DialogHeader>
-                    <DialogDescription className="text-sm text-muted-foreground">
-                        Điền thông tin voucher mới.
-                    </DialogDescription>
                     <VoucherForm value={form} onChange={setForm} error={errors} />
                     <DialogFooter>
                         <Button variant="outline" type="button" onClick={() => setOpenCreate(false)}>
@@ -355,7 +367,6 @@ export default function Page() {
                         <Button
                             type="button"
                             variant="default"
-                            disabled={!!creating}
                             onClick={() => {
                                 const e = validate(form)
                                 setErrors(e)
@@ -372,6 +383,8 @@ export default function Page() {
                                             form.minOrderAmount === "" ? undefined : Number(form.minOrderAmount),
                                         perUserLimit:
                                             form.perUserLimit === "" ? undefined : Number(form.perUserLimit),
+                                        totalLimit:
+                                            form.totalLimit === "" ? undefined : Number(form.totalLimit),
                                         applyScope: form.applyScope,
                                         categoryId:
                                             form.applyScope === "category"
@@ -398,24 +411,21 @@ export default function Page() {
                                 )
                             }}
                         >
-                            {creating ? "Đang lưu..." : "Lưu"}
+                            {creating ? "Đang tạo..." : "Tạo"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
             {/* Edit Dialog */}
-            <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-                <DialogContent className="sm:max-w-lg">
+            <Dialog open={openEdit} onOpenChange={handleEditOpenChange}>
+                <DialogContent className="sm:max-w-lg sm:left-auto sm:right-0 h-screen sm:top-0 sm:translate-x-0 sm:translate-y-0">
                     <DialogHeader className="border-b pb-3">
                         <DialogTitle>Sửa voucher</DialogTitle>
                     </DialogHeader>
-                    <DialogDescription className="text-sm text-muted-foreground">
-                        Chỉnh sửa thông tin voucher.
-                    </DialogDescription>
                     <VoucherForm value={form} onChange={setForm} error={errors} />
                     <DialogFooter>
-                        <Button variant="outline" type="button" onClick={() => setOpenEdit(false)}>
+                        <Button variant="outline" type="button" onClick={() => handleEditOpenChange(false)}>
                             Huỷ
                         </Button>
                         <Button
@@ -440,6 +450,8 @@ export default function Page() {
                                             form.minOrderAmount === "" ? null : Number(form.minOrderAmount),
                                         perUserLimit:
                                             form.perUserLimit === "" ? null : Number(form.perUserLimit),
+                                        totalLimit:
+                                            form.totalLimit === "" ? null : Number(form.totalLimit),
                                         applyScope: form.applyScope,
                                         categoryId:
                                             form.applyScope === "category" ? form.categoryId || null : null,
@@ -464,11 +476,33 @@ export default function Page() {
                                 )
                             }}
                         >
-                            {updating ? "Đang lưu..." : "Lưu"}
+                            {updating ? "Đang cập nhật..." : "Cập nhật"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Unsaved changes confirm (Edit) */}
+            <ConfirmDialog
+                open={openUnsavedConfirm}
+                onOpenChange={setOpenUnsavedConfirm}
+                title="Thay đổi chưa lưu"
+                description={
+                    <span>
+                        Bạn có thay đổi <b>chưa lưu</b>. Đóng cửa sổ sẽ <b>mất tất cả thay đổi</b>. Bạn có chắc muốn đóng?
+                    </span>
+                }
+                confirmText="Thoát"
+                confirmVariant="default"
+                loading={false}
+                position="top"
+                onConfirm={() => {
+                    setOpenUnsavedConfirm(false)
+                    setOpenEdit(false)
+                    setEditing(null)
+                    setEditInitialForm(null)
+                }}
+            />
 
             {/* Delete confirm */}
             <ConfirmDialog
@@ -483,6 +517,7 @@ export default function Page() {
                 confirmText={deleting ? "Đang xoá..." : "Xoá"}
                 confirmVariant="destructive"
                 loading={deleting}
+                position="top"
                 onConfirm={() => {
                     if (!target) return
                     deleteVoucher(

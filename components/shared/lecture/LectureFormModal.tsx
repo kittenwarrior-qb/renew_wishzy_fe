@@ -223,6 +223,15 @@ export function LectureFormModal({
                                         {selectedSize ? <span className="text-muted-foreground"> · {formatBytes(selectedSize)}</span> : null}
                                     </div>
                                 ) : null}
+                                {form.fileUrl ? (
+                                    <div className="mt-3 w-full">
+                                        <video
+                                            src={form.fileUrl}
+                                            controls
+                                            className="w-full max-h-64 rounded-md bg-black"
+                                        />
+                                    </div>
+                                ) : null}
                             </div>
                             {uploading ? <UploadProgressOverlay progress={uploadProgress} /> : null}
                             <input

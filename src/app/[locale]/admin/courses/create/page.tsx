@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useParentCategories } from "@/components/shared/category/useCategory"
+import { useAllCategories } from "@/components/shared/category/useCategory"
 import { useCreateCourse } from "@/components/shared/course/useCourse"
 import { CourseForm, type CourseFormValue, useUnsavedChanges } from "@/components/shared/course/CourseForm"
 import { notify } from "@/components/shared/admin/Notifications"
@@ -14,8 +14,8 @@ export default function CreateCoursePage() {
     const router = useRouter()
     const { setPrimaryAction } = useAdminHeaderStore()
 
-    const { data: parentsData } = useParentCategories()
-    const categories = (parentsData?.data ?? []) as Array<{ id: string; name: string }>
+    const { data: categoriesData } = useAllCategories()
+    const categories = categoriesData?.data ?? []
     const { mutate: createCourse, isPending } = useCreateCourse()
 
     const [form, setForm] = React.useState<CourseFormValue>({ name: "", categoryId: "", level: "beginner", price: 0, totalDuration: 0, status: false, description: "", notes: "", thumbnail: "" })
@@ -48,7 +48,7 @@ export default function CreateCoursePage() {
 
     React.useEffect(() => {
         setPrimaryAction({
-            label: isPending ? "Đang lưu..." : "Lưu",
+            label: isPending ? "Đang lưu..." : "Tạo khóa học",
             variant: "default",
             disabled: isPending,
             onClick: handleSubmit,
@@ -58,13 +58,15 @@ export default function CreateCoursePage() {
     }, [setPrimaryAction, isPending, handleSubmit])
 
     return (
-        <CourseForm
-            value={form}
-            onChange={(v) => { setForm(v) }}
-            categories={categories}
-            loading={isPending}
-            onDirtyChange={setDirty}
-            onSubmit={handleSubmit}
-        />
+        <div className="relative py-4 px-4 md:px-6">
+            <CourseForm
+                value={form}
+                onChange={(v) => { setForm(v) }}
+                categories={categories}
+                loading={isPending}
+                onDirtyChange={setDirty}
+                onSubmit={handleSubmit}
+            />
+        </div>
     )
 }

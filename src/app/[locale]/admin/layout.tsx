@@ -17,8 +17,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const params = useParams<{ locale: string }>()
   const locale = params?.locale || "vi"
   const { ready } = useAdminGuard({ allowedRoles: ["admin"], redirectTo: `/${locale}` })
-  const { theme } = useAppStore()
+  const theme = useAppStore((state) => state.theme)
+  const hasHydrated = useAppStore((state) => state._hasHydrated)
   const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
+
+  React.useEffect(() => {
+    if (!hasHydrated) return
+
+    const root = document.documentElement
+    if (theme === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }, [theme, hasHydrated])
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {

@@ -19,3 +19,27 @@ export interface CreateOrderResponse {
   message: string;
   url: string;
 }
+
+export type OrderListRow = {
+  id: string
+  user?: { fullName?: string; email?: string } | null
+  userId?: string
+  totalPrice?: number | string
+  status?: OrderStatus
+  paymentMethod?: PaymentMethod
+  createdAt?: string
+}
+
+export enum OrderStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  CANCELLED = 'cancelled'
+}
+
+export enum PaymentMethod {
+  VNPAY = 'vnpay',
+  ZALOPAY = 'zalopay',
+  MOMO = 'momo',
+  BANKING = 'banking'
+}

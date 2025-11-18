@@ -6,11 +6,22 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { notify } from "@/components/shared/admin/Notifications"
-import { Upload } from "lucide-react"
+import { Upload, ChevronDown } from "lucide-react"
 import api from "@/services/api"
 import { uploadImage } from "@/services/uploads"
 import UploadProgressOverlay from "@/components/shared/upload/UploadProgressOverlay"
 import Switch from "@/components/ui/switch"
+import type { Category } from "@/types/category"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 export { useUnsavedChanges } from "@/hooks/useUnsavedChanges"
 
 export type CourseFormValue = {
@@ -37,7 +48,7 @@ export function CourseForm({
 }: {
     value: CourseFormValue
     onChange: (v: CourseFormValue) => void
-    categories: Array<{ id: string; name: string }>
+    categories: Category[]
     loading?: boolean
     onSubmit: () => void
     onDirtyChange?: (dirty: boolean) => void
@@ -67,6 +78,41 @@ export function CourseForm({
     const MAX_IMAGE_MB = 5
     const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
 
+    const { parentCategories, categoriesByParent } = React.useMemo(() => {
+        const result: {
+            parentCategories: Category[]
+            categoriesByParent: Record<string, Category[]>
+        } = {
+            parentCategories: [],
+            categoriesByParent: {},
+        }
+
+        if (!categories || !categories.length) return result
+
+        const all = categories
+
+        all.forEach((cat) => {
+            if (!cat.parentId) {
+                result.parentCategories.push(cat)
+            } else {
+                if (!result.categoriesByParent[cat.parentId]) {
+                    result.categoriesByParent[cat.parentId] = []
+                }
+                result.categoriesByParent[cat.parentId].push(cat)
+            }
+        })
+
+        result.parentCategories.sort((a, b) => a.name.localeCompare(b.name))
+
+        return result
+    }, [categories])
+
+    const selectedCategoryLabel = React.useMemo(() => {
+        if (!value.categoryId) return ""
+        const found = categories.find((c) => String(c.id) === String(value.categoryId))
+        return found?.name ?? ""
+    }, [categories, value.categoryId])
+
     const tryUpload = async (file: File) => {
         try {
             if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -80,7 +126,7 @@ export function CourseForm({
             }
             setUploading(true)
             setUploadProgress(0)
-            const { url } = await uploadImage(file, '/uploads/avatar', { fieldName: 'file', onProgress: (p) => setUploadProgress(p) })
+            const { url } = await uploadImage(file, undefined, { fieldName: 'file', onProgress: (p) => setUploadProgress(p) })
             if (!url) throw new Error('Upload không trả về URL')
             setField('thumbnail', url)
             notify({ title: 'Tải ảnh thành công', variant: 'success' })
@@ -156,14 +202,86 @@ export function CourseForm({
                         </div>
                         <div>
                             <label className="mb-1 block text-sm font-medium">Danh mục</label>
-                            <Select value={value.categoryId || undefined} onValueChange={(v) => setField('categoryId', v as any)}>
-                                <SelectTrigger disabled={loading}><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
-                                <SelectContent>
-                                    {categories.map((c) => (
-                                        <SelectItem key={String((c as any).id)} value={String((c as any).id)}>{(c as any).name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        disabled={loading}
+                                        className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <span className={selectedCategoryLabel ? "truncate" : "text-muted-foreground"}>
+                                            {selectedCategoryLabel || "Chọn danh mục"}
+                                        </span>
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="relative w-64 max-h-80 overflow-y-auto scrollbar-none scrollbar-left">
+                                    <DropdownMenuGroup>
+                                        {parentCategories.length === 0 ? (
+                                            <DropdownMenuItem disabled>
+                                                Không có danh mục
+                                            </DropdownMenuItem>
+                                        ) : (
+                                            parentCategories.map((parent) => {
+                                                const children = categoriesByParent[parent.id] || []
+                                                if (children.length > 0) {
+                                                    return (
+                                                        <DropdownMenuSub key={parent.id}>
+                                                            <DropdownMenuSubTrigger
+                                                                className="cursor-pointer"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault()
+                                                                    setField('categoryId', String(parent.id) as any)
+                                                                    setTouched((t) => ({ ...t, categoryId: true }))
+                                                                }}
+                                                            >
+                                                                <span className="flex-1 truncate">{parent.name}</span>
+                                                            </DropdownMenuSubTrigger>
+                                                            <DropdownMenuSubContent className="relative max-h-80 overflow-y-auto scrollbar-none scrollbar-left">
+                                                                {children.map((child) => (
+                                                                    <DropdownMenuItem
+                                                                        key={child.id}
+                                                                        className="cursor-pointer"
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault()
+                                                                            setField('categoryId', String(child.id) as any)
+                                                                            setTouched((t) => ({ ...t, categoryId: true }))
+                                                                        }}
+                                                                    >
+                                                                        <span className="truncate">{child.name}</span>
+                                                                    </DropdownMenuItem>
+                                                                ))}
+                                                                {children.length > 6 && (
+                                                                    <div className="pointer-events-none sticky bottom-1 flex justify-center py-1">
+                                                                        <ChevronDown className="h-8 w-8 text-muted-foreground scroll-hint-bounce" />
+                                                                    </div>
+                                                                )}
+                                                            </DropdownMenuSubContent>
+                                                        </DropdownMenuSub>
+                                                    )
+                                                }
+                                                return (
+                                                    <DropdownMenuItem
+                                                        key={parent.id}
+                                                        className="cursor-pointer"
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            setField('categoryId', String(parent.id) as any)
+                                                            setTouched((t) => ({ ...t, categoryId: true }))
+                                                        }}
+                                                    >
+                                                        <span className="truncate">{parent.name}</span>
+                                                    </DropdownMenuItem>
+                                                )
+                                            })
+                                        )}
+                                    </DropdownMenuGroup>
+                                    {parentCategories.length > 6 && (
+                                        <div className="pointer-events-none sticky bottom-1 flex justify-center py-1">
+                                            <ChevronDown className="h-8 w-8 text-muted-foreground scroll-hint-bounce" />
+                                        </div>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             {touched.categoryId && errors.categoryId ? <p className="mt-1 text-xs text-destructive">{errors.categoryId}</p> : null}
                         </div>
                         <div>

@@ -20,7 +20,7 @@ export default function Page() {
     const voucher = order?.voucher as unknown as { code?: string; id?: string } | null
 
     return (
-        <div className="relative">
+        <div className="relative p-4 md:p-6">
             <LoadingOverlay show={isPending || isFetching} />
 
             <div className="mb-4 flex items-center gap-2">

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useParentCategories } from "@/components/shared/category/useCategory"
+import { useAllCategories } from "@/components/shared/category/useCategory"
 import { useCourseDetail, useUpdateCourse } from "@/components/shared/course/useCourse"
 import { CourseForm, type CourseFormValue, useUnsavedChanges } from "@/components/shared/course/CourseForm"
 import { notify } from "@/components/shared/admin/Notifications"
@@ -15,8 +15,8 @@ export default function EditCoursePage() {
   const router = useRouter()
   const { setPrimaryAction } = useAdminHeaderStore()
 
-  const { data: parentsData } = useParentCategories()
-  const categories = (parentsData?.data ?? []) as Array<{ id: string; name: string }>
+  const { data: categoriesData } = useAllCategories()
+  const categories = categoriesData?.data ?? []
   const { data, isPending } = useCourseDetail(id)
   const { mutate: updateCourse, isPending: updating } = useUpdateCourse()
 
@@ -76,7 +76,7 @@ export default function EditCoursePage() {
   }, [setPrimaryAction, updating, handleSubmit])
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="relative py-4 px-4 md:px-6">
       <CourseForm
         value={form}
         onChange={(v) => { setForm(v); setDirty(true) }}

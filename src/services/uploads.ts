@@ -2,7 +2,7 @@ import api from "./api"
 
 export async function uploadImage(
     file: File,
-    endpoint: string = "/uploads/avatar",
+    endpoint: string = "/uploads/image",
     opts: { timeoutMs?: number; onProgress?: (progress: number) => void; fieldName?: string } = {}
 ): Promise<{ url: string }> {
     if (!file || file.size === 0) throw new Error("Không có file hợp lệ")

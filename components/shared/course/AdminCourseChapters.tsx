@@ -59,6 +59,7 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
     const [openLectureEdit, setOpenLectureEdit] = React.useState(false)
     const [editingLecture, setEditingLecture] = React.useState<{ id: string; name: string; description?: string; fileUrl?: string; duration: number; isPreview?: boolean; orderIndex: number } | null>(null)
     const [openDeleteLectureId, setOpenDeleteLectureId] = React.useState<string | null>(null)
+    const [previewLecture, setPreviewLecture] = React.useState<{ name: string; fileUrl?: string; duration?: number } | null>(null)
 
     const onDelete = (id: string) => {
         setDeletingId(id)
@@ -170,10 +171,13 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
                                         <Play className="w-4 h-4 text-muted-foreground" />
                                         <div className="flex flex-col">
                                             <span className="text-sm font-medium">{lecture.name}</span>
-                                            {lecture.isPreview && (
+                                            {lecture.isPreview && lecture.fileUrl && (
                                                 <button
                                                     className="text-xs cursor-pointer text-blue-600 font-medium hover:text-blue-800 hover:underline transition-colors w-fit"
-                                                    onClick={(e) => { e.stopPropagation() }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setPreviewLecture({ name: lecture.name, fileUrl: lecture.fileUrl, duration: Number(lecture.duration || 0) })
+                                                    }}
                                                 >
                                                     Xem trước
                                                 </button>
@@ -316,6 +320,27 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
                     })
                 }}
             />
+            <Dialog open={!!previewLecture} onOpenChange={(o) => { if (!o) setPreviewLecture(null) }}>
+                <DialogContent className="sm:max-w-lg sm:left-auto sm:right-0 h-screen sm:top-0 sm:translate-x-0 sm:translate-y-0">
+                    <DialogHeader className="px-4 py-3 border-b">
+                        <DialogTitle className="text-base font-semibold truncate">Xem trước: {previewLecture?.name}</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 flex flex-col p-4 gap-3 overflow-hidden">
+                        {previewLecture?.fileUrl ? (
+                            <video
+                                src={previewLecture.fileUrl}
+                                controls
+                                className="w-full h-full rounded-md bg-black"
+                            />
+                        ) : (
+                            <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">Không có video</div>
+                        )}
+                    </div>
+                    <DialogFooter className="px-4 py-3 border-t flex justify-end">
+                        <Button type="button" variant="outline" className="cursor-pointer" onClick={() => setPreviewLecture(null)}>Đóng</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             <LectureFormModal
                 open={openLecture}
                 onOpenChange={(o) => { setOpenLecture(o); if (!o) setLectureChapterId(null) }}

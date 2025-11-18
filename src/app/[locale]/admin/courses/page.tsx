@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
+import Switch from "@/components/ui/switch"
 import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog"
 import Link from "next/link"
 import { notify } from "@/components/shared/admin/Notifications"
@@ -90,7 +91,7 @@ export default function Page() {
   }, [setPrimaryAction, router, locale])
 
   return (
-    <div className="">
+    <div className="relative py-4 px-4 md:px-6">
       <div className="mb-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-2 items-center">
@@ -238,26 +239,41 @@ export default function Page() {
                 label: 'Trạng thái',
                 type: 'short',
                 render: (row: Course) => (
-                  <Button
-                    variant={row.status ? "secondary" : "outline"}
-                    size="sm"
-                    disabled={toggling}
-                    onClick={() =>
-                      toggleStatus(
-                        { id: String(row.id) },
-                        {
-                          onError: (e: any) =>
-                            notify({
-                              title: "Lỗi",
-                              description: String(e?.message || "Không thể cập nhật"),
-                              variant: "destructive",
-                            }),
-                        },
-                      )
-                    }
-                  >
-                    {row.status ? "Xuất bản" : "Nháp"}
-                  </Button>
+                  <div className="flex flex-col items-center gap-1">
+                    <Switch
+                      checked={!!row.status}
+                      disabled={toggling}
+                      onCheckedChange={() =>
+                        toggleStatus(
+                          { id: String(row.id) },
+                          {
+                            onError: (e: any) => {
+                              const backendMessage = e?.response?.data?.message as string | undefined
+                              const statusCode = e?.response?.status as number | undefined
+
+                              const isUnauthorizedToggle =
+                                statusCode === 403 ||
+                                backendMessage === "You are not authorized to perform this action on this course"
+
+                              const description = isUnauthorizedToggle
+                                ? "Bạn không có quyền thay đổi trạng thái của khoá học này."
+                                : "Không thể cập nhật trạng thái khoá học. Vui lòng thử lại sau."
+
+                              notify({
+                                title: "Lỗi",
+                                description,
+                                variant: "destructive",
+                              })
+                            },
+                          },
+                        )
+                      }
+                      aria-label={row.status ? "Đang xuất bản" : "Đang nháp"}
+                    />
+                    <span className="text-[11px] text-muted-foreground">
+                      {row.status ? "Mở" : "Nháp"}
+                    </span>
+                  </div>
                 ),
               },
               {

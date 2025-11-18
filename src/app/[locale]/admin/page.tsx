@@ -4,27 +4,37 @@ import * as React from "react"
 import { Users, GraduationCap, Layers3, Folder, Image as ImageIcon } from "lucide-react"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { useUserList, useInstructorList } from "@/components/shared/user/useUser"
-import { useCourseList } from "@/components/shared/course/useCourse"
+import { useCourseList, useBestSellerCourses } from "@/components/shared/course/useCourse"
 import { useCategoryList } from "@/components/shared/category/useCategory"
 import { useBannerList } from "@/components/shared/banner/useBanner"
+import { useOrderList, type OrderListItem, type OrderList } from "@/components/shared/order/useOrder"
 import type { UserList } from "@/components/shared/user/useUser"
 import type { CourseListResponse } from "@/components/shared/course/useCourse"
 import type { CategoryListResponse } from "@/types/category"
 import type { BannerListResponse } from "@/components/shared/banner/useBanner"
+import { AdminDashboardHero } from "@/components/shared/admin/AdminDashboardHero"
+import { AdminDashboardQuickStats } from "@/components/shared/admin/AdminDashboardQuickStats"
+import { AdminDashboardSchedule } from "@/components/shared/admin/AdminDashboardSchedule"
+import { AdminDashboardLeaderboards } from "@/components/shared/admin/AdminDashboardLeaderboards"
+import { AdminDashboardRevenue } from "@/components/shared/admin/AdminDashboardRevenue"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 
 export default function Page() {
-  const { data: usersRes, isPending: loadingUsers, isFetching: fetchingUsers } = useUserList({ page: 1, limit: 1, role: 'user' })
+  const { data: usersRes, isPending: loadingUsers, isFetching: fetchingUsers } = useUserList({ page: 1, limit: 20, role: 'user' })
   const { data: instrRes, isPending: loadingInstr, isFetching: fetchingInstr } = useInstructorList({ page: 1, limit: 1, role: 'instructor' })
   const { data: coursesRes, isPending: loadingCourses, isFetching: fetchingCourses } = useCourseList({ page: 1, limit: 1 })
   const { data: categoriesRes, isPending: loadingCats, isFetching: fetchingCats } = useCategoryList({ page: 1, limit: 1 })
   const { data: bannersRes, isPending: loadingBanners, isFetching: fetchingBanners } = useBannerList({ page: 1, limit: 1 })
+  const { data: bestSellerCoursesRes } = useBestSellerCourses(5)
+  const { data: ordersRes, isPending: loadingOrders, isFetching: fetchingOrders } = useOrderList({ page: 1, limit: 100 })
 
   const showLoading = (
     loadingUsers || fetchingUsers ||
     loadingInstr || fetchingInstr ||
     loadingCourses || fetchingCourses ||
     loadingCats || fetchingCats ||
-    loadingBanners || fetchingBanners
+    loadingBanners || fetchingBanners ||
+    loadingOrders || fetchingOrders
   )
 
   const totalUsers = (usersRes as UserList | undefined)?.total ?? 0
@@ -41,32 +51,34 @@ export default function Page() {
     { title: "Banner", value: totalBanners, icon: <ImageIcon className="h-5 w-5" /> },
   ]
 
+  const featuredCourse = (coursesRes as CourseListResponse | undefined)?.data?.[0]
+  const courses = (coursesRes as CourseListResponse | undefined)?.data ?? []
+  const latestUsers = (usersRes as UserList | undefined)?.data ?? []
+  const bestSellerCourses = (bestSellerCoursesRes ?? [])
+  const orders = ((ordersRes as OrderList | undefined)?.data ?? []) as OrderListItem[]
+
+  const { fullName, email } = useCurrentUser()
+
   return (
-    <div className="relative p-4 md:p-6">
+    <div className="relative space-y-6 p-4 md:p-6">
       <LoadingOverlay show={showLoading} />
+      {/* Below: 2-column layout */}
+      <div className="grid gap-6 grid-cols-[2.1fr_1fr]">
+        <div className="space-y-6">
+          <AdminDashboardHero
+            fullName={fullName}
+            email={email}
+            totalUsers={totalUsers}
+            totalCourses={totalCourses}
+            totalInstructors={totalInstructors}
+          />
+          <AdminDashboardRevenue orders={orders} />
+        </div>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Tổng quan</h1>
-        <p className="text-sm text-muted-foreground mt-1">Số liệu nhanh của hệ thống</p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {cards.map((c) => (
-          <div key={c.title} className="rounded-lg border bg-card text-card-foreground shadow-sm">
-            <div className="p-4 flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="text-sm text-muted-foreground">{c.title}</div>
-                <div className="text-2xl font-semibold tabular-nums">{c.value}</div>
-                {c.hint ? <div className="text-xs text-muted-foreground">{c.hint}</div> : null}
-              </div>
-              <div className="h-10 w-10 inline-flex items-center justify-center rounded-md bg-primary/10 text-primary">
-                {c.icon}
-              </div>
-            </div>
-          </div>
-        ))}
+        <div className="space-y-4">
+          <AdminDashboardLeaderboards bestSellerCourses={bestSellerCourses} orders={orders} />
+        </div>
       </div>
     </div>
   )
 }
-
