@@ -33,7 +33,6 @@ export function VideoPlayer({
   lectureId,
   videoUrl, 
   title,
-  initialProgress,
   onProgressUpdate,
   onComplete,
   onNext, 
@@ -45,18 +44,15 @@ export function VideoPlayer({
   const playerRef = useRef<any>(null);
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastProgressRef = useRef<UpdateLectureProgressDto | null>(null);
-  const [isReady, setIsReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const isSavingRef = useRef(false);
   const hasTriggeredCompletionRef = useRef(false);
 
   const saveProgressToAPI = async (progress: UpdateLectureProgressDto) => {
     try {
-      // Get current enrollment to preserve existing finishedLectures
       const enrollment = await enrollmentsApi.getEnrollment(enrollmentId);
       const currentFinishedLectures = enrollment.attributes?.finishedLectures || [];
       
-      // Add current lecture to finishedLectures if completed and not already in the list
       let updatedFinishedLectures = currentFinishedLectures;
       if (progress.isCompleted && !currentFinishedLectures.includes(progress.lectureId)) {
         updatedFinishedLectures = [...currentFinishedLectures, progress.lectureId];
@@ -76,7 +72,7 @@ export function VideoPlayer({
         },
       });
     } catch (error) {
-      console.error('Failed to save progress:', error);
+      // Silent fail
     }
   };
 
@@ -152,12 +148,6 @@ export function VideoPlayer({
       return;
     }
 
-    console.log('=== Initializing VideoPlayer ===');
-    console.log('Lecture ID:', lectureId);
-    console.log('Enrollment ID:', enrollmentId);
-    console.log('Video URL:', videoUrl);
-
-    // Reset completion flag and last progress for new lecture
     hasTriggeredCompletionRef.current = false;
     lastProgressRef.current = null;
 
@@ -180,9 +170,7 @@ export function VideoPlayer({
         },
       };
 
-      const player = videojs(videoRef.current, options, () => {
-        setIsReady(true);
-      });
+      const player = videojs(videoRef.current, options);
 
       playerRef.current = player;
 
@@ -196,104 +184,56 @@ export function VideoPlayer({
         if (progressLoaded) return;
         
         try {
-          console.log('=== Loading Progress ===');
-          console.log('Current lectureId:', lectureId);
-          console.log('EnrollmentId:', enrollmentId);
-          
           const enrollment = await enrollmentsApi.getEnrollment(enrollmentId);
           const lectureOnlearning = enrollment.attributes?.lectureOnlearning;
-          
-          console.log('Enrollment attributes:', JSON.stringify(enrollment.attributes, null, 2));
-          
-          if (lectureOnlearning) {
-            console.log('Saved lectureId:', lectureOnlearning.lectureId);
-            console.log('Saved currentTime:', lectureOnlearning.currentTime);
-            console.log('IDs match:', lectureOnlearning.lectureId === lectureId);
-            console.log('ID types:', typeof lectureOnlearning.lectureId, typeof lectureId);
-          }
-          
-          // Only load progress if it's for the current lecture
           if (lectureOnlearning && String(lectureOnlearning.lectureId) === String(lectureId)) {
-            savedTimeToSeek = lectureOnlearning.currentTime || 0;
-            const volume = (lectureOnlearning.volume || 100) / 100;
+            savedTimeToSeek = lectureOnlearning.currentTime ?? 0;
+            const volume = (lectureOnlearning.volume ?? 100) / 100;
             
             player.volume(volume);
             progressLoaded = true;
-            
-            console.log(`✓ Found saved progress: ${savedTimeToSeek}s for lecture ${lectureId}`);
           } else {
-            console.log('✗ No matching saved progress for this lecture');
-            if (lectureOnlearning) {
-              console.log(`  Saved lecture: ${lectureOnlearning.lectureId}`);
-              console.log(`  Current lecture: ${lectureId}`);
-            }
             progressLoaded = true;
           }
         } catch (error) {
-          console.error('Failed to load progress:', error);
           progressLoaded = true;
         }
       };
 
       const attemptSeek = () => {
-        if (!progressLoaded) {
-          console.log('Progress not loaded yet, skipping seek');
-          return;
-        }
-        
-        if (savedTimeToSeek <= 0) {
-          console.log('No saved time to seek to');
+        if (!progressLoaded || savedTimeToSeek <= 0) {
           return;
         }
         
         const duration = player.duration();
-        const currentTime = player.currentTime();
-        
-        console.log(`Attempt seek - Current: ${currentTime}s, Target: ${savedTimeToSeek}s, Duration: ${duration}s`);
+        const currentTime = player.currentTime() ?? 0;
         
         if (duration && !isNaN(duration) && duration > 0) {
-          // Only seek if saved time is valid and less than duration
-          if (savedTimeToSeek < duration - 1) {
-            // Check if we're not already at the saved position
-            if (Math.abs(currentTime - savedTimeToSeek) > 1) {
-              player.currentTime(savedTimeToSeek);
-              console.log(`✓ Successfully resumed video at ${savedTimeToSeek}s (duration: ${duration}s)`);
-            } else {
-              console.log(`Already at saved position ${savedTimeToSeek}s`);
-            }
-          } else {
-            console.log(`Saved time ${savedTimeToSeek}s is too close to duration ${duration}s, starting from beginning`);
+          if (savedTimeToSeek < duration - 1 && Math.abs(currentTime - savedTimeToSeek) > 1) {
+            player.currentTime(savedTimeToSeek);
           }
         } else if (retryCount < MAX_RETRIES) {
-          // Retry if duration not ready yet
           retryCount++;
-          console.log(`Duration not ready (${duration}), retry ${retryCount}/${MAX_RETRIES}`);
           setTimeout(attemptSeek, 150);
-        } else {
-          console.error('Failed to get video duration after max retries');
         }
       };
 
-      // Load progress first
       player.one('loadedmetadata', async () => {
         await loadProgress();
-        // Try to seek immediately after loading progress
         attemptSeek();
       });
 
-      // Backup: try again when video can play
       player.one('canplay', () => {
-        if (savedTimeToSeek > 0 && player.currentTime() < 1) {
-          console.log('Attempting seek on canplay event');
+        const currentTime = player.currentTime() ?? 0;
+        if (savedTimeToSeek > 0 && currentTime < 1) {
           attemptSeek();
         }
       });
 
-      // Final backup: try when player is fully ready
       player.ready(() => {
         setTimeout(() => {
-          if (savedTimeToSeek > 0 && player.currentTime() < 1) {
-            console.log('Attempting seek on player ready');
+          const currentTime = player.currentTime() ?? 0;
+          if (savedTimeToSeek > 0 && currentTime < 1) {
             attemptSeek();
           }
         }, 300);
@@ -306,10 +246,8 @@ export function VideoPlayer({
         if (duration > 0 && !isNaN(duration)) {
           const watchedPercentage = (currentTime / duration) * 100;
           
-          // Trigger completion only once when reaching 90%
           if (watchedPercentage >= 90 && !hasTriggeredCompletionRef.current) {
             hasTriggeredCompletionRef.current = true;
-            console.log(`Lecture completed at ${watchedPercentage.toFixed(1)}%`);
             saveProgress(true);
             onComplete?.();
           }
@@ -318,9 +256,7 @@ export function VideoPlayer({
 
       const handleEnded = () => {
         saveProgress(true);
-        if (onComplete) {
-          onComplete();
-        }
+        onComplete?.();
       };
 
       player.on('pause', () => {
@@ -347,7 +283,7 @@ export function VideoPlayer({
           playerRef.current.dispose();
           playerRef.current = null;
         } catch (error) {
-          //
+          // Silent cleanup
         }
       }
     };

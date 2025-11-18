@@ -15,7 +15,7 @@ export const CourseCard = ({ enrollment }: CourseCardProps) => {
   const t = useTranslations();
   const translate = (key: string) => t(`students.${key}`);
   const { course, progress, status } = enrollment;
-  const progressValue = parseFloat(progress) || 0;
+  const progressValue = progress || 0;
   
   const formatDuration = (minutes: number) => {
     if (minutes < 60) return `${minutes} ${translate("minutes")}`;
@@ -80,7 +80,7 @@ export const CourseCard = ({ enrollment }: CourseCardProps) => {
               <Badge variant="outline" className="text-xs capitalize">
                 {course.level}
               </Badge>
-              {status === "in_progress" && (
+              {status === "ongoing" && (
                 <Badge variant="secondary" className="text-xs bg-primary/10 text-primary">
                   {translate("inProgress")}
                 </Badge>

@@ -19,7 +19,7 @@ export const CoursesSection = ({
   const translate = (key: string) => t(`students.${key}`);
 
   const inProgressCourses = enrollments.filter(
-    (e) => e.status === "in_progress"
+    (e) => e.status === "ongoing"
   );
   const allCourses = enrollments;
 
