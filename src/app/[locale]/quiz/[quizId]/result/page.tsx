@@ -49,13 +49,14 @@ export default function QuizResultPage() {
         score: 80,
         correctCount: 4,
         totalQuestions: 5,
-        timeSpent: 450, // 7 phút 30 giây
+        timeSpent: 450, 
         answers: {},
         quiz: {
           id: quizId,
           title: "Bài kiểm tra Lập trình Web",
           description: "Kiểm tra kiến thức về HTML, CSS và JavaScript cơ bản",
           duration: 30,
+          timeLimit: 30,
           questions: [],
         },
       };

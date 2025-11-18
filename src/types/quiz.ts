@@ -18,6 +18,7 @@ export interface Quiz {
   description?: string;
   questions: QuizQuestion[];
   timeLimit: number;
+  duration:number;
 }
 
 export interface QuizSubmission {

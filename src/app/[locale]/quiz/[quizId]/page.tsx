@@ -31,6 +31,7 @@ export default function QuizPage() {
         title: quizData.title,
         description: quizData.description,
         timeLimit: quizData.timeLimit,
+        duration: quizData.timeLimit, // duration is the same as timeLimit
         questions: quizData.questions.map((q: any) => ({
           id: q.id,
           question: q.questionText,

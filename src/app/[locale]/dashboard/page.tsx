@@ -1,9 +1,5 @@
-import React from 'react'
-
-const hi = () => {
+export default function DashboardPage() {
   return (
     <div>hi</div>
   )
 }
-
-export default hi
