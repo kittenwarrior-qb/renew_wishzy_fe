@@ -156,8 +156,9 @@ export const useParentCategories = () => {
 
 export const useSubCategories = (parentId: string, page: number = 1, limit: number = 10) => {
   return useQuery<any, unknown, CategoryListResponse>({
-    queryKey: [CATEGORY_ENDPOINTS.list, { parentId, page, limit }],
-    queryFn: async () => categoryService.subcategories(parentId, { page, limit }),
+    queryKey: [CATEGORY_ENDPOINTS.list, { parentId, page, limit, isSubCategory: true }],
+    // BE only exposes GET /categories with filters, no dedicated subcategories endpoint
+    queryFn: async () => categoryService.list({ parentId, page, limit, isSubCategory: true } as any),
     enabled: !!parentId,
     staleTime: 15 * 60 * 1000,
     select: (res: any): CategoryListResponse => {
@@ -177,8 +178,8 @@ export const useSubCategories = (parentId: string, page: number = 1, limit: numb
 
 export const useSubCategoriesCount = (parentId: string) => {
   return useQuery<any, unknown, CategoryListResponse>({
-    queryKey: [CATEGORY_ENDPOINTS.list, { parentId, limit: 1 }],
-    queryFn: async () => categoryService.subcategories(parentId, { limit: 1 }),
+    queryKey: [CATEGORY_ENDPOINTS.list, { parentId, limit: 1, isSubCategory: true }],
+    queryFn: async () => categoryService.list({ parentId, limit: 1, isSubCategory: true } as any),
     enabled: !!parentId,
     staleTime: 15 * 60 * 1000,
     select: (res: any): CategoryListResponse => {

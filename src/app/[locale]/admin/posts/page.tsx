@@ -5,19 +5,23 @@ import Link from "next/link"
 import { useParams, useSearchParams, useRouter } from "next/navigation"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { usePostList, useDeletePost } from "@/components/shared/post/usePost"
-import type { PostStatus } from "@/services/post"
+import type { PostStatus, Post } from "@/services/post"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { Pagination } from "@/components/shared/common/Pagination"
+import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
+import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
 import { Pencil, Trash2, Plus } from "lucide-react"
 import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
+import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
+import { AdminDataErrorState } from "@/components/shared/admin/AdminDataErrorState"
 
 export default function Page() {
   const params = useParams<{ locale: string }>()
   const locale = params?.locale || "vi"
   const router = useRouter()
   const sp = useSearchParams()
+  const { setPrimaryAction } = useAdminHeaderStore()
 
   const [page, setPage] = React.useState<number>(Number(sp.get("page") || 1))
   const [limit, setLimit] = React.useState<number>(Number(sp.get("limit") || 10))
@@ -36,7 +40,7 @@ export default function Page() {
     if (current !== href) router.replace(href)
   }, [q, status, page, limit, locale, router])
 
-  const { data, isPending, isFetching, isError } = usePostList({ page, limit, q, status })
+  const { data, isPending, isFetching, isError, refetch } = usePostList({ page, limit, q, status })
   const { mutate: deletePost, isPending: deleting } = useDeletePost()
 
   const items = data?.data ?? []
@@ -48,6 +52,27 @@ export default function Page() {
   const [openDelete, setOpenDelete] = React.useState(false)
   const [target, setTarget] = React.useState<{ id: string; title: string } | null>(null)
 
+  React.useEffect(() => {
+    setPrimaryAction({
+      label: "Viết bài",
+      variant: "default",
+      onClick: () => router.push(`/${locale}/admin/posts/create`),
+    })
+
+    return () => setPrimaryAction(null)
+  }, [setPrimaryAction, router, locale])
+
+  if (isError) {
+    return (
+      <div className="relative">
+        <AdminDataErrorState
+          title="Không thể tải danh sách bài viết"
+          onRetry={() => refetch()}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="relative p-4 md:p-6">
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -55,7 +80,7 @@ export default function Page() {
           <Input placeholder="Tìm kiếm..." value={qInput} onChange={(e) => setQInput(e.target.value)} className="w-[260px]" />
           <Button variant="outline" onClick={() => { setQ(qInput); setPage(1) }}>Tìm</Button>
           <Select value={status} onValueChange={(v) => { setStatus(v as any); setPage(1) }}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__all">Tất cả trạng thái</SelectItem>
               <SelectItem value="draft">Nháp</SelectItem>
@@ -64,51 +89,81 @@ export default function Page() {
             </SelectContent>
           </Select>
         </div>
-        <Link href={`/${locale}/admin/posts/create`} className="inline-flex"><Button className="gap-2"><Plus className="h-4 w-4" /> Viết bài</Button></Link>
       </div>
 
       <div className="relative min-h-[300px]">
         <LoadingOverlay show={isPending || isFetching} />
-
-        <div className="border rounded-md overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-3 py-2 text-left">Tiêu đề</th>
-                <th className="px-3 py-2 text-left">Slug</th>
-                <th className="px-3 py-2 text-left">Trạng thái</th>
-                <th className="px-3 py-2 text-right">Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isError ? (
-                <tr><td colSpan={4} className="px-3 py-6 text-center text-destructive">Lỗi tải dữ liệu</td></tr>
-              ) : items.length === 0 ? (
-                <tr><td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">Không có dữ liệu</td></tr>
-              ) : (
-                items.map((p) => (
-                  <tr key={p.id} className="border-t">
-                    <td className="px-3 py-2 font-medium">{p.title}</td>
-                    <td className="px-3 py-2 text-muted-foreground">/{p.slug}</td>
-                    <td className="px-3 py-2">{p.status}</td>
-                    <td className="px-3 py-2 text-right">
-                      <div className="inline-flex items-center gap-1">
-                        <Link href={`/${locale}/admin/posts/${p.id}`} className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent"><Pencil className="h-4 w-4" /></Link>
-                        <button type="button" className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent text-destructive" disabled={deleting} onClick={() => { setTarget({ id: p.id, title: p.title }); setOpenDelete(true) }}>
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-4 flex justify-end">
-          <Pagination pagination={{ totalItems: total, totalPages, currentPage, itemsPerPage: pageSize }} onPageChange={(p) => setPage(p)} size="sm" />
-        </div>
+        <DynamicTable
+          columns={(() => {
+            type PostRow = Post
+            const cols: Column<PostRow>[] = [
+              {
+                key: "title",
+                title: "Tiêu đề",
+                render: (row: PostRow) => (
+                  <TruncateTooltipWrapper className="max-w-[260px]">
+                    {row.title}
+                  </TruncateTooltipWrapper>
+                ),
+              },
+              {
+                key: "slug",
+                title: "Slug",
+                render: (row: PostRow) => (
+                  <span className="text-muted-foreground">/{row.slug}</span>
+                ),
+              },
+              {
+                key: "status",
+                title: "Trạng thái",
+                align: "center",
+                render: (row: PostRow) => (
+                  <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize">
+                    {row.status}
+                  </span>
+                ),
+              },
+              {
+                key: "actions",
+                title: "Hành động",
+                align: "right",
+                type: "action",
+                render: (row: PostRow) => (
+                  <div className="inline-flex items-center gap-1">
+                    <Link
+                      href={`/${locale}/admin/posts/${row.id}`}
+                      className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                    <button
+                      type="button"
+                      className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent text-destructive cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={deleting}
+                      onClick={() => { setTarget({ id: row.id, title: row.title }); setOpenDelete(true) }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ),
+              },
+            ]
+            return cols
+          })()}
+          data={items as Post[]}
+          loading={isPending || isFetching}
+          pagination={{
+            totalItems: total,
+            currentPage,
+            itemsPerPage: pageSize,
+            onPageChange: (p) => setPage(p),
+            pageSizeOptions: [10, 20, 50],
+            onPageSizeChange: (sz) => {
+              setLimit(sz)
+              setPage(1)
+            },
+          }}
+        />
       </div>
 
       <ConfirmDialog

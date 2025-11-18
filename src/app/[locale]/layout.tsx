@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from "@/providers/GoogleOAuthProvider";
 import Header from "@/components/shared/layout/Header";
 import Footer from "@/components/shared/layout/Footer";
 import ScrollToTop from "@/components/shared/ScrollToTop";
+import { MaintenanceGuard } from "@/components/shared/layout/MaintenanceGuard";
 
 const locales = ["vi", "en"];
 
@@ -66,7 +67,9 @@ export default async function LocaleLayout({
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
             <Header />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1">
+              <MaintenanceGuard>{children}</MaintenanceGuard>
+            </main>
             <Footer />
             <ScrollToTop />
           </div>

@@ -46,6 +46,18 @@ export const usersService = {
     const res = await api.get(`${BASE}/${id}`);
     return res.data;
   },
+  async create(data: Record<string, any>) {
+    const res = await api.post(`${BASE}/admin`, data);
+    return res.data;
+  },
+  async update(id: string, data: Record<string, any>) {
+    const res = await api.put(`${BASE}/${id}`, data);
+    return res.data;
+  },
+  async remove(id: string) {
+    const res = await api.delete(`${BASE}/${id}`);
+    return res.data;
+  },
   async approveInstructor(id: string) {
     const res = await api.post(`${BASE}/${id}/instructor/approve`);
     return res.data;

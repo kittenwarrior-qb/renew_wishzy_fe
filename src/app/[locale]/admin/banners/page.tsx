@@ -9,23 +9,25 @@ import { notify } from "@/components/shared/admin/Notifications"
 import { useBannerList, useCreateBanner, useUpdateBanner, useDeleteBanner } from "@/components/shared/banner/useBanner"
 import type { Banner } from "@/services/banner"
 import { BannerForm, type BannerFormValue } from "@/components/shared/banner/BannerForm"
-import { Pagination } from "@/components/shared/common/Pagination"
 import { useAppStore } from "@/stores/useAppStore"
+import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 import { Pencil, Trash2 } from "lucide-react"
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
+import { AdminDataErrorState } from "@/components/shared/admin/AdminDataErrorState"
 
 export default function Page() {
   const params = useParams<{ locale: string }>()
   const locale = params?.locale || "vi"
   const { theme } = useAppStore()
   const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
+  const { setPrimaryAction } = useAdminHeaderStore()
 
   const [page, setPage] = React.useState(1)
   const [limit, setLimit] = React.useState(10)
 
-  const { data, isPending, isFetching, isError } = useBannerList({ page, limit })
+  const { data, isPending, isFetching, isError, refetch } = useBannerList({ page, limit })
   const { mutate: createBanner, isPending: creating } = useCreateBanner()
   const { mutate: updateBanner, isPending: updating } = useUpdateBanner()
   const { mutate: deleteBanner, isPending: deleting } = useDeleteBanner()
@@ -79,50 +81,109 @@ export default function Page() {
   const total = data?.total ?? 0
   const currentPage = data?.page ?? page
   const pageSize = data?.limit ?? limit
-  const totalPages = data?.totalPages ?? Math.ceil(total / pageSize || 1)
+
+  React.useEffect(() => {
+    setPrimaryAction({
+      label: "Thêm banner",
+      variant: "default",
+      onClick: () => {
+        resetForm()
+        setOpenCreate(true)
+      },
+    })
+
+    return () => setPrimaryAction(null)
+  }, [setPrimaryAction])
 
   return (
-    <div className="relative p-4 md:p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-semibold">Banner</h1>
-        <Button onClick={() => { resetForm(); setOpenCreate(true) }}>Thêm banner</Button>
-      </div>
-
+    <div className="relative">
       <LoadingOverlay show={isPending || isFetching} />
 
-      {(() => {
+      {isError ? (
+        <AdminDataErrorState
+          title="Không thể tải danh sách banner"
+          onRetry={() => refetch()}
+        />
+      ) : (() => {
         const columns: Column<Banner & any>[] = [
-          { key: 'imageUrl', title: 'Ảnh', render: (v: string, r: Banner, _i: number) => (v ? <img src={v} alt={r.title} className="h-10 w-20 object-cover rounded" /> : null) },
+          {
+            key: 'imageUrl',
+            title: 'Ảnh',
+            type: 'short',
+            align: 'center',
+            render: (row: Banner) => (
+              row.imageUrl
+                ? <img src={row.imageUrl} alt={row.title} className="h-10 w-20 object-cover rounded" />
+                : null
+            ),
+          },
           { key: 'title', title: 'Tiêu đề' },
-          { key: 'link', title: 'Liên kết', render: (v: string, _r: Banner, _i: number) => (<a href={v} target="_blank" className="text-primary hover:underline">{v}</a>) },
-          { key: 'position', title: 'Vị trí' },
-          { key: 'actions', title: 'Hành động', align: 'right', render: (_v: unknown, r: Banner, _i: number) => (
-            <div className="inline-flex items-center gap-1">
-              <button title="Sửa" type="button" className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer" onClick={() => { setEditing(r); setForm({ title: r.title, imageUrl: r.imageUrl, link: r.link, position: r.position }); setOpenEdit(true) }}>
-                <Pencil className="h-4 w-4" />
-              </button>
-              <button title="Xoá" type="button" className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent text-destructive cursor-pointer" onClick={() => { setTarget(r); setOpenDeleteConfirm(true) }} disabled={deleting}>
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          ) },
+          {
+            key: 'link',
+            title: 'Liên kết',
+            render: (row: Banner) => (
+              <a href={row.link} target="_blank" className="text-primary hover:underline">
+                {row.link}
+              </a>
+            ),
+          },
+          {
+            key: 'position',
+            title: 'Vị trí',
+            align: 'center',
+            type: 'short',
+          },
+          {
+            key: 'actions',
+            title: 'Hành động',
+            align: 'center',
+            type: 'action',
+            render: (row: Banner) => (
+              <div className="inline-flex items-center gap-1">
+                <button
+                  title="Sửa"
+                  type="button"
+                  className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer"
+                  onClick={() => {
+                    setEditing(row)
+                    setForm({ title: row.title, imageUrl: row.imageUrl, link: row.link, position: row.position })
+                    setOpenEdit(true)
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  title="Xoá"
+                  type="button"
+                  className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent text-destructive cursor-pointer"
+                  onClick={() => { setTarget(row); setOpenDeleteConfirm(true) }}
+                  disabled={deleting}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ),
+          },
         ]
         return (
           <DynamicTable
             columns={columns}
             data={isError ? [] : (items as any)}
             loading={isPending || isFetching}
+            pagination={{
+              totalItems: total,
+              currentPage,
+              itemsPerPage: pageSize,
+              onPageChange: (p) => setPage(p),
+              pageSizeOptions: [10, 20, 50],
+              onPageSizeChange: (sz) => {
+                setLimit(sz)
+                setPage(1)
+              },
+            }}
           />
         )
       })()}
-
-      <div className="mt-4 flex justify-end">
-        <Pagination
-          pagination={{ totalItems: total, totalPages, currentPage, itemsPerPage: pageSize }}
-          onPageChange={(p) => setPage(p)}
-          size="sm"
-        />
-      </div>
 
       {/* Create Dialog */}
       <AdminActionDialog

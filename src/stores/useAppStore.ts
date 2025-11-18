@@ -27,24 +27,25 @@ interface User {
 interface AppState {
   user: User | null;
   isAuthenticated: boolean;
-  
+
   // Course state
   courses: CourseItemType[];
   selectedCourse: CourseItemType | null;
   enrolledCourses: CourseItemType[];
-  
+
   // UI state
   isLoading: boolean;
   theme: 'light' | 'dark';
   _hasHydrated: boolean;
+  maintenanceMode: boolean;
 
   // cart state
   cart: CourseItemType[];
   orderListCourse: CourseItemType[];
-  
+
   // wishlist state
   wishlist: CourseItemType[];
-  
+
   // Actions
   setUser: (user: User | null) => void;
   login: (user: User) => void;
@@ -54,6 +55,7 @@ interface AppState {
   enrollInCourse: (course: CourseItemType) => void;
   setLoading: (loading: boolean) => void;
   toggleTheme: () => void;
+  setMaintenanceMode: (enabled: boolean) => void;
   setHasHydrated: (state: boolean) => void;
   addToCart: (course: CourseItemType) => void;
   removeFromCart: (course: CourseItemType) => void;
@@ -79,53 +81,56 @@ export const useAppStore = create<AppState>()(
         isLoading: false,
         theme: 'light',
         _hasHydrated: false,
+        maintenanceMode: false,
         cart: [],
         orderListCourse: [],
         wishlist: [],
 
         setUser: (user) => set({ user, isAuthenticated: !!user }),
-        
-        login: (user) => set({ 
-          user, 
-          isAuthenticated: true 
+
+        login: (user) => set({
+          user,
+          isAuthenticated: true
         }),
-        
-        logout: () => set({ 
-          user: null, 
+
+        logout: () => set({
+          user: null,
           isAuthenticated: false,
           enrolledCourses: []
         }),
-        
+
         setCourses: (courses) => set({ courses }),
-        
+
         selectCourse: (course) => set({ selectedCourse: course }),
-        
+
         enrollInCourse: (course) => {
           const { enrolledCourses } = get();
           const isAlreadyEnrolled = enrolledCourses.some(c => String(c.id) === String(course.id));
-          
+
           if (!isAlreadyEnrolled) {
-            set({ 
-              enrolledCourses: [...enrolledCourses, course] 
+            set({
+              enrolledCourses: [...enrolledCourses, course]
             });
           }
         },
-        
+
         setLoading: (isLoading) => set({ isLoading }),
-        
-        toggleTheme: () => set((state) => ({ 
-          theme: state.theme === 'light' ? 'dark' : 'light' 
+
+        toggleTheme: () => set((state) => ({
+          theme: state.theme === 'light' ? 'dark' : 'light'
         })),
+
+        setMaintenanceMode: (enabled) => set({ maintenanceMode: enabled }),
 
         setHasHydrated: (state) => set({ _hasHydrated: state }),
 
         addToCart: (course) => {
           const { cart } = get();
           const isAlreadyInCart = cart.some(c => c.id === course.id);
-          
+
           if (!isAlreadyInCart) {
-            set({ 
-              cart: [...cart, course] 
+            set({
+              cart: [...cart, course]
             });
           }
         },
@@ -141,10 +146,10 @@ export const useAppStore = create<AppState>()(
         addToOrderList: (course) => {
           const { orderListCourse } = get();
           const isAlreadyInOrder = orderListCourse.some(c => c.id === course.id);
-          
+
           if (!isAlreadyInOrder) {
-            set({ 
-              orderListCourse: [...orderListCourse, course] 
+            set({
+              orderListCourse: [...orderListCourse, course]
             });
           }
         },
@@ -162,10 +167,10 @@ export const useAppStore = create<AppState>()(
         addToWishlist: (course) => {
           const { wishlist } = get();
           const isAlreadyInWishlist = wishlist.some(c => c.id === course.id);
-          
+
           if (!isAlreadyInWishlist) {
-            set({ 
-              wishlist: [...wishlist, course] 
+            set({
+              wishlist: [...wishlist, course]
             });
           }
         },
@@ -185,6 +190,7 @@ export const useAppStore = create<AppState>()(
           isAuthenticated: state.isAuthenticated,
           enrolledCourses: state.enrolledCourses,
           theme: state.theme,
+          maintenanceMode: state.maintenanceMode,
           cart: state.cart,
           orderListCourse: state.orderListCourse,
           wishlist: state.wishlist,

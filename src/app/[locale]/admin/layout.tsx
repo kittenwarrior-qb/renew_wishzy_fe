@@ -4,8 +4,8 @@ import React from "react"
 import HeaderAdmin from "@/components/shared/layout/HeaderAdmin"
 import AdminAppSidebar from "@/components/shared/layout/AdminAppSidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
 import { Notifications } from "@/components/shared/admin/Notifications"
+import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
 import { useAppStore } from "@/stores/useAppStore"
 import { useParams, useRouter } from "next/navigation"
 import { useAdminGuard } from "@/hooks/useAdminGuard"
@@ -17,8 +17,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const params = useParams<{ locale: string }>()
   const locale = params?.locale || "vi"
   const { ready } = useAdminGuard({ allowedRoles: ["admin"], redirectTo: `/${locale}` })
-  const { theme } = useAppStore()
+  const theme = useAppStore((state) => state.theme)
+  const hasHydrated = useAppStore((state) => state._hasHydrated)
   const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
+
+  React.useEffect(() => {
+    if (!hasHydrated) return
+
+    const root = document.documentElement
+    if (theme === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }, [theme, hasHydrated])
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -59,7 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <AdminAppSidebar />
         <SidebarInset className="md:!m-0 md:!ml-0 md:!rounded-none md:!shadow-none flex flex-col min-h-dvh">
           <HeaderAdmin />
-          <main className="flex-1 overflow-auto p-4 md:p-6">
+          <main className="flex-1 overflow-auto">
             {children}
           </main>
         </SidebarInset>

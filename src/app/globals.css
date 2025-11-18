@@ -18,6 +18,10 @@
   }
 }
 
+button {
+  cursor: pointer;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -180,10 +184,12 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 }
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -213,6 +219,54 @@
   background-color: rgb(156 163 175);
 }
 
+/* Extra thin scrollbar (≈1px) for specific components */
+.scrollbar-xthin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-xthin::-webkit-scrollbar {
+  width: 1px;
+  height: 1px;
+}
+
+/* Hide scrollbar but keep scrolling */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Scrollbar on the left side while keeping content LTR */
+.scrollbar-left {
+  direction: rtl !important;
+}
+
+.scrollbar-left * {
+  direction: ltr;
+}
+
+/* Soft bounce animation for scroll hint icons */
+@keyframes scroll-hint-bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+.scroll-hint-bounce {
+  animation: scroll-hint-bounce 1.1s ease-in-out infinite;
+}
+
 /* Dark mode scrollbar */
 .dark .scrollbar-thin {
   scrollbar-color: rgb(75 85 99) transparent;
@@ -231,6 +285,7 @@
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(0);
   }

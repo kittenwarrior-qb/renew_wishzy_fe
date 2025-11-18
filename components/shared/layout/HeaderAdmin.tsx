@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation"
 import { Search, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -15,6 +16,7 @@ import { CourseItemType } from "@/src/types/course/course-item.types"
 export default function HeaderAdmin() {
   const pathname = usePathname() || ""
   const { user, logout } = useAppStore()
+  const { primaryAction } = useAdminHeaderStore()
   const initials = React.useMemo(() => {
     if (user?.fullName) return user.fullName.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase()
     if (user?.email) return user.email[0]?.toUpperCase() ?? "U"
@@ -38,6 +40,16 @@ export default function HeaderAdmin() {
         <HeaderTitle pathname={pathname} courseName={course?.name} />
       </div>
       <div className="ml-auto flex items-center gap-2">
+        {primaryAction ? (
+          <Button
+            variant={primaryAction.variant ?? "default"}
+            size="sm"
+            onClick={primaryAction.onClick}
+            disabled={primaryAction.disabled}
+          >
+            {primaryAction.label}
+          </Button>
+        ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="gap-2">

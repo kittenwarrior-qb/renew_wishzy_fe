@@ -136,6 +136,54 @@ export const useApproveInstructor = () => {
   })
 }
 
+export const useCreateUser = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Record<string, any>) => usersService.create(data),
+    onSuccess: (res: any) => {
+      const msg = res?.message || 'Đã tạo người dùng'
+      toast.success(msg)
+      qc.invalidateQueries({ queryKey: [ENDPOINT] })
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || 'Không thể tạo người dùng'
+      toast.error(msg)
+    },
+  })
+}
+
+export const useUpdateUser = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & Record<string, any>) => usersService.update(id, data),
+    onSuccess: (res: any) => {
+      const msg = res?.message || 'Đã cập nhật người dùng'
+      toast.success(msg)
+      qc.invalidateQueries({ queryKey: [ENDPOINT] })
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || 'Không thể cập nhật người dùng'
+      toast.error(msg)
+    },
+  })
+}
+
+export const useDeleteUser = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => usersService.remove(id),
+    onSuccess: (res: any) => {
+      const msg = res?.message || 'Đã xoá người dùng'
+      toast.success(msg)
+      qc.invalidateQueries({ queryKey: [ENDPOINT] })
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || 'Không thể xoá người dùng'
+      toast.error(msg)
+    },
+  })
+}
+
 export const useRejectInstructor = () => {
   const qc = useQueryClient()
   return useMutation({

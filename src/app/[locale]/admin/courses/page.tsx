@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
+import Switch from "@/components/ui/switch"
 import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog"
 import Link from "next/link"
 import { notify } from "@/components/shared/admin/Notifications"
@@ -16,6 +17,7 @@ import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 
 type CourseFormValue = Partial<Pick<Course, "name" | "price" | "level" | "totalDuration" | "categoryId" | "description" | "notes" | "thumbnail">>
 
@@ -26,6 +28,7 @@ export default function Page() {
   const searchParams = useSearchParams()
   const { theme } = useAppStore()
   const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
+  const { setPrimaryAction } = useAdminHeaderStore()
 
   const [page, setPage] = React.useState<number>(Number(searchParams.get("page") || 1))
   const [limit, setLimit] = React.useState<number>(Number(searchParams.get("limit") || 10))
@@ -77,8 +80,18 @@ export default function Page() {
   const [deletingTarget, setDeletingTarget] = React.useState<Course | null>(null)
   const onConfirmDelete = (c: Course) => { setDeletingTarget(c); setOpenDelete(true) }
 
+  React.useEffect(() => {
+    setPrimaryAction({
+      label: "Thêm khoá học",
+      variant: "default",
+      onClick: () => router.push(`/${locale}/admin/courses/create`),
+    })
+
+    return () => setPrimaryAction(null)
+  }, [setPrimaryAction, router, locale])
+
   return (
-    <div className="">
+    <div className="relative py-4 px-4 md:px-6">
       <div className="mb-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-2 items-center">
@@ -109,9 +122,6 @@ export default function Page() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="flex items-center gap-2 justify-end">
-            <Link href={`/${locale}/admin/courses/create`} className="inline-flex"><Button className="h-9 gap-2"><Plus className="h-4 w-4" />Thêm khoá học</Button></Link>
           </div>
         </div>
       </div>
@@ -229,26 +239,41 @@ export default function Page() {
                 label: 'Trạng thái',
                 type: 'short',
                 render: (row: Course) => (
-                  <Button
-                    variant={row.status ? "secondary" : "outline"}
-                    size="sm"
-                    disabled={toggling}
-                    onClick={() =>
-                      toggleStatus(
-                        { id: String(row.id) },
-                        {
-                          onError: (e: any) =>
-                            notify({
-                              title: "Lỗi",
-                              description: String(e?.message || "Không thể cập nhật"),
-                              variant: "destructive",
-                            }),
-                        },
-                      )
-                    }
-                  >
-                    {row.status ? "Xuất bản" : "Nháp"}
-                  </Button>
+                  <div className="flex flex-col items-center gap-1">
+                    <Switch
+                      checked={!!row.status}
+                      disabled={toggling}
+                      onCheckedChange={() =>
+                        toggleStatus(
+                          { id: String(row.id) },
+                          {
+                            onError: (e: any) => {
+                              const backendMessage = e?.response?.data?.message as string | undefined
+                              const statusCode = e?.response?.status as number | undefined
+
+                              const isUnauthorizedToggle =
+                                statusCode === 403 ||
+                                backendMessage === "You are not authorized to perform this action on this course"
+
+                              const description = isUnauthorizedToggle
+                                ? "Bạn không có quyền thay đổi trạng thái của khoá học này."
+                                : "Không thể cập nhật trạng thái khoá học. Vui lòng thử lại sau."
+
+                              notify({
+                                title: "Lỗi",
+                                description,
+                                variant: "destructive",
+                              })
+                            },
+                          },
+                        )
+                      }
+                      aria-label={row.status ? "Đang xuất bản" : "Đang nháp"}
+                    />
+                    <span className="text-[11px] text-muted-foreground">
+                      {row.status ? "Mở" : "Nháp"}
+                    </span>
+                  </div>
                 ),
               },
               {
@@ -264,7 +289,7 @@ export default function Page() {
                 render: (row: Course) => (
                   <div className="flex items-center justify-center gap-3">
                     <Link
-                      href={`/${locale}/admin/courses/${row.id}`}
+                      href={`/${locale}/admin/courses/edit/${row.id}`}
                       className="inline-flex text-muted-foreground hover:text-foreground"
                     >
                       <Pencil className="h-5 w-5" />

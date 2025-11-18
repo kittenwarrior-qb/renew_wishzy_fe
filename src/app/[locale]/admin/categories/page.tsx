@@ -17,6 +17,7 @@ import { CategoryForm, type CategoryFormValue } from "@/components/shared/catego
 import { validateCategoryName, normalizeSpaces } from "@/lib/validators"
 import { useAppStore } from "@/stores/useAppStore"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
+import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 
 export default function CategoryListPage() {
     const router = useRouter()
@@ -24,6 +25,7 @@ export default function CategoryListPage() {
     const locale = params?.locale || "vi"
     const { theme } = useAppStore()
     const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
+    const { setPrimaryAction } = useAdminHeaderStore()
 
     const searchParams = useSearchParams()
     const [page, setPage] = React.useState<number>(Number(searchParams.get("page") || 1))
@@ -146,6 +148,17 @@ export default function CategoryListPage() {
         }
     }, [page, limit, nameFilter, parentIdFilter, isSubCategory, showDeleted, locale, router, isEditDirty, isCreateDirty])
 
+    // Header primary action: Tạo danh mục
+    React.useEffect(() => {
+        setPrimaryAction({
+            label: "Tạo danh mục",
+            variant: "default",
+            onClick: () => openCreateFor(),
+        })
+
+        return () => setPrimaryAction(null)
+    }, [setPrimaryAction])
+
     const openCreateFor = (parentId?: string) => {
         setCreateDefaultParentId(parentId ? String(parentId) : undefined)
         setCreateForm({ name: "", notes: "", parentId: parentId ? String(parentId) : "" })
@@ -187,7 +200,7 @@ export default function CategoryListPage() {
     }
 
     return (
-        <div className="relative">
+        <div className="relative p-4 md:p-6 ">
             <div className="mb-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <CategoryFilters
@@ -208,10 +221,6 @@ export default function CategoryListPage() {
                                 <RotateCcw className="h-4 w-4" />
                             </Button>
                         </Link>
-                        <Button className="h-9 gap-2 cursor-pointer" onClick={() => openCreateFor()}>
-                            <Plus className="h-4 w-4" />
-                            Tạo danh mục
-                        </Button>
                     </div>
                 </div>
             </div>

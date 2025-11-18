@@ -43,6 +43,7 @@ import {
     List,
     Trash2,
 } from "lucide-react"
+import { useAppStore } from "@/stores/useAppStore"
 
 export default function AdminAppSidebar() {
     const [hydrated, setHydrated] = useState(false)
@@ -76,6 +77,9 @@ export default function AdminAppSidebar() {
     }, [pathname])
 
     const toggle = (key: string) => setOpen(prev => ({ ...prev, [key]: !prev[key] }))
+
+    const theme = useAppStore((state) => state.theme)
+    const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
 
     type MenuItem = { label: string; href: string; icon: React.ReactNode; isActiveKey: string }
     type MenuGroup = {
@@ -229,7 +233,7 @@ export default function AdminAppSidebar() {
         <Sidebar
             variant="sidebar"
             collapsible="icon"
-            className="[&_[data-slot=sidebar-inner]]:bg-transparent [&_[data-slot=sidebar-container]]:border-0 [&_[data-mobile=true][data-slot=sidebar]]:w-screen [&_[data-mobile=true][data-slot=sidebar]]:max-w-none"
+            className="[&_[data-slot=sidebar-inner]]:bg-transparent bg-background z-99 [&_[data-slot=sidebar-container]]:border-0 [&_[data-mobile=true][data-slot=sidebar]]:w-screen [&_[data-mobile=true][data-slot=sidebar]]:max-w-none"
         >
             <SidebarHeader>
                 <div className="px-2 py-2 text-sm font-semibold grid grid-cols-3 items-center">
@@ -248,7 +252,7 @@ export default function AdminAppSidebar() {
                             </Button>
                         ) : (
                             <Link href={base}>
-                                <NextImage src="/images/black-logo.png" alt="Wishzy" width={120} height={24} priority />
+                                <NextImage src={logoSrc} alt="Wishzy" width={120} height={24} priority />
                             </Link>
                         )}
                     </div>

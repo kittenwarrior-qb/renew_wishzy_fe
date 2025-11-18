@@ -22,6 +22,21 @@ export const useCurrentUser = () => {
   };
 };
 
+export const useCurrentUserRole = (): UserRole | string | null => {
+  const { role } = useCurrentUser();
+  return role;
+};
+
+export const useCurrentUserFullName = (): string | null => {
+  const { fullName } = useCurrentUser();
+  return fullName;
+};
+
+export const useIsAuthenticated = (): boolean => {
+  const { isAuthenticated } = useCurrentUser();
+  return !!isAuthenticated;
+};
+
 export const useHasRole = (roles: UserRole | UserRole[] | string | string[]) => {
   const { role } = useCurrentUser();
 

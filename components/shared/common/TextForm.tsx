@@ -11,9 +11,8 @@ export type TextFieldConfig = {
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
   validate?: (value: string, values: Record<string, string>) => string | undefined;
   format?: (value: string, values: Record<string, string>) => string;
-  colSpanMd?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+  colSpanMd?: number;
 };
-
 export type TextFormProps = {
   fields: TextFieldConfig[];
   initialValues?: Record<string, string>;
@@ -37,6 +36,7 @@ export default function TextForm({
   renderSubmit,
   autoFocusFirst = true,
 }: TextFormProps) {
+  // Generate initial state
   const initial = useMemo(() => {
     const obj: Record<string, string> = {};
     for (const f of fields) {
@@ -45,11 +45,12 @@ export default function TextForm({
     return obj;
   }, [fields, initialValues]);
 
-  const [values, setValues] = useState<Record<string, string>>(initial);
+  const [values, setValues] = useState(initial);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
 
+  // Validate 1 field
   const validateField = useCallback(
     (name: string, value: string, allValues: Record<string, string>) => {
       const cfg = fields.find((f) => f.name === name);
@@ -60,57 +61,65 @@ export default function TextForm({
     [fields]
   );
 
+  // Validate entire form
   const validateAll = useCallback(
     (vals: Record<string, string>) => {
-      const nextErrors: Record<string, string | undefined> = {};
+      const next: Record<string, string | undefined> = {};
       for (const f of fields) {
-        nextErrors[f.name] = f.validate ? f.validate(vals[f.name] ?? "", vals) : undefined;
+        next[f.name] = f.validate ? f.validate(vals[f.name] ?? "", vals) : undefined;
       }
-      setErrors(nextErrors);
-      return nextErrors;
+      setErrors(next);
+      return next;
     },
     [fields]
   );
 
+  // Change handler
   const handleChange = useCallback(
     (name: string, raw: string) => {
       setValues((prev) => {
-        const next = { ...prev, [name]: raw };
+        let next = { ...prev, [name]: raw };
+
         const cfg = fields.find((f) => f.name === name);
-        const formatted = cfg?.format ? cfg.format(raw, next) : raw;
-        const finalNext = { ...next, [name]: formatted };
-        validateField(name, formatted, finalNext);
-        return finalNext;
+        if (cfg?.format) {
+          const formatted = cfg.format(raw, next);
+          next = { ...next, [name]: formatted };
+        }
+
+        validateField(name, next[name], next);
+        return next;
       });
     },
-    [fields, onChange, validateField]
+    [fields, validateField]
   );
-
-  // Notify parent after values commit to avoid setState during render in parent
-  useEffect(() => {
-    if (onChange) onChange(values);
-  }, [onChange, values]);
 
   const handleBlur = useCallback(
     (name: string) => {
       setTouched((t) => ({ ...t, [name]: true }));
-      const v = values[name] ?? "";
-      validateField(name, v, values);
+      validateField(name, values[name] ?? "", values);
     },
-    [validateField, values]
+    [values, validateField]
   );
 
-  const hasErrors = useMemo(() => Object.values(errors).some((e) => !!e), [errors]);
+  const hasErrors = useMemo(() => Object.values(errors).some(Boolean), [errors]);
+
+  // 🔥 FIX CHÍNH: chỉ depend values, KHÔNG depend onChange
+  useEffect(() => {
+    if (onChange) onChange(values);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+
       const allTouched: Record<string, boolean> = {};
       for (const f of fields) allTouched[f.name] = true;
       setTouched(allTouched);
+
       const errs = validateAll(values);
-      const any = Object.values(errs).some((x) => !!x);
-      if (any) return;
+      if (Object.values(errs).some(Boolean)) return;
+
       if (!onSubmit) return;
       try {
         setSubmitting(true);
@@ -119,53 +128,58 @@ export default function TextForm({
         setSubmitting(false);
       }
     },
-    [fields, onSubmit, validateAll, values]
+    [fields, values, validateAll, onSubmit]
   );
 
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className={className ? undefined : "grid grid-cols-1 md:grid-cols-12 gap-2"}>
-      {fields.map((f, idx) => {
-        const value = values[f.name] ?? "";
-        const error = touched[f.name] ? errors[f.name] : undefined;
-        const colClassMap: Record<number, string> = {
-          1: "md:col-span-1",
-          2: "md:col-span-2",
-          3: "md:col-span-3",
-          4: "md:col-span-4",
-          5: "md:col-span-5",
-          6: "md:col-span-6",
-          7: "md:col-span-7",
-          8: "md:col-span-8",
-          9: "md:col-span-9",
-          10: "md:col-span-10",
-          11: "md:col-span-11",
-          12: "md:col-span-12",
-        }
-        const colCls = colClassMap[f.colSpanMd || 6]
-        return (
-          <div key={f.name} className={`${fieldClassName ?? ''} ${colCls}`}>
-            {f.label ? (
-              <Label htmlFor={f.name}>{f.label}</Label>
-            ) : null}
-            <Input
-              id={f.name}
-              name={f.name}
-              type="text"
-              value={value}
-              placeholder={f.placeholder}
-              disabled={f.disabled}
-              onChange={(e) => handleChange(f.name, e.target.value)}
-              onBlur={() => handleBlur(f.name)}
-              className={`${f.inputProps?.className ?? ''} h-9`}
-              autoFocus={autoFocusFirst && idx === 0 && !f.disabled}
-              {...(f.inputProps || {})}
-            />
-            <p className={`mt-1 text-xs min-h-4 leading-4 ${error ? 'text-destructive' : 'text-transparent'}`}>{error || '\u00A0'}</p>
-          </div>
-        );
-      })}
+        {fields.map((f, idx) => {
+          const value = values[f.name] ?? "";
+          const error = touched[f.name] ? errors[f.name] : undefined;
+
+          const colMap: Record<number, string> = {
+            1: "md:col-span-1",
+            2: "md:col-span-2",
+            3: "md:col-span-3",
+            4: "md:col-span-4",
+            5: "md:col-span-5",
+            6: "md:col-span-6",
+            7: "md:col-span-7",
+            8: "md:col-span-8",
+            9: "md:col-span-9",
+            10: "md:col-span-10",
+            11: "md:col-span-11",
+            12: "md:col-span-12",
+          };
+
+          const colCls = colMap[f.colSpanMd ?? 6];
+
+          return (
+            <div key={f.name} className={`${fieldClassName ?? ""} ${colCls}`}>
+              {f.label && <Label htmlFor={f.name}>{f.label}</Label>}
+
+              <Input
+                id={f.name}
+                name={f.name}
+                value={value}
+                placeholder={f.placeholder}
+                disabled={f.disabled}
+                autoFocus={autoFocusFirst && idx === 0 && !f.disabled}
+                onChange={(e) => handleChange(f.name, e.target.value)}
+                onBlur={() => handleBlur(f.name)}
+                className={`${f.inputProps?.className ?? ""} h-9`}
+                {...f.inputProps}
+              />
+
+              <p className={`mt-1 text-xs min-h-4 leading-4 ${error ? "text-destructive" : "text-transparent"}`}>
+                {error || "\u00A0"}
+              </p>
+            </div>
+          );
+        })}
       </div>
+
       {renderSubmit ? (
         renderSubmit({ submitting, valid: !hasErrors })
       ) : onSubmit ? (

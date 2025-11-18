@@ -107,6 +107,15 @@ export function VoucherForm({ value, onChange, error }: {
       colSpanMd: 6,
       inputProps: { className: 'h-9' },
     },
+    {
+      name: 'totalLimit',
+      label: 'Tổng lượt dùng',
+      placeholder: '>= 1',
+      format: onlyDigits,
+      validate: (v) => v === '' ? undefined : greaterThan(0, 'Phải >= 1')(v),
+      colSpanMd: 6,
+      inputProps: { className: 'h-9' },
+    },
   ], [value.discountType])
 
   return (
@@ -119,6 +128,7 @@ export function VoucherForm({ value, onChange, error }: {
           maxDiscountAmount: value.maxDiscountAmount === '' || value.maxDiscountAmount == null ? '' : toVndGrouped(Number(value.maxDiscountAmount)),
           minOrderAmount: value.minOrderAmount === '' || value.minOrderAmount == null ? '' : toVndGrouped(Number(value.minOrderAmount)),
           perUserLimit: value.perUserLimit === '' || value.perUserLimit == null ? '' : onlyDigits(String(value.perUserLimit)),
+          totalLimit: value.totalLimit === '' || value.totalLimit == null ? '' : onlyDigits(String(value.totalLimit)),
         }}
         onChange={(vals) =>
           onChange({
@@ -128,6 +138,7 @@ export function VoucherForm({ value, onChange, error }: {
             maxDiscountAmount: vals.maxDiscountAmount === '' ? '' : toNumberFromGrouped(vals.maxDiscountAmount),
             minOrderAmount: vals.minOrderAmount === '' ? '' : toNumberFromGrouped(vals.minOrderAmount),
             perUserLimit: vals.perUserLimit === '' ? '' : toNumberFromGrouped(vals.perUserLimit),
+            totalLimit: vals.totalLimit === '' ? '' : toNumberFromGrouped(vals.totalLimit),
           })
         }
       />
@@ -140,11 +151,11 @@ export function VoucherForm({ value, onChange, error }: {
           : (numDV === '' ? '' : String(numDV))
         const dvErr = validateDiscountValue(value.discountType, dvStr)
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div className="space-y-2">
               <Label>Loại giảm</Label>
               <Select value={value.discountType} onValueChange={(v: VoucherType) => onChange({ ...value, discountType: v })}>
-                <SelectTrigger className="h-9 w-full max-w-[140px]">
+                <SelectTrigger className="h-9 w-full">
                   <SelectValue placeholder="Chọn loại" />
                 </SelectTrigger>
                 <SelectContent>
@@ -167,14 +178,10 @@ export function VoucherForm({ value, onChange, error }: {
                   onChange({ ...value, discountValue: digits === '' ? '' : Number(digits) })
                 }}
                 placeholder={value.discountType === 'percent' ? '1 - 100' : 'Ví dụ: 10000'}
-                className="h-9 w-full max-w-[240px]"
+                className="h-9 w-full"
                 inputMode="numeric"
               />
               <p className={`text-xs min-h-4 leading-4 ${dvErr ? 'text-destructive' : 'text-transparent'}`}>{dvErr || '\u00A0'}</p>
-            </div>
-            <div className="flex items-center flex-col gap-2 pt-2">
-              <p className="text-sm">Kích hoạt</p>
-              <Switch checked={!!value.isActive} onCheckedChange={(c: boolean) => onChange({ ...value, isActive: c })} />
             </div>
           </div>
         )
@@ -361,6 +368,10 @@ export function VoucherForm({ value, onChange, error }: {
             </Popover>
           </div>
         ) : <div />}
+        <div className="flex items-center gap-2 pt-2">
+          <p className="text-sm">Kích hoạt</p>
+          <Switch checked={!!value.isActive} onCheckedChange={(c: boolean) => onChange({ ...value, isActive: c })} />
+        </div>
       </div>
     </div>
   )

@@ -87,6 +87,32 @@ export const minLength = (n: number, msg?: string): Validator => (v) => {
   return s.length >= n || s.length === 0 ? undefined : (msg || `Phải có ít nhất ${n} ký tự`)
 }
 
+export const emailValidator = (msgRequired = "Email là bắt buộc", msgInvalid = "Email không hợp lệ"): Validator => (v) => {
+  const s = (v ?? "").trim()
+  if (!s) return msgRequired
+  const re = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+  return re.test(s) ? undefined : msgInvalid
+}
+
+export const strongPasswordValidator = (
+  options?: {
+    required?: boolean
+    msgRequired?: string
+    msgInvalid?: string
+  }
+): Validator => {
+  const required = options?.required ?? true
+  const msgRequired = options?.msgRequired ?? "Mật khẩu là bắt buộc"
+  const msgInvalid = options?.msgInvalid ?? "Mật khẩu phải có chữ hoa, chữ thường, số, ký tự đặc biệt và tối thiểu 8 ký tự"
+  const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
+  return (v) => {
+    const s = (v ?? "").trim()
+    if (!s) return required ? msgRequired : undefined
+    if (!re.test(s)) return msgInvalid
+    return undefined
+  }
+}
+
 export const maxLength = (n: number, msg?: string): Validator => (v) => {
   const s = (v ?? "").trim()
   return s.length <= n ? undefined : (msg || `Không được vượt quá ${n} ký tự`)
