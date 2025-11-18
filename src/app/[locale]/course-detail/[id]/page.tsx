@@ -1,6 +1,7 @@
 'use client'
 
-import { use } from "react";
+import { use, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryHook } from "@/src/hooks/useQueryHook";
 import { courseService } from "@/src/services/course";
 import { CourseItemType } from "@/src/types/course/course-item.types";
@@ -13,10 +14,13 @@ import CourseCreator from "@/components/shared/course/CourseCreator";
 import CourseComment from "@/components/shared/course/CourseComment";
 import CourseCard from "@/components/shared/course/CourseCard";
 import { useAppStore } from "@/src/stores/useAppStore";
+import { enrollmentService } from "@/src/services/enrollment";
 
 const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     const { id } = use(params);
-    const { addToCart, cart } = useAppStore();
+    const { addToCart, cart, addToOrderList, clearOrderList, user } = useAppStore();
+    const searchParams = useSearchParams();
+    const router = useRouter();
 
     const { data: course } = useQueryHook<CourseItemType>(
         ['course', id],
@@ -26,7 +30,30 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     const { data: chapters } = useQueryHook<{ items: ChapterType[]}>(
         ['chapter', id],
         () => chapterService.getChapterByCourseId(id)
-    )
+    );
+
+    const { data: enrollments } = useQueryHook(
+        ['my-enrollments'],
+        () => enrollmentService.getMyLearning(),
+        {
+            enabled: !!user // Only fetch enrollments if user is logged in
+        }
+    );
+
+    const isEnrolled = enrollments?.some(
+        (enrollment: any) => enrollment.courseId === id
+    ) || false;
+
+    useEffect(() => {
+        if (searchParams.get('scrollTo') === 'feedback') {
+            setTimeout(() => {
+                const feedbackElement = document.getElementById('feedback');
+                if (feedbackElement) {
+                    feedbackElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 500);
+        }
+    }, [searchParams]);
 
     console.log(course);
 
@@ -37,16 +64,50 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     const totalLessons = course.chapters?.length || 0;
     const durationHours = Math.round(course.totalDuration / 60);
     
-    // Check if course is already in cart
+    const originalPrice = course?.price ? Number(course.price) : 0;
+    
+    // Calculate sale price from saleInfo
+    let salePrice = null;
+    let discountPercent = 0;
+    
+    if (course.saleInfo) {
+        const now = new Date();
+        const saleStart = course.saleInfo.saleStartDate ? new Date(course.saleInfo.saleStartDate) : null;
+        const saleEnd = course.saleInfo.saleEndDate ? new Date(course.saleInfo.saleEndDate) : null;
+        
+        const isWithinSalePeriod = (!saleStart || now >= saleStart) && (!saleEnd || now <= saleEnd);
+        
+        if (isWithinSalePeriod && course.saleInfo.value) {
+            if (course.saleInfo.saleType === 'percent') {
+                discountPercent = course.saleInfo.value;
+                salePrice = originalPrice * (1 - course.saleInfo.value / 100);
+            } else if (course.saleInfo.saleType === 'fixed') {
+                salePrice = originalPrice - course.saleInfo.value;
+                discountPercent = Math.round(((originalPrice - salePrice) / originalPrice) * 100);
+            }
+        }
+    }
+    
+    const hasSale = salePrice !== null && salePrice > 0 && salePrice < originalPrice;
+    const displayPrice = hasSale ? salePrice : originalPrice;
+    
     const isInCart = cart.some(c => c.id === course.id);
+
+    const handleBuyCourse = () => {
+        if (isEnrolled) {
+            router.push(`/learning/${id}`);
+        } else {
+            clearOrderList();
+            addToOrderList(course);
+            router.push('/checkout');
+        }
+    };
 
     return (
         <div className="min-h-screen">
             <div className="max-w-[1300px] mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left - Course Content */}
                     <div className="lg:col-span-2 space-y-6">
-                        {/* Thumbnail */}
                         <div className="w-full aspect-video rounded-lg overflow-hidden">
                             <img 
                                 src={course.thumbnail} 
@@ -82,7 +143,7 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
 
                         {/* Course Comment */}
                         <div className="border-b pb-6">
-                            <CourseComment courseId={course.id} />
+                            <CourseComment courseId={id} isEnrolled={isEnrolled} />
                         </div>
 
                         {/* Course related */}
@@ -100,11 +161,27 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div className="lg:col-span-1">
                         <div className="border rounded-lg p-6 sticky top-8 space-y-6">
                             {/* Price */}
-                            <div className="flex items-center justify-between border-b pb-4">
-                                <span className="text-lg font-semibold">Giá ưu đãi</span>
-                                <span className="text-3xl font-bold">
-                                    {formatPrice(course.price)}
-                                </span>
+                            <div className="border-b pb-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-lg font-semibold">
+                                        {hasSale ? 'Giá ưu đãi' : 'Giá khóa học'}
+                                    </span>
+                                    {hasSale && (
+                                        <span className="text-sm bg-red-500 text-white px-2 py-1 rounded font-semibold">
+                                            -{discountPercent}%
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-3xl font-bold text-primary">
+                                        {formatPrice(displayPrice || '')}
+                                    </span>
+                                    {hasSale && (
+                                        <span className="text-xl text-muted-foreground line-through">
+                                            {formatPrice(originalPrice)}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* What you'll get */}
@@ -187,22 +264,29 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                             </div>
 
                             {/* Enroll Button */}
-                            <div className="flex gap-2 mb-3">
-                                <div className="w-1/2">
-                                    <Button variant="outline" className="w-full">Thêm vào yêu thích</Button>
+                            {!isEnrolled && (
+                                <div className="flex gap-2 mb-3">
+                                    <div className="w-1/2">
+                                        <Button variant="outline" className="w-full">Thêm vào yêu thích</Button>
+                                    </div>
+                                    <div className="w-1/2">
+                                        <Button
+                                            variant={isInCart ? 'secondary' : 'outline'}
+                                            className="w-full"
+                                            onClick={() => addToCart(course)}
+                                            disabled={isInCart}
+                                        >
+                                            {isInCart ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="w-1/2">
-                                    <Button
-                                        variant={isInCart ? 'secondary' : 'outline'}
-                                        className="w-full"
-                                        onClick={() => addToCart(course)}
-                                        disabled={isInCart}
-                                    >
-                                        {isInCart ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
-                                    </Button>
-                                </div>
-                            </div>
-                            <Button className="w-full">Tham gia học ngay</Button>
+                            )}
+                            <Button 
+                                className={`w-full transition-all hover:bg-primary/90 hover:scale-105 `}
+                                onClick={handleBuyCourse}
+                            >
+                                {isEnrolled ? 'Tiếp tục học' : 'Mua khóa học ngay'}
+                            </Button>
                         </div>
                     </div>
                 </div>

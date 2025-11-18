@@ -17,6 +17,10 @@ export const routing = defineRouting({
     '/about': {
       en: '/about',
       vi: '/gioi-thieu'
+    },
+    'students': {
+      en: '/students',
+      vi: '/students'
     }
   }
 });

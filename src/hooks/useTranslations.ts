@@ -9,7 +9,7 @@ type Translations = {
   [key: string]: TranslationValue;
 };
 
-export function useTranslations() {
+export function useTranslations(p0: string) {
   const pathname = usePathname();
   const [translations, setTranslations] = useState<Translations>({});
   const [locale, setLocale] = useState<string>('vi');
