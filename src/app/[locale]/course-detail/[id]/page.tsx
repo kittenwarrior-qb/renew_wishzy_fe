@@ -145,7 +145,7 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                         </div>
 
                         {/* Course Comment */}
-                        <div className="border-b pb-6">
+                        <div id="feedback" className="border-b pb-6">
                             <CourseComment courseId={id} isEnrolled={isEnrolled} />
                         </div>
 

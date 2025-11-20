@@ -154,6 +154,21 @@ export const wishzyAuthService = {
       message: response.message,
     };
   },
+
+  uploadAvatar: async (file: File): Promise<User> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Use axios directly for FormData to ensure proper handling
+    const response = await apiRequest<{ success: boolean; data: User; message: string }>(
+      "uploads/avatar",
+      {
+        method: "POST",
+        data: formData,
+      }
+    );
+    return response.data;
+  },
 };
 
 export const authService = wishzyAuthService;

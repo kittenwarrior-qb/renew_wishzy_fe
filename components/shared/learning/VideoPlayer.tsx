@@ -152,12 +152,55 @@ export function VideoPlayer({
       }
     };
 
+    const handleSeekToTime = (event: CustomEvent) => {
+      const { seconds } = event.detail;
+      console.log('VideoPlayer received seekToTime event:', seconds);
+      console.log('Player ref exists:', !!playerRef.current);
+      console.log('Player disposed:', playerRef.current?.isDisposed());
+      
+      if (playerRef.current && !playerRef.current.isDisposed()) {
+        try {
+          playerRef.current.currentTime(seconds);
+          playerRef.current.play();
+          console.log('Video seeked to:', seconds, 'and playing');
+        } catch (error) {
+          console.error('Error seeking video:', error);
+        }
+      } else {
+        console.warn('Player not ready for seeking');
+      }
+    };
+
+    const handleRequestCurrentTime = () => {
+      console.log('VideoPlayer received requestCurrentTime event');
+      console.log('Player ref exists:', !!playerRef.current);
+      
+      if (playerRef.current && !playerRef.current.isDisposed()) {
+        const currentTime = playerRef.current.currentTime() || 0;
+        console.log('Sending current time:', currentTime);
+        const event = new CustomEvent('currentTimeResponse', { 
+          detail: { currentTime } 
+        });
+        window.dispatchEvent(event);
+      } else {
+        console.warn('Player not ready, sending default time');
+        const event = new CustomEvent('currentTimeResponse', { 
+          detail: { currentTime: 0 } 
+        });
+        window.dispatchEvent(event);
+      }
+    };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('seekToTime', handleSeekToTime as EventListener);
+    window.addEventListener('requestCurrentTime', handleRequestCurrentTime);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('seekToTime', handleSeekToTime as EventListener);
+      window.removeEventListener('requestCurrentTime', handleRequestCurrentTime);
       setIsMounted(false);
     };
   }, [enrollmentId, lectureId]);
@@ -407,7 +450,10 @@ export function VideoPlayer({
 
   return (
     <div className="w-full space-y-4">
-      {/* Video Player */}
+      <h3 className="text-lg font-semibold">
+        {title}
+      </h3>
+      
       <div className="relative bg-black rounded-lg overflow-hidden shadow-2xl">
         <div data-vjs-player>
           <video
@@ -432,7 +478,7 @@ export function VideoPlayer({
 
         {videoError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-20">
-            <div className="flex flex-col items-center gap-4 p-6 max-w-md text-center">
+            <div className="flex flex-col items-center gap-4 p-4 max-w-md text-center">
               <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
                 <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -458,12 +504,6 @@ export function VideoPlayer({
             </div>
           </div>
         )}
-
-        <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none">
-          <h3 className="text-white text-lg font-semibold drop-shadow-lg">
-            {title}
-          </h3>
-        </div>
       </div>
 
       <div className="flex items-center justify-between px-2">

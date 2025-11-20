@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Star, ThumbsUp, MessageCircle, Send } from "lucide-react"
+import { Star, ThumbsUp, ThumbsDown, MessageCircle, Send, Trash2 } from "lucide-react"
 import { useQueryHook } from "@/src/hooks/useQueryHook"
 import { commentService, type Comment as CommentType } from "@/src/services/comment"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -18,6 +18,7 @@ interface CommentWithUser extends CommentType {
     avatar?: string
   }
   isLiked?: boolean
+  isDisliked?: boolean
 }
 
 interface CourseCommentProps {
@@ -28,6 +29,8 @@ interface CourseCommentProps {
 const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => {
   const [newComment, setNewComment] = useState("")
   const [newRating, setNewRating] = useState(5)
+  const [page, setPage] = useState(1)
+  const [limit] = useState(10)
   const queryClient = useQueryClient()
   const { user } = useAppStore()
 
@@ -41,8 +44,8 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
       totalPage: number
     }
   }>(
-    ['comments', courseId],
-    () => commentService.listByCourse(courseId)
+    ['comments', courseId, page.toString(), limit.toString()],
+    () => commentService.listByCourse(courseId, page, limit)
   )
 
   const createCommentMutation = useMutation({
@@ -51,7 +54,6 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
         throw new Error("User not authenticated")
       }
       return commentService.create({
-        userId: user.id,
         courseId,
         content: data.content,
         rating: data.rating
@@ -79,6 +81,29 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
     },
     onError: () => {
       toast.error("Có lỗi xảy ra. Vui lòng thử lại!")
+    }
+  })
+
+  // Dislike comment mutation
+  const dislikeCommentMutation = useMutation({
+    mutationFn: (commentId: string) => commentService.dislike(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', courseId] })
+    },
+    onError: () => {
+      toast.error("Có lỗi xảy ra. Vui lòng thử lại!")
+    }
+  })
+
+  // Delete comment mutation
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => commentService.delete(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', courseId] })
+      toast.success("Đã xóa đánh giá thành công!")
+    },
+    onError: () => {
+      toast.error("Có lỗi xảy ra khi xóa đánh giá. Vui lòng thử lại!")
     }
   })
 
@@ -139,6 +164,24 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
       return
     }
     likeCommentMutation.mutate(commentId)
+  }
+
+  const handleDislikeComment = (commentId: string) => {
+    if (!user?.id) {
+      toast.error("Bạn cần đăng nhập để không thích đánh giá")
+      return
+    }
+    dislikeCommentMutation.mutate(commentId)
+  }
+
+  const handleDeleteComment = (commentId: string) => {
+    if (!user?.id) {
+      toast.error("Bạn cần đăng nhập để xóa đánh giá")
+      return
+    }
+    if (confirm("Bạn có chắc chắn muốn xóa đánh giá này?")) {
+      deleteCommentMutation.mutate(commentId)
+    }
   }
 
   if (isLoading) {
@@ -265,60 +308,111 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {displayComments.map((comment) => (
-              <Card key={comment.id}>
-                <CardContent className="p-4">
-                  <div className="flex gap-3">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={comment.user?.avatar} alt={comment.user?.name || 'User'} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                        {getInitials(comment.user?.name || 'U')}
-                      </AvatarFallback>
-                    </Avatar>
+          <>
+            <div className="space-y-3">
+              {displayComments.map((comment) => (
+                <Card key={comment.id}>
+                  <CardContent className="p-4">
+                    <div className="flex gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={comment.user?.avatar} alt={comment.user?.name || 'User'} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                          {getInitials(comment.user?.name || 'U')}
+                        </AvatarFallback>
+                      </Avatar>
 
-                    {/* Comment Content */}
-                    <div className="flex-1 space-y-2">
-                      <div>
-                        <h4 className="font-medium text-sm">
-                          {comment.user?.name || 'Người dùng'}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex items-center gap-0.5">
-                            {renderStars(comment.rating)}
+                      {/* Comment Content */}
+                      <div className="flex-1 space-y-2">
+                        <div>
+                          <h4 className="font-medium text-sm">
+                            {comment.user?.name || 'Người dùng'}
+                          </h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-0.5">
+                              {renderStars(comment.rating)}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              • {formatDate(comment.createdAt)}
+                            </span>
                           </div>
-                          <span className="text-xs text-muted-foreground">
-                            • {formatDate(comment.createdAt)}
-                          </span>
+                        </div>
+
+                        {/* Comment Text */}
+                        <p className="text-sm leading-relaxed text-foreground/90">
+                          {comment.content}
+                        </p>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleLikeComment(comment.id)}
+                            disabled={likeCommentMutation.isPending}
+                            className={`flex items-center gap-1 text-xs font-medium transition-colors rounded px-2 py-1 ${
+                              comment.isLiked 
+                                ? 'text-blue-600 bg-blue-50' 
+                                : 'text-muted-foreground hover:text-blue-600 hover:bg-blue-50'
+                            }`}
+                          >
+                            <ThumbsUp className={`w-3.5 h-3.5 ${comment.isLiked ? 'fill-current' : ''}`} />
+                            <span>{comment.like > 0 ? comment.like : 'Thích'}</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleDislikeComment(comment.id)}
+                            disabled={dislikeCommentMutation.isPending}
+                            className={`flex items-center gap-1 text-xs font-medium transition-colors rounded px-2 py-1 ${
+                              comment.isDisliked 
+                                ? 'text-red-600 bg-red-50' 
+                                : 'text-muted-foreground hover:text-red-600 hover:bg-red-50'
+                            }`}
+                          >
+                            <ThumbsDown className={`w-3.5 h-3.5 ${comment.isDisliked ? 'fill-current' : ''}`} />
+                            <span>{comment.dislike > 0 ? comment.dislike : 'Không thích'}</span>
+                          </button>
+                          
+                          {user?.id === comment.userId && (
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              disabled={deleteCommentMutation.isPending}
+                              className="flex items-center gap-1 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors rounded px-2 py-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Xóa</span>
+                            </button>
+                          )}
                         </div>
                       </div>
-
-                      {/* Comment Text */}
-                      <p className="text-sm leading-relaxed text-foreground/90">
-                        {comment.content}
-                      </p>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => handleLikeComment(comment.id)}
-                          disabled={likeCommentMutation.isPending}
-                          className={`flex items-center gap-1 text-xs font-medium transition-colors rounded px-2 py-1 ${
-                            comment.isLiked 
-                              ? 'text-blue-600 bg-blue-50' 
-                              : 'text-muted-foreground hover:text-blue-600 hover:bg-blue-50'
-                          }`}
-                        >
-                          <ThumbsUp className={`w-3.5 h-3.5 ${comment.isLiked ? 'fill-current' : ''}`} />
-                          <span>{comment.likes > 0 ? comment.likes : 'Thích'}</span>
-                        </button>
-                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {commentsData?.pagination && commentsData.pagination.totalPage > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  Trước
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Trang {page} / {commentsData.pagination.totalPage}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.min(commentsData.pagination.totalPage, p + 1))}
+                  disabled={page === commentsData.pagination.totalPage}
+                >
+                  Sau
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

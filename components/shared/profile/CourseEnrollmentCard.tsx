@@ -30,6 +30,9 @@ export const CourseEnrollmentCard = ({
   };
 
   const getStatusLabel = (status: Enrollment['status']) => {
+    if (Number(progress) >= 100) {
+      return "Hoàn tất";
+    }
     if (progress > 0 && status === "not_started") {
       return "Đang học";
     }
@@ -47,7 +50,10 @@ export const CourseEnrollmentCard = ({
   };
 
   const getStatusColor = (status: Enrollment['status']) => {
-    // Show "ongoing" color for courses with progress > 0, even if status is "not_started"
+    // Show "completed" color for courses with 100% progress
+    if (Number(progress) >= 100) {
+      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+    }
     if (progress > 0 && status === "not_started") {
       return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
     }
@@ -215,7 +221,7 @@ export const CourseEnrollmentCard = ({
                     size="sm"
                     className="bg-primary text-black hover:bg-primary/90 font-medium"
                   >
-                    {status === 'not_started' && progress === 0 ? 'Bắt đầu học' : 'Tiếp tục học'}
+                    {Number(progress) >= 100 ? 'Xem chứng chỉ' : status === 'not_started' && progress === 0 ? 'Bắt đầu học' : 'Tiếp tục học'}
                   </Button>
                 </div>
               </div>

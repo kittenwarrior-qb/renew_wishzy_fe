@@ -8,8 +8,8 @@ export type Comment = {
   courseId: string;
   content: string;
   rating: number;
-  likes: number;
-  dislikes: number;
+  like: number;
+  dislike: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -21,7 +21,6 @@ export type CommentFilter = {
 };
 
 export type CreateCommentRequest = {
-  userId: string;
   courseId: string;
   content: string;
   rating: number;
@@ -53,9 +52,23 @@ export const commentService = {
     const res = await api.get<CommentListResponse>(BASE, { params });
     return res.data;
   },
-  async listByCourse(courseId: string): Promise<CommentListResponse> {
-    const res = await api.get<CommentListResponse>(`/courses/${courseId}/comments`);
-    return res.data;
+  async listByCourse(courseId: string, page: number = 1, limit: number = 10): Promise<CommentListResponse> {
+    const res = await api.get<any>(`${BASE}/course/${courseId}`, {
+      params: { page, limit }
+    });
+    console.log('Comment API Response:', res.data);
+    
+    // Handle different response formats
+    // If wrapped in { data: { items, pagination } }
+    if (res.data?.data?.items) {
+      return res.data.data;
+    }
+    // If direct { items, pagination }
+    if (res.data?.items) {
+      return res.data;
+    }
+    // Fallback
+    return { items: [], pagination: { totalItems: 0, currentPage: 1, itemsPerPage: 10, totalPage: 0 } };
   },
   async get(id: string): Promise<CommentResponse> {
     const res = await api.get<CommentResponse>(`${BASE}/${id}`);
@@ -75,6 +88,10 @@ export const commentService = {
   },
   async dislike(id: string): Promise<CommentMutationResponse> {
     const res = await api.patch<CommentMutationResponse>(`${BASE}/${id}/dislike`);
+    return res.data;
+  },
+  async delete(id: string): Promise<{ message: string }> {
+    const res = await api.delete<{ message: string }>(`${BASE}/${id}`);
     return res.data;
   },
 };

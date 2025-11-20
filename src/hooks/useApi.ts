@@ -23,18 +23,28 @@ export const apiRequest = async <TData = unknown>(
     method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
     data?: unknown;
     params?: Record<string, unknown>;
+    headers?: Record<string, string>;
   }
 ): Promise<TData> => {
-  const { method = 'GET', data, params } = options || {};
+  const { method = 'GET', data, params, headers } = options || {};
 
   const url = `${endpoint}${buildQueryParams(params)}`;
 
   const config: any = {
     method: method.toLowerCase(),
+    headers: headers || {},
   };
 
   if (data) {
     config.data = data;
+    
+    // Debug log for FormData
+    if (data instanceof FormData) {
+      console.log('Sending FormData to:', url);
+      for (const pair of (data as any).entries()) {
+        console.log('FormData entry:', pair[0], pair[1]);
+      }
+    }
   }
 
   const response = await api.request({ url, ...config });

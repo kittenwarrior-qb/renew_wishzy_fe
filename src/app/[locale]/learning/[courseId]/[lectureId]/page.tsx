@@ -250,11 +250,9 @@ export default function LearningPage() {
             )}
           </aside>
 
-          {/* Main Content Area */}
           <main className="flex-1 min-w-0">
-            {/* Video Player Section */}
-            <div className="w-full bg-black/5 dark:bg-black/20">
-              <div className="px-4 sm:px-6 lg:px-8 py-6">
+            <div className="w-full ">
+              <div className="px-4 py-4">
                 {!enrollmentId ? (
                   <div className="relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center shadow-2xl">
                     <div className="text-white text-center p-4">
@@ -280,33 +278,24 @@ export default function LearningPage() {
               </div>
             </div>
 
-            {/* Content Area */}
-            <div className="px-4 sm:px-6 lg:px-8 py-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Content */}
-                <div className="lg:col-span-2">
-                  {lecture && chapter && (
-                    <LectureInfo
-                      lecture={lecture}
-                      chapter={chapter}
-                    />
-                  )}
-                </div>
-
-                {/* Right Sidebar - Additional Info */}
-                <div className="lg:col-span-1">
-                  <div className="bg-muted/30 rounded-lg p-4 text-center text-muted-foreground">
-                    <p className="text-sm">Additional content area</p>
-                    <p className="text-xs mt-1">Notes, comments, etc.</p>
-                  </div>
-                </div>
-              </div>
+            <div className="px-4 py-6">
+              {lecture && chapter && (
+                <LectureInfo
+                  lecture={lecture}
+                  chapter={chapter}
+                  onSeekToTime={(seconds) => {
+                    const event = new CustomEvent('seekToTime', { detail: { seconds } });
+                    window.dispatchEvent(event);
+                  }}
+                  courseId={courseId}
+                  isEnrolled={!!enrollmentId}
+                />
+              )}
             </div>
           </main>
         </div>
       </div>
 
-      {/* Mobile Sidebar Toggle - Show on mobile */}
       <div className="lg:hidden fixed bottom-4 right-4 z-50">
         <button
           onClick={() => {/* Add mobile sidebar toggle logic */}}

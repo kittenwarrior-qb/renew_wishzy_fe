@@ -123,6 +123,8 @@ declare module 'lucide-react' {
   export const Calendar: Icon
   export const AlertCircle: Icon
   export const Database: Icon
+  export const Camera: Icon
+  export const ThumbsDown: Icon
   
   interface Icons {
     [key: string]: Icon

@@ -34,6 +34,9 @@ export function CourseSidebar({
   useEffect(() => {
     const fetchEnrollment = async () => {
       try {
+        // Reset state when courseId changes
+        setFinishedLectures([]);
+        
         const enrollment = await enrollmentService.getEnrollmentByCourseId(courseId);
         if (enrollment?.attributes?.finishedLectures) {
           setFinishedLectures(enrollment.attributes.finishedLectures);
@@ -52,16 +55,13 @@ export function CourseSidebar({
     }
   }, [completedLectureIds]);
 
-  // Calculate total lectures
   useEffect(() => {
     const total = course.chapters.reduce((sum, chapter) => sum + chapter.lectures.length, 0);
     setTotalLectures(total);
   }, [course.chapters]);
 
-  // Auto-expand chapter containing current lecture
   useEffect(() => {
     if (currentLectureId) {
-      // Find which chapter contains the current lecture
       const chapterWithLecture = course.chapters.find(chapter =>
         chapter.lectures.some(lecture => lecture.id === currentLectureId)
       );
@@ -87,7 +87,7 @@ export function CourseSidebar({
   };
 
   return (
-    <div className="w-full h-screen bg-card border-r flex flex-col sticky top-0">
+    <div className="w-full h-screen bg-card border-r flex flex-col sticky top-16">
       {/* Header */}
       <div className="p-4 border-b shrink-0">
         <h2 className="font-semibold text-lg mb-2">{course.title}</h2>

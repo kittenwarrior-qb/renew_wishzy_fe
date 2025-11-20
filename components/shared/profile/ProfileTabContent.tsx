@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Edit2, Save, X } from 'lucide-react';
+import { Edit2, Save, X, Camera } from 'lucide-react';
 import { useQueryHook } from '@/src/hooks/useQueryHook';
 import { useMutationHook } from '@/src/hooks/useMutationHook';
 import { wishzyAuthService } from '@/src/services/auth';
@@ -16,6 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export const ProfileTabContent = () => {
     const queryClient = useQueryClient();
     const { setUser } = useAppStore();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isHoveringAvatar, setIsHoveringAvatar] = useState(false);
+    
     const { data, isLoading } = useQueryHook(
         ['profile'],
         () => wishzyAuthService.getProfile(),
@@ -42,6 +45,18 @@ export const ProfileTabContent = () => {
                 // Invalidate cache
                 queryClient.invalidateQueries({ queryKey: ['profile'] });
                 setIsEditing(false);
+            },
+        }
+    );
+
+    const uploadAvatarMutation = useMutationHook(
+        (file: File) => wishzyAuthService.uploadAvatar(file),
+        {
+            onSuccess: (updatedUser) => {
+                // Update store with new user data
+                setUser(updatedUser);
+                // Invalidate cache
+                queryClient.invalidateQueries({ queryKey: ['profile'] });
             },
         }
     );
@@ -98,6 +113,30 @@ export const ProfileTabContent = () => {
         setIsEditing(false);
     };
 
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Vui lòng chọn file hình ảnh');
+                return;
+            }
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Kích thước file không được vượt quá 5MB');
+                return;
+            }
+            console.log('Uploading file:', file.name, file.type, file.size);
+            uploadAvatarMutation.mutate(file);
+        }
+        // Reset input để có thể upload lại cùng file
+        event.target.value = '';
+    };
+
     return (
         <div className="space-y-6">
             {/* Header với nút Edit/Save/Cancel */}
@@ -142,26 +181,62 @@ export const ProfileTabContent = () => {
                         Có lỗi xảy ra khi cập nhật thông tin. Vui lòng thử lại.
                     </div>
                 )}
+                {uploadAvatarMutation.isSuccess && (
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-400 px-4 py-3 rounded">
+                        Cập nhật avatar thành công!
+                    </div>
+                )}
+                {uploadAvatarMutation.isError && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-400 px-4 py-3 rounded">
+                        Có lỗi xảy ra khi tải lên avatar. Vui lòng thử lại.
+                    </div>
+                )}
             </div>
 
             {/* Avatar và thông tin cơ bản */}
             <div className="bg-card rounded-lg border border-border p-6">
                 <div className="flex items-start gap-6">
                     {/* Avatar */}
-                    <div className="shrink-0">
+                    <div 
+                        className="shrink-0 relative cursor-pointer group"
+                        onMouseEnter={() => setIsHoveringAvatar(true)}
+                        onMouseLeave={() => setIsHoveringAvatar(false)}
+                        onClick={handleAvatarClick}
+                    >
                         {profile?.avatar ? (
                             <img
                                 src={profile.avatar}
                                 alt={profile.fullName || 'Avatar'}
-                                className="w-24 h-24 rounded-full object-cover border-4 border-primary/10"
+                                className="w-24 h-24 rounded-full object-cover border-4 border-primary/10 transition-opacity group-hover:opacity-70"
                             />
                         ) : (
-                            <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center border-4 border-primary/10">
+                            <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center border-4 border-primary/10 transition-opacity group-hover:opacity-70">
                                 <span className="text-primary-foreground text-3xl font-semibold">
                                     {profile?.fullName?.charAt(0).toUpperCase() || profile?.email?.charAt(0).toUpperCase() || 'U'}
                                 </span>
                             </div>
                         )}
+                        
+                        {/* Overlay with camera icon */}
+                        <div className={`absolute inset-0 rounded-full bg-black/50 flex items-center justify-center transition-opacity ${isHoveringAvatar ? 'opacity-100' : 'opacity-0'}`}>
+                            <Camera className="h-8 w-8 text-white" />
+                        </div>
+                        
+                        {/* Loading overlay */}
+                        {uploadAvatarMutation.isPending && (
+                            <div className="absolute inset-0 rounded-full bg-black/70 flex items-center justify-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                            </div>
+                        )}
+                        
+                        {/* Hidden file input */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
                     </div>
 
                     {/* Thông tin cơ bản */}
