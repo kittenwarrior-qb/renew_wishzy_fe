@@ -19,6 +19,7 @@ export interface Lecture {
   duration?: number;
   chapterId: string;
   order: number;
+  orderIndex?: number;
   isCompleted?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -108,6 +109,16 @@ export interface VideoPlayerOptions {
   };
   userActions?: {
     hotkeys?: boolean;
+  };
+  html5?: {
+    vhs?: {
+      overrideNative?: boolean;
+      enableLowInitialPlaylist?: boolean;
+      smoothQualityChange?: boolean;
+      fastQualityChange?: boolean;
+    };
+    nativeAudioTracks?: boolean;
+    nativeVideoTracks?: boolean;
   };
 }
 

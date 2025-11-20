@@ -15,19 +15,20 @@ import momoLogo from '@/public/images/momo.png'
 import vnpayLogo from '@/public/images/vnpay.jpg'
 import zalopayLogo from '@/public/images/zalopay.png'
 import { formatPrice } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 
 const CheckoutPage = () => {
   const { user, orderListCourse } = useAppStore()
   const [paymentMethod, setPaymentMethod] = useState<'vnpay' | 'zalopay' | 'momo' | 'banking'>('vnpay')
+  const router = useRouter()
 
-  // Payment mutation
   const createOrderMutation = useApiPost<CreateOrderResponse, CreateOrderRequest>('/orders', {
     onSuccess: (response) => {
       if (response.data?.paymentUrl) {
-        // Redirect to payment gateway
         window.location.href = response.data.paymentUrl
       } else {
         toast.success(response.message || 'Đặt hàng thành công!')
+        router.push('/checkout/success')
       }
     },
     onError: (error: any) => {
@@ -72,6 +73,13 @@ const CheckoutPage = () => {
   const handlePayment = () => {
     if (orderListCourse.length === 0) {
       toast.error('Vui lòng chọn ít nhất một khóa học')
+      return
+    }
+
+    // For free courses, redirect directly to success page without creating order
+    if (totalSale === 0) {
+      toast.success('Đăng ký khóa học miễn phí thành công!')
+      router.push('/checkout/success')
       return
     }
 

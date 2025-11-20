@@ -31,15 +31,14 @@ export default function QuizPage() {
         title: quizData.title,
         description: quizData.description,
         timeLimit: quizData.timeLimit,
-        duration: quizData.timeLimit, // duration is the same as timeLimit
+        duration: quizData.timeLimit, 
         questions: quizData.questions.map((q: any) => ({
           id: q.id,
           question: q.questionText,
-          type: "single", // Có thể cần thêm field type trong API response
+          type: "single", 
           answers: q.answerOptions.map((opt: any) => ({
             id: opt.id,
             text: opt.optionText,
-            // isCorrect không có vì includeAnswers=false
           })),
         })),
       }
@@ -49,7 +48,6 @@ export default function QuizPage() {
     try {
       await submitQuiz(submission);
 
-      // Chuyển đến trang kết quả
       router.push(`/${params.locale}/quiz/${quizId}/result`);
     } catch (error) {
       console.error("Error submitting quiz:", error);

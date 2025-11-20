@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "../providers/QueryProvider";
+import { ThemeProvider } from "../providers/ThemeProvider";
 import { Toaster } from "sonner";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -28,19 +29,38 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const stored = localStorage.getItem('user-storage');
+                if (stored) {
+                  const { state } = JSON.parse(stored);
+                  if (state?.theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  }
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${beVietnamPro.variable} ${jetbrainsMono.variable} antialiased font-sans`}
       >
-        <QueryProvider>
-          {children}
-          <Toaster
-            position="top-center"
-            richColors
-            expand={true}
-            duration={4000}
-          />
-        </QueryProvider>
+        <ThemeProvider>
+          <QueryProvider>
+            {children}
+            <Toaster
+              position="top-center"
+              richColors
+              expand={true}
+              duration={4000}
+            />
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

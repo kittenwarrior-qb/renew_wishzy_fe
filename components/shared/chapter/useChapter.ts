@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { chapterService } from '@/services/chapter'
+import { getPersistedQueryData, persistQueryData } from '@/lib/queryClient'
 
 export type ChapterLecture = {
   id: string
@@ -28,9 +29,24 @@ const ENDPOINT = 'chapters'
 export const useChapterList = (courseId?: string) => {
   return useQuery<{ items: Chapter[] }>({
     queryKey: [ENDPOINT, 'course', courseId],
-    queryFn: async () => chapterService.getChapterByCourseId(courseId as string),
+    queryFn: async () => {
+      // Try to get from localStorage first
+      const cached = getPersistedQueryData<any>([ENDPOINT, 'course', courseId || '']);
+      if (cached) {
+        return cached;
+      }
+
+      // Fetch from API
+      const result = await chapterService.getChapterByCourseId(courseId as string);
+      
+      // Persist to localStorage
+      persistQueryData([ENDPOINT, 'course', courseId || ''], result, 10);
+      
+      return result;
+    },
     enabled: !!courseId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // Increased to 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     select: (res: any): { items: Chapter[] } => {
       const payload = res?.data ?? res
       const items = payload?.items ?? []

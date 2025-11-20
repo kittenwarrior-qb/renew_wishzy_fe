@@ -32,6 +32,7 @@
       "@/libs/*": ["./src/libs/*"],
       "@/types/*": ["./src/types/*"],
       "@/types": ["./src/types/index.ts"],
+      "@/utils/*": ["./src/utils/*"],
       "@/data/*": ["./src/data/*"],
       "@/locales/*": ["./locales/*"]
     }

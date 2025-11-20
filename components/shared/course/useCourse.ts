@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { courseService } from '@/services/course'
 import { UserRole } from '@/types/auth'
 import { CourseItemType } from '@/types/course/course-item.types'
+import { getPersistedQueryData, persistQueryData } from '@/lib/queryClient'
 
 export type Course = {
   id: string
@@ -86,9 +87,24 @@ export const useCourseList = (filter?: CourseFilter, options?: { enabled?: boole
 export const useCourseDetail = (id?: string) => {
   return useQuery<any, unknown, Course>({
     queryKey: [ENDPOINT, id],
-    queryFn: async () => courseService.get(id as string),
+    queryFn: async () => {
+      // Try to get from localStorage first
+      const cached = getPersistedQueryData<any>([ENDPOINT, id || '']);
+      if (cached) {
+        return cached;
+      }
+
+      // Fetch from API
+      const result = await courseService.get(id as string);
+      
+      // Persist to localStorage
+      persistQueryData([ENDPOINT, id || ''], result, 15);
+      
+      return result;
+    },
     enabled: !!id,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // Increased to 15 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     select: (res: any): Course => {
       const payload = res?.data ?? res
       const item = (payload && typeof payload === 'object' && 'data' in payload) ? (payload as any).data : payload

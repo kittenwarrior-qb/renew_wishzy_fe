@@ -1,5 +1,6 @@
 import api from './api';
 import type { Enrollment } from '@/types/enrollment';
+import { cache } from '@/lib/cache';
 
 export interface UpdateEnrollmentAttributesDto {
   attributes: {
@@ -19,16 +20,47 @@ export interface UpdateEnrollmentAttributesDto {
   };
 }
 
+export interface UpdateEnrollmentStatusDto {
+  status: 'not_started' | 'ongoing' | 'completed';
+}
+
+const CACHE_TTL = 5; // 5 minutes
+
 export const enrollmentsApi = {
   getEnrollment: async (enrollmentId: string): Promise<Enrollment> => {
+    // Try cache first
+    const cacheKey = `enrollment_${enrollmentId}`;
+    const cached = cache.get<Enrollment>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const response = await api.get(`/enrollments/${enrollmentId}`);
-    // Backend returns {success, data, message} structure
-    return response.data.data || response.data;
+    const enrollment = response.data.data || response.data;
+    
+    // Cache the result
+    cache.set(cacheKey, enrollment, CACHE_TTL);
+    
+    return enrollment;
   },
   
   updateAttributes: async (enrollmentId: string, data: UpdateEnrollmentAttributesDto) => {
     const response = await api.patch(`/enrollments/${enrollmentId}/attributes`, data);
-    // Backend returns {success, data, message} structure
+    
+    // Clear cache after update
+    cache.remove(`enrollment_${enrollmentId}`);
+    cache.remove('my_enrollments');
+    
+    return response.data.data || response.data;
+  },
+
+  updateStatus: async (enrollmentId: string, data: UpdateEnrollmentStatusDto) => {
+    const response = await api.patch(`/enrollments/${enrollmentId}`, data);
+    
+    // Clear cache after update
+    cache.remove(`enrollment_${enrollmentId}`);
+    cache.remove('my_enrollments');
+    
     return response.data.data || response.data;
   },
 };

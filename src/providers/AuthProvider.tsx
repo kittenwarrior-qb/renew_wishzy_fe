@@ -32,7 +32,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     checkAuth();
-  }, [setUser, logout, isAuthenticated, user]);
+    // Remove 'user' from dependencies to prevent infinite loop
+  }, [setUser, logout, isAuthenticated]);
 
   return <>{children}</>;
 }

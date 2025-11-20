@@ -2,12 +2,14 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { CourseSidebar } from '@/components/shared/learning/CourseSidebar';
 import { VideoPlayer } from '@/components/shared/learning/VideoPlayer';
 import { LectureInfo } from '@/components/shared/learning/LectureInfo';
 import { useChapterList } from '@/components/shared/chapter/useChapter';
 import { useCourseDetail } from '@/components/shared/course/useCourse';
 import { enrollmentService } from '@/services/enrollment';
+import { usePrefetchLearning, usePrefetchAdjacentLectures } from '@/hooks/usePrefetchLearning';
 import type { Lecture, Chapter, LectureProgress, UpdateLectureProgressDto, Course } from '@/types/learning';
 
 export default function LearningPage() {
@@ -18,8 +20,12 @@ export default function LearningPage() {
   
   const [progress, setProgress] = useState<LectureProgress | undefined>(undefined);
   const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
+  const [completedLectureIds, setCompletedLectureIds] = useState<string[]>([]);
 
-  // Fetch enrollment ID
+  // Prefetch data for better performance
+  usePrefetchLearning(courseId);
+
+  // Fetch enrollment ID and completed lectures
   useEffect(() => {
     const fetchEnrollment = async () => {
       try {
@@ -27,6 +33,10 @@ export default function LearningPage() {
         console.log('Fetched enrollment:', enrollment);
         if (enrollment) {
           setEnrollmentId(enrollment.id);
+          // Set initial completed lectures
+          if (enrollment.attributes?.finishedLectures) {
+            setCompletedLectureIds(enrollment.attributes.finishedLectures);
+          }
         } else {
           console.warn('No enrollment found for course:', courseId);
         }
@@ -100,6 +110,9 @@ export default function LearningPage() {
       });
     });
 
+    // Sort lectures by order index
+    lectures.sort((a, b) => a.lecture.order - b.lecture.order);
+
     // Build course object
     const totalLessons = lectures.length;
     const completedLessons = lectures.filter(l => l.lecture.isCompleted).length;
@@ -123,6 +136,9 @@ export default function LearningPage() {
   }, [chaptersData, courseData, lectureId]);
 
   const isLoading = isCourseLoading || isChaptersLoading;
+
+  // Prefetch adjacent lectures for smoother navigation
+  usePrefetchAdjacentLectures(courseId, lectureId, allLectures);
 
   // Navigation helpers
   const { nextLecture, prevLecture } = useMemo(() => {
@@ -166,6 +182,17 @@ export default function LearningPage() {
   };
 
   const handleComplete = () => {
+    // Update completed lectures immediately for sidebar (đồng bộ với API call ở 90%)
+    if (lectureId && !completedLectureIds.includes(lectureId)) {
+      setCompletedLectureIds(prev => [...prev, lectureId]);
+      
+      // Show toast notification
+      toast.success('Lecture completed! 🎉', {
+        description: lecture?.title || 'Great job!',
+        duration: 3000,
+      });
+    }
+    
     setProgress(prev => {
       if (!prev) return prev;
       return {
@@ -174,17 +201,6 @@ export default function LearningPage() {
         completedAt: new Date(),
       };
     });
-    
-    // Note: In a real implementation, you would update the lecture completion status
-    // via an API call here
-  };
-
-  const handleMarkComplete = () => {
-    handleComplete();
-    
-    setTimeout(() => {
-      handleNext();
-    }, 1000);
   };
 
   if (isLoading) {
@@ -228,7 +244,8 @@ export default function LearningPage() {
               <CourseSidebar 
                 course={course}
                 courseId={courseId}
-                currentLectureId={lectureId} 
+                currentLectureId={lectureId}
+                completedLectureIds={completedLectureIds}
               />
             )}
           </aside>
