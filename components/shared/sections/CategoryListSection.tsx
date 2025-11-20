@@ -14,12 +14,12 @@ const CategoryListSection = () => {
 
   return (
     <section className="relative w-full overflow-hidden bg-background pt-16">
-      <div className="max-w-[1300px] mx-auto px-4">
+      <div className="max-w-[1300px] mx-auto px-4 py-4">
         <div className="mb-4">
           <h2 className="text-3xl font-bold mb-2 text-foreground">
             Danh mục nổi
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-8">
             Khám phá những khóa học mới được cập nhật
           </p>
         </div>

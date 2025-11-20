@@ -17,11 +17,7 @@ export const courseService = {
         if (params) {
             Object.entries(params).forEach(([key, value]) => {
                 if (value !== undefined) {
-                    if ((key === 'minPrice' || key === 'maxPrice') && value === 0) {
-                        cleanParams[key] = 0.000001;
-                    } else {
-                        cleanParams[key] = value;
-                    }
+                    cleanParams[key] = value;
                 }
             });
         }

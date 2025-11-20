@@ -30,7 +30,7 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
   const [newComment, setNewComment] = useState("")
   const [newRating, setNewRating] = useState(5)
   const [page, setPage] = useState(1)
-  const [limit] = useState(10)
+  const [limit] = useState(5)
   const queryClient = useQueryClient()
   const { user } = useAppStore()
 
@@ -182,6 +182,19 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
     if (confirm("Bạn có chắc chắn muốn xóa đánh giá này?")) {
       deleteCommentMutation.mutate(commentId)
     }
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+    // Scroll to feedback section smoothly after a small delay to let React render
+    setTimeout(() => {
+      const feedbackSection = document.getElementById('feedback')
+      if (feedbackSection) {
+        const yOffset = -80 // Offset for fixed header if any
+        const y = feedbackSection.getBoundingClientRect().top + window.pageYOffset + yOffset
+        window.scrollTo({ top: y, behavior: 'smooth' })
+      }
+    }, 100)
   }
 
   if (isLoading) {
@@ -394,7 +407,7 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  onClick={() => handlePageChange(Math.max(1, page - 1))}
                   disabled={page === 1}
                 >
                   Trước
@@ -405,7 +418,7 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage(p => Math.min(commentsData.pagination.totalPage, p + 1))}
+                  onClick={() => handlePageChange(Math.min(commentsData.pagination.totalPage, page + 1))}
                   disabled={page === commentsData.pagination.totalPage}
                 >
                   Sau

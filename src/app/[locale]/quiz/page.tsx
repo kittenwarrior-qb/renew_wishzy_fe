@@ -96,7 +96,7 @@ export default function QuizListPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="max-w-[1300px] mx-auto py-8 px-4">
         <Skeleton className="h-10 w-64 mb-8" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
@@ -108,7 +108,7 @@ export default function QuizListPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="max-w-[1300px] mx-auto py-8 px-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Bài kiểm tra trắc nghiệm</h1>
         <p className="text-muted-foreground">

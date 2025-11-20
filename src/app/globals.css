@@ -193,6 +193,16 @@ button {
   body {
     @apply bg-background text-foreground;
   }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    color: inherit;
+  }
+
+  ::-moz-selection {
+    background-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    color: inherit;
+  }
 }
 
 /* Custom thin scrollbar */

@@ -58,10 +58,8 @@ export const useCourseList = (filter?: CourseFilter, options?: { enabled?: boole
     createdBy: filter?.createdBy,
     rating: filter?.rating,
     courseLevel: filter?.courseLevel,
-    minPrice: filter?.minPrice !== undefined ?
-      (filter.minPrice === 0 ? 0.000001 : filter.minPrice) :
-      undefined,
-    maxPrice: filter?.maxPrice !== undefined ? filter.maxPrice : undefined,
+    minPrice: filter?.minPrice,
+    maxPrice: filter?.maxPrice,
     status: typeof filter?.status === 'boolean' ? filter?.status : undefined,
   }
   return useQuery<CourseListResponse>({
@@ -119,6 +117,29 @@ export const useBestSellerCourses = (limit: number = 3) => {
     queryFn: async () => {
       const response = await courseService.list({ 
         limit,
+      });
+      return response.data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    select: (res: any): CourseItemType[] => {
+      const payload = res?.data ?? res;
+      if (Array.isArray(payload)) return payload as CourseItemType[];
+      const items = payload?.items ?? [];
+      return items as CourseItemType[];
+    },
+  })
+}
+
+export const useFreeCourses = (limit: number = 6) => {
+  return useQuery<CourseItemType[]>({
+    queryKey: [ENDPOINT, 'free', limit],
+    queryFn: async () => {
+      const response = await courseService.list({ 
+        page: 1,
+        limit,
+        minPrice: 0,
+        maxPrice: 1,
+        status: true,
       });
       return response.data || [];
     },

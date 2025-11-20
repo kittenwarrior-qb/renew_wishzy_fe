@@ -89,7 +89,7 @@ export default function QuizResultPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-12 px-4">
+      <div className="max-w-[1300px] mx-auto py-12 px-4">
         <Card className="max-w-2xl mx-auto">
           <CardContent className="p-8">
             <Skeleton className="h-12 w-3/4 mx-auto mb-8" />
@@ -103,7 +103,7 @@ export default function QuizResultPage() {
 
   if (!result) {
     return (
-      <div className="container mx-auto py-12 px-4">
+      <div className="max-w-[1300px] mx-auto py-12 px-4">
         <Card className="max-w-md mx-auto">
           <CardContent className="p-6 text-center">
             <p className="text-muted-foreground mb-4">
@@ -121,7 +121,7 @@ export default function QuizResultPage() {
   const scoreBadge = getScoreBadge(result.score);
 
   return (
-    <div className="container mx-auto py-12 px-4">
+    <div className="max-w-[1300px] mx-auto py-12 px-4">
       <Card className="max-w-2xl mx-auto">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-4">
