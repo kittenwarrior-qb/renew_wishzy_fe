@@ -9,6 +9,7 @@ import type {
 const USER_ENDPOINTS = {
   base: '/users',
   byId: (id: string) => `/users/${id}`,
+  instructorStudents: '/users/instructors/my-students',
 } as const;
 
 export const userService = {
@@ -50,6 +51,24 @@ export const userService = {
 
   async getInstructors(params?: Omit<UserListParams, 'role'>): Promise<UserListResponse> {
     return this.getUsersByRole('instructor', params);
+  },
+
+  async getInstructorStudents(params?: Omit<UserListParams, 'role' | 'fullName' | 'email'>): Promise<UserListResponse> {
+    const apiParams: Record<string, unknown> = { ...params };
+    delete apiParams.size;
+    delete apiParams.instructorId;
+
+    Object.keys(apiParams).forEach((key) => {
+      if (apiParams[key] === undefined) {
+        delete apiParams[key];
+      }
+    });
+
+    const response = await api.get<UserListResponse>(
+      USER_ENDPOINTS.instructorStudents,
+      { params: apiParams }
+    );
+    return response.data;
   },
 };
 

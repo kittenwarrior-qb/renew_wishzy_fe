@@ -42,11 +42,10 @@ const StudentsPage = () => {
     page,
     limit,
     role: role || undefined,
-    ...(debouncedSearch && { search: debouncedSearch }),
-    ...(isInstructor && {
-      fullName: fullName || undefined,
-      email: user?.email || undefined,
-    }),
+    // Backend endpoint /users/instructors/my-students hỗ trợ fullName và email
+    // Map search query thành fullName để tìm kiếm
+    ...(debouncedSearch && isInstructor && { fullName: debouncedSearch }),
+    ...(debouncedSearch && !isInstructor && { search: debouncedSearch }),
   });
 
   const students = data?.data.data.items || [];
