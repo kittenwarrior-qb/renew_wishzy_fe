@@ -25,15 +25,22 @@ export const useStudents = (params?: UserListParams) => {
     queryKey: [STUDENTS_ENDPOINT, params],
     queryFn: async () => {
       let response;
-      if (params?.role) {
-        // Sử dụng role từ params (lấy từ useCurrentUser)
-        // Admin: role = 'admin', Instructor: role = 'instructor'
+      
+      // Nếu role là instructor, sử dụng endpoint riêng
+      if (params?.role === 'instructor') {
+        const { role, fullName, email, ...restParams } = params;
+        // Endpoint /users/instructors/my-students tự động lấy instructorId từ token
+        // Chỉ cần truyền page, limit, search
+        response = await userService.getInstructorStudents(restParams);
+      } else if (params?.role) {
+        // Sử dụng role từ params cho admin hoặc các role khác
         const { role, ...restParams } = params;
         response = await userService.getUsersByRole(role as 'user' | 'instructor' | 'admin', restParams);
       } else {
         // Nếu không có role, lấy tất cả users (không filter theo role)
         response = await userService.getUsers(params);
       }
+      
       const items = response.data.data.items.map(transformUserToStudent);
       const apiPagination = response.data.data.pagination;
       return {
