@@ -24,7 +24,7 @@ export default function CourseDetailPage() {
     const locale = params?.locale || "vi"
     const courseId = params?.id as string
 
-    const { data: course, isPending: loadingCourse, isFetching: fetchingCourse } = useCourseDetail(courseId, { refetchOnMount: 'always' })
+    const { data: course, isPending: loadingCourse, isFetching: fetchingCourse } = useCourseDetail(courseId)
     const { data: chapterRes, isPending: loadingChapters, isFetching: fetchingChapters } = useChapterList(courseId)
     const chapters = chapterRes?.items ?? []
 
