@@ -1,5 +1,5 @@
 import * as React from "react"
-import type { Column } from "@/shared/types/table.type"
+import type { Column } from "@/src/types/table.type"
 
 export type Render<T> = (row: T, rowIndex: number) => React.ReactNode
 

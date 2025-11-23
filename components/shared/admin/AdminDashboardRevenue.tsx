@@ -136,6 +136,13 @@ export function AdminDashboardRevenue({ orders }: AdminDashboardRevenueProps) {
     const monthly = React.useMemo(() => buildMonthlyRevenue(orders), [orders])
     const yearly = React.useMemo(() => buildYearlyRevenue(orders), [orders])
 
+    const now = new Date()
+    const todayLabel = `${now.getDate()}/${now.getMonth() + 1}`
+
+    const revenueToday = daily.find((d) => d.label === todayLabel)?.value ?? 0
+    const revenueThisMonth = monthly.length ? monthly[monthly.length - 1].value : 0
+    const revenueThisYear = yearly.length ? yearly[yearly.length - 1].value : 0
+
     const hasAny = daily.some((d) => d.value > 0) || monthly.some((m) => m.value > 0) || yearly.some((y) => y.value > 0)
 
     const dailyScrollRef = React.useRef<HTMLDivElement>(null!)
@@ -252,9 +259,29 @@ export function AdminDashboardRevenue({ orders }: AdminDashboardRevenueProps) {
 
     return (
         <Card>
-            <CardContent className="space-y-3 text-xs">
+            <CardContent className="space-y-4 text-xs">
+                <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl bg-muted/60 px-3 py-2">
+                        <p className="text-[11px] font-medium text-muted-foreground">Hôm nay</p>
+                        <p className="mt-1 text-sm font-semibold">
+                            {revenueToday.toLocaleString()} VNĐ
+                        </p>
+                    </div>
+                    <div className="rounded-xl bg-muted/60 px-3 py-2">
+                        <p className="text-[11px] font-medium text-muted-foreground">Tháng này</p>
+                        <p className="mt-1 text-sm font-semibold">
+                            {revenueThisMonth.toLocaleString()} VNĐ
+                        </p>
+                    </div>
+                    <div className="rounded-xl bg-muted/60 px-3 py-2">
+                        <p className="text-[11px] font-medium text-muted-foreground">Năm nay</p>
+                        <p className="mt-1 text-sm font-semibold">
+                            {revenueThisYear.toLocaleString()} VNĐ
+                        </p>
+                    </div>
+                </div>
                 <Tabs defaultValue="day" className="w-full">
-                    <div className="mb-12 flex items-center justify-between gap-3">
+                    <div className="mb-6 flex items-center justify-between gap-3">
                         <CardTitle className="text-sm font-semibold">Doanh thu</CardTitle>
                         <TabsList className="h-8 text-[11px]">
                             <TabsTrigger value="day">Ngày</TabsTrigger>
@@ -262,13 +289,13 @@ export function AdminDashboardRevenue({ orders }: AdminDashboardRevenueProps) {
                             <TabsTrigger value="year">Năm</TabsTrigger>
                         </TabsList>
                     </div>
-                    <TabsContent value="day" className="mt-1">
+                    <TabsContent value="day">
                         {renderChart(daily, "from-emerald-400 to-emerald-600", dailyScrollRef)}
                     </TabsContent>
-                    <TabsContent value="month" className="mt-1">
+                    <TabsContent value="month">
                         {renderChart(monthly, "from-sky-400 to-sky-600", monthlyScrollRef)}
                     </TabsContent>
-                    <TabsContent value="year" className="mt-1">
+                    <TabsContent value="year">
                         {renderChart(yearly, "from-amber-400 to-amber-600", yearlyScrollRef)}
                     </TabsContent>
                 </Tabs>

@@ -62,21 +62,20 @@ export default function Page() {
   return (
     <div className="relative space-y-6 p-4 md:p-6">
       <LoadingOverlay show={showLoading} />
-      {/* Below: 2-column layout */}
-      <div className="grid gap-6 grid-cols-[2.1fr_1fr]">
-        <div className="space-y-6">
-          <AdminDashboardHero
-            fullName={fullName}
-            email={email}
-            totalUsers={totalUsers}
-            totalCourses={totalCourses}
-            totalInstructors={totalInstructors}
-          />
+      <div className="space-y-6">
+        <AdminDashboardHero
+          fullName={fullName}
+          email={email}
+          totalUsers={totalUsers}
+          totalCourses={totalCourses}
+          totalInstructors={totalInstructors}
+        />
+        <AdminDashboardQuickStats cards={cards} />
+        <div className="grid gap-6 lg:grid-cols-[1.8fr_1fr]">
           <AdminDashboardRevenue orders={orders} />
-        </div>
-
-        <div className="space-y-4">
-          <AdminDashboardLeaderboards bestSellerCourses={bestSellerCourses} orders={orders} />
+          <div className="space-y-4">
+            <AdminDashboardLeaderboards bestSellerCourses={bestSellerCourses} orders={orders} />
+          </div>
         </div>
       </div>
     </div>

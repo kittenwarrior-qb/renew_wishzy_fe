@@ -49,7 +49,7 @@ export default function QuizResultPage() {
         score: 80,
         correctCount: 4,
         totalQuestions: 5,
-        timeSpent: 450, 
+        timeSpent: 450,
         answers: {},
         quiz: {
           id: quizId,
