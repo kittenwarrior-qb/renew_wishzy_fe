@@ -9,7 +9,7 @@ type Options = {
 }
 
 export function useAdminGuard(options: Options = {}) {
-  const { allowedRoles = ["admin", "superadmin", "owner"], redirectTo } = options
+  const { allowedRoles = ["admin", "instructor", "owner"], redirectTo } = options
   const router = useRouter()
   const params = useParams<{ locale: string }>()
   const locale = params?.locale || "vi"

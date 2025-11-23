@@ -4,7 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Pagination } from "@/components/shared/common/Pagination"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
-import type { Column as NewColumn } from "@/shared/types/table.type"
+import type { Column as NewColumn } from "@/src/types/table.type"
 
 // Backward-compat Column type (old API)
 export type LegacyColumn<T> = {
