@@ -26,6 +26,7 @@ import {
     ChevronDown,
     ArrowLeftToLine,
     ArrowRightToLine,
+    Coins,
 } from "lucide-react"
 
 export default function InstructorAppSidebar() {
@@ -48,6 +49,7 @@ export default function InstructorAppSidebar() {
             dashboard: isActive('.'),
             users: isActive('user/'),
             courses: isActive('courses'),
+            revenue: isActive('revenue'),
         })
     }, [pathname])
 
@@ -108,6 +110,11 @@ export default function InstructorAppSidebar() {
                                     <SidebarMenuItem>
                                         <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('.')} tooltip="Tổng quan">
                                             <Link href={base}><Home className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Tổng quan</span>}</Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('revenue')} tooltip="Quản lý doanh thu">
+                                            <Link href={`${base}/revenue`}><Coins className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Quản lý doanh thu</span>}</Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 </SidebarMenu>
