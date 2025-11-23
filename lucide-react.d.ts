@@ -126,6 +126,10 @@ declare module 'lucide-react' {
   export const Camera: Icon
   export const ThumbsDown: Icon
   export const FileQuestion: Icon
+  export const Coins: Icon
+  export const TrendingDown: Icon
+  export const Trophy: Icon
+  export const Download: Icon
   
   interface Icons {
     [key: string]: Icon

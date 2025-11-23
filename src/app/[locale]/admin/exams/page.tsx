@@ -324,7 +324,7 @@ export default function Page() {
           createQuiz(
             {
               title: form.title.trim(),
-              description: form.description.trim() || undefined,
+              description: form.description?.trim() || undefined,
               isPublic: !!form.isPublic,
               isFree: !!form.isFree,
               price: form.price === "" ? 0 : Number(form.price),
@@ -385,7 +385,7 @@ export default function Page() {
             {
               id: editing.id,
               title: trimmedTitle,
-              description: form.description.trim() || undefined,
+              description: form.description?.trim() || undefined,
               isPublic: !!form.isPublic,
               isFree: !!form.isFree,
               price: form.price === "" ? 0 : Number(form.price),
