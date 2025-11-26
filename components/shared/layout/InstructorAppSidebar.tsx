@@ -27,6 +27,7 @@ import {
     ArrowLeftToLine,
     ArrowRightToLine,
     Coins,
+    MessageSquare,
 } from "lucide-react"
 
 export default function InstructorAppSidebar() {
@@ -50,6 +51,7 @@ export default function InstructorAppSidebar() {
             users: isActive('user/'),
             courses: isActive('courses'),
             revenue: isActive('revenue'),
+            comments: isActive('comments'),
         })
     }, [pathname])
 
@@ -155,8 +157,34 @@ export default function InstructorAppSidebar() {
                             <SidebarGroupContent className={(open.courses || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
                                 <SidebarMenu>
                                     <SidebarMenuItem>
-                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('courses')} tooltip="Khoá học">
+                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('courses') && !isActive('courses/sales')} tooltip="Khoá học">
                                             <Link href={`${base}/courses`}><BookOpen className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Khoá học</span>}</Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('courses/sales')} tooltip="Quản lý sale">
+                                            <Link href={`${base}/courses/sales`}><Coins className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Quản lý sale</span>}</Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </SidebarGroup>
+
+                        <SidebarSeparator />
+                        <SidebarGroup>
+                            <SidebarGroupLabel asChild className="text-[16px] font-semibold tracking-wide text-foreground truncate">
+                                <button type="button" onClick={() => toggle('comments')} className="w-full flex items-center gap-2">
+                                    <MessageSquare className="mr-2 h-4 w-4" />Quản lý bình luận
+                                    <span className="ml-auto group-data-[collapsible=icon]:hidden transition-transform" style={{ transform: open.comments ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+                                        <ChevronDown className="h-3.5 w-3.5" />
+                                    </span>
+                                </button>
+                            </SidebarGroupLabel>
+                            <SidebarGroupContent className={(open.comments || state === 'collapsed' ? '' : 'hidden') + ' ' + (state === 'collapsed' ? '' : 'pl-6')}>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton size="lg" className="group-data-[collapsible=icon]:justify-center" asChild isActive={isActive('comments')} tooltip="Bình luận">
+                                            <Link href={`${base}/comments`}><MessageSquare className="h-[18px] w-[18px]" />{state !== 'collapsed' && <span>Bình luận</span>}</Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 </SidebarMenu>

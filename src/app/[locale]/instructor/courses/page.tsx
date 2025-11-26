@@ -18,6 +18,8 @@ import DynamicTable, { type Column } from "@/components/shared/common/DynamicTab
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
+import { SaleBadge } from "./components/SaleBadge"
+import { getSaleStatus, getDiscountPercentage } from "@/types/sale"
 
 type CourseFormValue = Partial<Pick<Course, "name" | "price" | "level" | "totalDuration" | "categoryId" | "description" | "notes" | "thumbnail">>
 
@@ -211,7 +213,35 @@ export default function Page() {
                 key: 'price',
                 label: 'Giá',
                 type: 'number',
-                render: (row: Course) => Number(row.price).toLocaleString() + ' VNĐ',
+                render: (row: Course) => {
+                  const saleInfo = (row as any).saleInfo
+                  const saleStatus = getSaleStatus(saleInfo)
+                  const discount = getDiscountPercentage(Number(row.price), saleInfo)
+                  const hasSale = saleStatus !== 'none'
+                  
+                  return (
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className={hasSale ? "line-through text-muted-foreground text-sm" : ""}>
+                          {Number(row.price).toLocaleString()} VNĐ
+                        </span>
+                        {hasSale && (
+                          <SaleBadge status={saleStatus} discount={discount} />
+                        )}
+                      </div>
+                      {hasSale && saleInfo && (
+                        <span className="text-xs text-primary font-medium">
+                          {(() => {
+                            const salePrice = saleInfo.saleType === 'percent'
+                              ? Number(row.price) * (1 - saleInfo.value / 100)
+                              : Number(row.price) - saleInfo.value
+                            return Math.max(0, salePrice).toLocaleString()
+                          })()} VNĐ
+                        </span>
+                      )}
+                    </div>
+                  )
+                },
               },
               {
                 key: 'level',
