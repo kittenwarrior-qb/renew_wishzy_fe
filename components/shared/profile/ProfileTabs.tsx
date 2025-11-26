@@ -1,15 +1,17 @@
 'use client';
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { BookOpen, Heart, UserCircle } from 'lucide-react';
+import { BookOpen, Heart, UserCircle, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MyLearningTab } from './MyLearningTab';
 import { WishlistTab } from './WishlistTab';
 import { ProfileTabContent } from './ProfileTabContent';
+import { OrdersTab } from './OrdersTab';
 
 const tabs = [
   { id: 'my-learning', label: 'Khóa học của tôi', icon: BookOpen },
   { id: 'wishlist', label: 'Khóa học yêu thích', icon: Heart },
+  { id: 'orders', label: 'Đơn hàng', icon: FileText },
   { id: 'profile', label: 'Hồ sơ', icon: UserCircle },
 ];
 
@@ -32,6 +34,7 @@ export const ProfileTabs = () => {
           <h1 className="text-3xl font-bold text-foreground mb-6">
             {currentTab === 'my-learning' && 'Khóa học của tôi'}
             {currentTab === 'wishlist' && 'Khóa học yêu thích'}
+            {currentTab === 'orders' && 'Đơn hàng của tôi'}
             {currentTab === 'profile' && 'Hồ sơ của tôi'}
           </h1>
 
@@ -66,6 +69,7 @@ export const ProfileTabs = () => {
         <div className="mt-6">
           {currentTab === 'my-learning' && <MyLearningTab />}
           {currentTab === 'wishlist' && <WishlistTab />}
+          {currentTab === 'orders' && <OrdersTab />}
           {currentTab === 'profile' && <ProfileTabContent />}
         </div>
       </div>

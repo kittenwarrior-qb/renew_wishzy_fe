@@ -153,11 +153,12 @@ const SearchPage = () => {
     return found?.name ?? ""
   }, [allCategories, selectedCategoryId])
 
-  const updateUrlAndNavigate = () => {
+  const updateUrlAndNavigate = (pageOverride?: number) => {
     const params = new URLSearchParams();
+    const pageToUse = pageOverride !== undefined ? pageOverride : currentPage;
 
     if (searchQuery) params.set("search", searchQuery);
-    if (currentPage > 1) params.set("page", currentPage.toString());
+    if (pageToUse > 1) params.set("page", pageToUse.toString());
     if (selectedLevel) params.set("level", selectedLevel);
     if (selectedRating) params.set("rating", selectedRating);
     if (selectedPrice) params.set("price", selectedPrice);
@@ -191,13 +192,39 @@ const SearchPage = () => {
   const handleLevelChange = (level: string) => {
     setSelectedLevel(level);
     setCurrentPage(1);
-    updateUrlAndNavigate();
+    
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("search", searchQuery);
+    if (level) params.set("level", level);
+    if (selectedRating) params.set("rating", selectedRating);
+    if (selectedPrice) params.set("price", selectedPrice);
+    if (selectedCategoryId) params.set("categoryId", selectedCategoryId);
+    if (selectedPrice === "custom") {
+      if (minPriceInput) params.set("minPrice", minPriceInput);
+      if (maxPriceInput) params.set("maxPrice", maxPriceInput);
+    }
+    
+    const url = `/${locale}/search?${params.toString()}`;
+    router.push(url);
   };
   
   const handleRatingChange = (rating: string) => {
     setSelectedRating(rating);
     setCurrentPage(1);
-    updateUrlAndNavigate();
+    
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("search", searchQuery);
+    if (selectedLevel) params.set("level", selectedLevel);
+    if (rating) params.set("rating", rating);
+    if (selectedPrice) params.set("price", selectedPrice);
+    if (selectedCategoryId) params.set("categoryId", selectedCategoryId);
+    if (selectedPrice === "custom") {
+      if (minPriceInput) params.set("minPrice", minPriceInput);
+      if (maxPriceInput) params.set("maxPrice", maxPriceInput);
+    }
+    
+    const url = `/${locale}/search?${params.toString()}`;
+    router.push(url);
   };
   
   const handlePriceChange = (price: string) => {
@@ -210,6 +237,10 @@ const SearchPage = () => {
     if (selectedRating) params.set("rating", selectedRating);
     if (price) params.set("price", price);
     if (selectedCategoryId) params.set("categoryId", selectedCategoryId);
+    if (price === "custom") {
+      if (minPriceInput) params.set("minPrice", minPriceInput);
+      if (maxPriceInput) params.set("maxPrice", maxPriceInput);
+    }
     
     const url = `/${locale}/search?${params.toString()}`;
     router.push(url);
@@ -225,6 +256,10 @@ const SearchPage = () => {
     if (selectedRating) params.set("rating", selectedRating);
     if (selectedPrice) params.set("price", selectedPrice);
     if (categoryId) params.set("categoryId", categoryId);
+    if (selectedPrice === "custom") {
+      if (minPriceInput) params.set("minPrice", minPriceInput);
+      if (maxPriceInput) params.set("maxPrice", maxPriceInput);
+    }
     
     const url = `/${locale}/search?${params.toString()}`;
     router.push(url);
@@ -378,6 +413,7 @@ const SearchPage = () => {
                 course.rating?.toString() ||
                 "0",
               numberOfStudents: course.numberOfStudents || 0,
+              reviewCount: course.reviewCount || 0,
               level: course.level || "beginner",
               totalDuration: course.totalDuration || 0,
               categoryId: course.categoryId || "",

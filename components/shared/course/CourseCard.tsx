@@ -26,11 +26,47 @@ const CourseCard = ({ course }: CourseCardProps) => {
   
   const isInWishlist = wishlist.some(c => c.id === course.id);
 
+  // Tính toán giá và giảm giá dựa trên sale_info
   const originalPrice = course?.price ? Number(course.price) : 500000;
-  const salePrice = course?.saleInfo?.salePrice ? Number(course.saleInfo.salePrice) : null;
+  
+  // Kiểm tra sale_info có hợp lệ và còn trong thời gian giảm giá không
+  const getSaleInfo = () => {
+    if (!course.saleInfo || typeof course.saleInfo !== 'object') return null;
+    
+    const saleInfo = course.saleInfo as any;
+    if (!saleInfo.saleStartDate || !saleInfo.saleEndDate) return null;
+    
+    const now = new Date();
+    const startDate = new Date(saleInfo.saleStartDate);
+    const endDate = new Date(saleInfo.saleEndDate);
+    
+    // Kiểm tra xem có trong thời gian giảm giá không
+    if (now < startDate || now > endDate) return null;
+    
+    return saleInfo;
+  };
+
+  const activeSaleInfo = getSaleInfo();
+  
+  // Tính giá sau giảm
+  const calculateSalePrice = () => {
+    if (!activeSaleInfo) return null;
+    
+    if (activeSaleInfo.saleType === 'percent' && activeSaleInfo.value) {
+      const discount = originalPrice * (activeSaleInfo.value / 100);
+      return originalPrice - discount;
+    } else if (activeSaleInfo.saleType === 'fixed' && activeSaleInfo.value) {
+      return Math.max(0, originalPrice - activeSaleInfo.value);
+    }
+    
+    return null;
+  };
+
+  const salePrice = calculateSalePrice();
   const hasSale = salePrice !== null && salePrice < originalPrice;
   const displayPrice = hasSale ? salePrice : originalPrice;
-  const discountPercent = hasSale && salePrice ? Math.round(((originalPrice - salePrice) / originalPrice) * 100) : 0;
+  const discountPercent = activeSaleInfo?.saleType === 'percent' ? activeSaleInfo.value : 
+    (hasSale && salePrice ? Math.round(((originalPrice - salePrice) / originalPrice) * 100) : 0);
   
   const handleAddToCart = () => {
     if (!isInCart) {
@@ -139,7 +175,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <Card onClick={() => router.push(`/course-detail/${course.id}`)} className="max-w-[350px] overflow-hidden hover:shadow-lg transition-shadow duration-300 group py-0 gap-2 shadow-none border-none relative cursor-pointer">
+      <Card onClick={() => router.push(`/course-detail/${course.id}`)} className="w-full overflow-hidden hover:shadow-lg transition-shadow duration-300 group py-0 gap-2 shadow-none border-none relative cursor-pointer">
         {hasSale && (
           <div className="absolute top-2 right-2 z-20 text-xs bg-red-500 text-white px-2 py-1 rounded font-semibold shadow-lg">
             -{discountPercent}%
@@ -182,7 +218,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
           <div className="pt-2 border-t">
             <div className="flex items-center gap-2">
-              <p className="text-xl font-bold text-primary">
+              <p className={` ${displayPrice === 0 ? 'text-[18px] font-medium' : 'text-xl font-bold'} text-primary`}>
                 {formatPrice(displayPrice)}
               </p>
               {hasSale && (
@@ -222,6 +258,9 @@ const CourseCard = ({ course }: CourseCardProps) => {
               <div className="flex items-center gap-1">
                 <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                 <span>{course?.averageRating || course?.rating || 5.0}</span>
+                {course?.reviewCount !== undefined && (
+                  <span className="text-muted-foreground">({course.reviewCount})</span>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
@@ -235,7 +274,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
             {/* Price */}
             <div className="flex items-center gap-2">
-              <p className="text-xl font-bold text-primary">
+              <p className={`${displayPrice === 0 ? 'font-medium text-[18px] ' : 'font-bold text-xl '} text-primary`}>
                 {formatPrice(displayPrice)}
               </p>
               {hasSale && (

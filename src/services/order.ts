@@ -15,6 +15,10 @@ export const orderService = {
         const res = await api.get(`/orders`, { params })
         return res.data
     },
+    async getMyOrders(params?: OrderListParams) {
+        const res = await api.get(`/orders/my-orders`, { params })
+        return res.data
+    },
     async getOrderById(orderId: string) {
         const response = await api.get(`/orders/${orderId}`)
         return response.data.data

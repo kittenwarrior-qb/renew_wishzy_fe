@@ -10,6 +10,7 @@ export interface CourseItemType {
   status: boolean
   averageRating: string
   numberOfStudents: number
+  reviewCount?: number
   level: string
   totalDuration: number
   categoryId: string

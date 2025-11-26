@@ -16,6 +16,7 @@ export type Course = {
   status: boolean
   averageRating: number
   numberOfStudents: number
+  reviewCount?: number
   level: 'beginner' | 'intermediate' | 'advanced'
   totalDuration: number
   categoryId: string
@@ -24,6 +25,7 @@ export type Course = {
   updatedAt: string
   deletedAt?: string | null
   category?: { id: string; name: string } | null
+  creator?: { id: string; fullName: string; email: string } | null
 }
 
 export type CourseListResponse = {
@@ -149,6 +151,29 @@ export const useFreeCourses = (limit: number = 6) => {
       if (Array.isArray(payload)) return payload as CourseItemType[];
       const items = payload?.items ?? [];
       return items as CourseItemType[];
+    },
+  })
+}
+
+export const useCoursesOnSale = (limit: number = 8) => {
+  return useQuery<CourseListResponse>({
+    queryKey: [ENDPOINT, 'on-sale', limit],
+    queryFn: async () => courseService.getCoursesOnSale({ 
+      page: 1,
+      limit,
+    }),
+    staleTime: 5 * 60 * 1000,
+    select: (res: any): CourseListResponse => {
+      const payload = res?.data ?? res
+      const items: Course[] = payload?.items ?? []
+      const p = payload?.pagination ?? {}
+      return {
+        data: items as Course[],
+        total: p?.totalItems ?? 0,
+        page: p?.currentPage ?? 1,
+        limit: p?.itemsPerPage ?? limit,
+        totalPages: p?.totalPage ?? 0,
+      }
     },
   })
 }

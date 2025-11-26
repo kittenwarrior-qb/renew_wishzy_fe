@@ -5,13 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/**
- * Format price to Vietnamese currency format
- * @param price - The price to format (number or string)
- * @returns Formatted price string with ₫ symbol
- * @example formatPrice(1000000) // "₫1.000.000"
- * @example formatPrice("1000000") // "₫1.000.000"
- */
 export function formatPrice(price: number | string): string {
-  return `₫${Number(price).toLocaleString('vi-VN')}`
+  const numPrice = Number(price);
+  if (numPrice === 0) {
+    return 'Miễn phí';
+  }
+  return `₫${numPrice.toLocaleString('vi-VN')}`;
 }

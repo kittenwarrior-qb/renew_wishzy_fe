@@ -16,7 +16,6 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <HeroSection />
       <StatSection />
-      {/* <ListBestSellerCourseCard /> */}
       <HotCourseSection />
       <FreeCourseList />
       <CategoryListSection />

@@ -45,4 +45,17 @@ export const courseService = {
         const res = await api.patch(`${BASE}/${id}/status`);
         return res.data;
     },
+    async getCoursesOnSale(params?: Record<string, any>) {
+        const cleanParams: Record<string, any> = {};
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    cleanParams[key] = value;
+                }
+            });
+        }
+        
+        const res = await api.get(`${BASE}/on-sale`, { params: cleanParams });
+        return res.data;
+    },
 }
