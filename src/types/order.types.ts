@@ -13,8 +13,17 @@ export interface CreateOrderRequest {
 export interface CreateOrderResponse {
   success: boolean;
   data: {
-    paymentUrl: string;
+    paymentUrl?: string;
     orderId?: string;
+    order?: {
+      id: string;
+      userId: string;
+      totalPrice: number;
+      status: OrderStatus;
+      paymentMethod: PaymentMethod;
+      createdAt: string;
+      updatedAt: string;
+    };
   };
   message: string;
   url: string;

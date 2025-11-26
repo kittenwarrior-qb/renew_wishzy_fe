@@ -63,4 +63,23 @@ export const enrollmentsApi = {
     
     return response.data.data || response.data;
   },
+
+  getCertificate: async (enrollmentId: string): Promise<{
+    certificateUrl: string | null;
+    enrollment?: Enrollment;
+  }> => {
+    const response = await api.get(`/enrollments/${enrollmentId}/certificate`);
+    return response.data.data || response.data;
+  },
+
+  regenerateCertificate: async (enrollmentId: string): Promise<{
+    certificateImageUrl: string;
+  }> => {
+    const response = await api.patch(`/enrollments/${enrollmentId}/certificate/regenerate`);
+    
+    // Clear cache after regenerate
+    cache.remove(`enrollment_${enrollmentId}`);
+    
+    return response.data.data || response.data;
+  },
 };

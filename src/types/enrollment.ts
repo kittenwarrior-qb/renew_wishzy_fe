@@ -28,6 +28,7 @@ export interface Enrollment {
   progress: number;
   lastAccess: string;
   certificateUrl: string | null;
+  certificateImageUrl?: string | null;
   attributes?: EnrollmentAttributes;
   createdAt: string;
   updatedAt: string;

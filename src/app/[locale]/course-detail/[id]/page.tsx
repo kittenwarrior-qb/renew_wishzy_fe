@@ -34,9 +34,11 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
 
     const { data: enrollments } = useQueryHook(
         ['my-enrollments'],
-        () => enrollmentService.getMyLearning(),
+        () => enrollmentService.getMyLearning(true), // Skip cache for fresh data
         {
-            enabled: !!user // Only fetch enrollments if user is logged in
+            enabled: !!user, // Only fetch enrollments if user is logged in
+            staleTime: 0, // Always fetch fresh
+            cacheTime: 0, // Don't cache
         }
     );
 

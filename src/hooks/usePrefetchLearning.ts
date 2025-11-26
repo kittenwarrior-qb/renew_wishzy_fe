@@ -36,11 +36,11 @@ export function usePrefetchLearning(courseId?: string) {
       staleTime: 10 * 60 * 1000,
     });
 
-    // Prefetch enrollment
+    // Prefetch enrollment (skip cache for fresh data)
     queryClient.prefetchQuery({
       queryKey: ['enrollment', 'course', courseId],
-      queryFn: () => enrollmentService.getEnrollmentByCourseId(courseId),
-      staleTime: 5 * 60 * 1000,
+      queryFn: () => enrollmentService.getEnrollmentByCourseId(courseId, true),
+      staleTime: 0, // Always fetch fresh
     });
   }, [courseId, queryClient]);
 }

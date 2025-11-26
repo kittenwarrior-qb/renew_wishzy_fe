@@ -10,6 +10,10 @@ export const MyLearningTab = () => {
     const { data: enrollments, isLoading } = useQueryHook(
         ['my-learning'],
         () => enrollmentService.getMyLearning(),
+        {
+            staleTime: 0, // Always fetch fresh data
+            cacheTime: 0, // Don't cache
+        }
     );
 
     if (isLoading) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { Enrollment } from "@/src/types/enrollment";
-import { Clock, BookOpen, TrendingUp, MessageSquare } from "lucide-react";
+import { Clock, BookOpen, TrendingUp, MessageSquare, Award } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -114,9 +114,12 @@ export const CourseEnrollmentCard = ({
     fetchLectureName();
   }, [lectureId]);
 
-  return (
-    <Link href={learningUrl}>
-      <div className="bg-card rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow cursor-pointer relative">
+  const isCompleted = Number(progress) >= 100;
+
+  const cardContent = (
+    <div 
+      className="bg-card rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow cursor-pointer relative"
+    >
         <div className="flex flex-col md:flex-row">
           {/* Thumbnail */}
           <div className="w-48 h-48 flex-shrink-0 relative overflow-hidden bg-muted">
@@ -217,18 +220,34 @@ export const CourseEnrollmentCard = ({
                     Đánh giá
                     <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
                   </button>
-                  <Button
-                    size="sm"
-                    className="bg-primary text-black hover:bg-primary/90 font-medium"
-                  >
-                    {Number(progress) >= 100 ? 'Xem chứng chỉ' : status === 'not_started' && progress === 0 ? 'Bắt đầu học' : 'Tiếp tục học'}
-                  </Button>
+                  {Number(progress) >= 100 ? (
+                    <Button
+                      size="sm"
+                      className="bg-primary text-black hover:bg-primary/90 font-medium gap-2"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        router.push(`/certificates/${enrollment.id}`);
+                      }}
+                    >
+                      <Award className="h-4 w-4" />
+                      Xem chứng chỉ
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="bg-primary text-black hover:bg-primary/90 font-medium"
+                    >
+                      {status === 'not_started' && progress === 0 ? 'Bắt đầu học' : 'Tiếp tục học'}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </Link>
   );
+
+  return <Link href={learningUrl}>{cardContent}</Link>;
 };

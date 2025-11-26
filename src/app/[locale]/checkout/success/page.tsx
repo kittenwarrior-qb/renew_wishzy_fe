@@ -1,12 +1,11 @@
 'use client'
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { CheckCircle2, Clock, CreditCard, User, Mail, Package } from "lucide-react"
-import { useApiQuery } from "@/src/hooks/useApi"
+import { CheckCircle2, Clock, CreditCard, Package } from "lucide-react"
 import { OrderDetailResponse } from "@/src/types/order-detail.types"
 import { useAppStore } from "@/src/stores/useAppStore"
 import { useQueryHook } from "@/src/hooks/useQueryHook"
@@ -14,6 +13,7 @@ import { orderService } from "@/src/services/order"
 import { CourseItemType } from "@/src/types/course/course-item.types"
 import { formatPrice } from "@/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
+import { enrollmentService } from "@/src/services/enrollment"
 
 // Loading component for Suspense fallback
 const LoadingState = () => (
@@ -37,26 +37,55 @@ const CheckoutSuccessContent = () => {
   const orderId = searchParams.get('orderId') ?? ''
   
   const { data: orderDetails, isLoading } = useQueryHook<OrderDetailResponse>(
-    ['order-detail'],
+    ['order-detail', orderId],
     () => orderService.getOrderById(orderId),
     {
       enabled: !!orderId,
       refetchOnWindowFocus: false,
       retry: 1,
+      staleTime: 0, // Always fetch fresh data
+      cacheTime: 0, // Don't cache
     }
   )
 
   useEffect(() => {
     if (orderDetails?.status === 'completed') {
+      console.log('=== ORDER COMPLETED - CLEARING CART ===', orderDetails)
+      
       clearOrderList();
       
       orderDetails.orderDetails.forEach((item) => {
         removeFromCart(item.course as unknown as CourseItemType);
       });
 
+      // CRITICAL: Clear localStorage enrollment cache
+      enrollmentService.clearCache();
+      console.log('=== ENROLLMENT CACHE CLEARED ===')
+
       // Invalidate enrollments cache để fetch lại danh sách khóa học đã mua
-      queryClient.invalidateQueries({ queryKey: ['my-enrollments'] });
-      queryClient.invalidateQueries({ queryKey: ['my-learning'] });
+      // Sử dụng refetchType: 'all' để đảm bảo refetch ngay lập tức
+      queryClient.invalidateQueries({ 
+        queryKey: ['my-enrollments'],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['my-learning'],
+        refetchType: 'all'
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['enrollments'],
+        refetchType: 'all'
+      });
+      
+      // Also invalidate course enrollment status
+      orderDetails.orderDetails.forEach((item) => {
+        queryClient.invalidateQueries({ 
+          queryKey: ['course-enrollment', item.course.id],
+          refetchType: 'all'
+        });
+      });
+      
+      console.log('=== CACHE INVALIDATED ===')
     }
   }, [orderDetails, clearOrderList, removeFromCart, queryClient])
 
@@ -289,10 +318,34 @@ const CheckoutSuccessContent = () => {
 
           {/* Actions */}
           <div className="space-y-3">
-            {isCompleted && (
+            {isCompleted && order.orderDetails.length > 0 && (
               <Button 
                 className="w-full" 
-                onClick={() => router.push('/my-courses')}
+                onClick={async () => {
+                  // CRITICAL: Clear enrollment cache before navigation
+                  enrollmentService.clearCache();
+                  
+                  // Đảm bảo invalidate queries hoàn tất trước khi navigate
+                  await Promise.all([
+                    queryClient.invalidateQueries({ 
+                      queryKey: ['my-enrollments'],
+                      refetchType: 'all'
+                    }),
+                    queryClient.invalidateQueries({ 
+                      queryKey: ['my-learning'],
+                      refetchType: 'all'
+                    }),
+                    queryClient.invalidateQueries({ 
+                      queryKey: ['enrollments'],
+                      refetchType: 'all'
+                    })
+                  ]);
+                  
+                  // Thêm delay để đảm bảo cache được clear hoàn toàn
+                  await new Promise(resolve => setTimeout(resolve, 200));
+                  
+                  router.push(`/learning/${order.orderDetails[0].course.id}`);
+                }}
               >
                 🎓 Bắt đầu học ngay
               </Button>
@@ -300,7 +353,7 @@ const CheckoutSuccessContent = () => {
             <Button 
               variant={isCompleted ? "outline" : "default"}
               className="w-full" 
-              onClick={() => router.push('/courses')}
+              onClick={() => router.push('/search')}
             >
               Khám phá thêm khóa học
             </Button>

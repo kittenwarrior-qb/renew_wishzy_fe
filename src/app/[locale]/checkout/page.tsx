@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useAppStore } from "@/src/stores/useAppStore"
 import Image, { StaticImageData } from "next/image"
@@ -22,23 +22,51 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState<'vnpay' | 'zalopay' | 'momo' | 'banking'>('vnpay')
   const router = useRouter()
 
-  const createOrderMutation = useApiPost<CreateOrderResponse, CreateOrderRequest>('/orders', {
-    onSuccess: (response) => {
+  // Check authentication on mount
+  useEffect(() => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập để tiếp tục')
+      router.push('/auth/login')
+    }
+  }, [user, router])
+
+  const createOrderMutation = useApiPost<any, CreateOrderRequest>('/orders', {
+    onSuccess: (response: any) => {
+      console.log('=== ORDER RESPONSE ===', response)
+      
       if (response.data?.paymentUrl) {
+        // Paid course - redirect to payment gateway
         window.location.href = response.data.paymentUrl
       } else {
-        toast.success(response.message || 'Đặt hàng thành công!')
-        router.push('/checkout/success')
+        // Free course - redirect to success page with orderId
+        toast.success(response.message || 'Đăng ký khóa học thành công!')
+        
+        // Extract orderId from response - check multiple possible locations
+        const orderId = response.data?.order?.id || response.data?.orderId || response.data?.id
+        
+        console.log('=== EXTRACTED ORDER ID ===', orderId)
+        
+        if (orderId) {
+          // Use router.push for client-side navigation (faster and preserves state)
+          router.push(`/checkout/success?orderId=${orderId}`)
+        } else {
+          console.error('No orderId found in response:', response)
+          toast.error('Không tìm thấy mã đơn hàng')
+          router.push('/checkout/success')
+        }
       }
     },
     onError: (error: any) => {
+      console.error('=== ORDER ERROR ===', error)
       toast.error(error?.response?.data?.message || 'Có lỗi xảy ra khi thanh toán')
     },
   })
 
   // Calculate totals with sale info
   const calculateFinalPrice = (course: CourseItemType) => {
-    const originalPrice = course?.price ? Number(course.price) : 500000
+    const originalPrice = course?.price !== undefined && course?.price !== null 
+      ? Number(course.price) 
+      : 0
     
     if (!course.saleInfo) return originalPrice
     
@@ -53,14 +81,16 @@ const CheckoutPage = () => {
     if (course.saleInfo.saleType === 'percent') {
       return originalPrice * (1 - course.saleInfo.value / 100)
     } else if (course.saleInfo.saleType === 'fixed') {
-      return originalPrice - course.saleInfo.value
+      return Math.max(0, originalPrice - course.saleInfo.value)
     }
     
     return originalPrice
   }
   
   const totalOriginal = orderListCourse.reduce((sum, course) => {
-    const originalPrice = course?.price ? Number(course.price) : 500000
+    const originalPrice = course?.price !== undefined && course?.price !== null
+      ? Number(course.price)
+      : 0
     return sum + originalPrice
   }, 0)
   
@@ -76,10 +106,10 @@ const CheckoutPage = () => {
       return
     }
 
-    // For free courses, redirect directly to success page without creating order
-    if (totalSale === 0) {
-      toast.success('Đăng ký khóa học miễn phí thành công!')
-      router.push('/checkout/success')
+    // Check authentication
+    if (!user) {
+      toast.error('Vui lòng đăng nhập để tiếp tục')
+      router.push('/auth/login')
       return
     }
 
@@ -94,6 +124,20 @@ const CheckoutPage = () => {
       orderItems,
     }
 
+    // Debug logging
+    console.log('=== ORDER DEBUG ===')
+    console.log('Courses:', orderListCourse.map(c => ({ 
+      id: c.id, 
+      name: c.name, 
+      price: c.price,
+      finalPrice: calculateFinalPrice(c)
+    })))
+    console.log('Total Sale:', totalSale)
+    console.log('Order Data:', orderData)
+    console.log('==================')
+
+    // Call API for both free and paid courses
+    // Backend will auto-complete free courses and create enrollments
     createOrderMutation.mutate(orderData)
   }
 
@@ -191,7 +235,9 @@ const CheckoutPage = () => {
 }
 
 const CheckoutCourseItem = ({course}: {course: CourseItemType}) => {
-  const originalPrice = course?.price ? Number(course.price) : 500000
+  const originalPrice = course?.price !== undefined && course?.price !== null
+    ? Number(course.price)
+    : 0
   
   // Calculate final price with sale info
   let finalPrice = originalPrice

@@ -29,7 +29,8 @@ export default function LearningPage() {
   useEffect(() => {
     const fetchEnrollment = async () => {
       try {
-        const enrollment = await enrollmentService.getEnrollmentByCourseId(courseId);
+        // Skip cache to ensure fresh data
+        const enrollment = await enrollmentService.getEnrollmentByCourseId(courseId, true);
         console.log('Fetched enrollment:', enrollment);
         if (enrollment) {
           setEnrollmentId(enrollment.id);
@@ -39,6 +40,17 @@ export default function LearningPage() {
           }
         } else {
           console.warn('No enrollment found for course:', courseId);
+          // Retry once after a short delay (in case enrollment was just created)
+          setTimeout(async () => {
+            const retryEnrollment = await enrollmentService.getEnrollmentByCourseId(courseId, true);
+            if (retryEnrollment) {
+              console.log('Retry successful - found enrollment:', retryEnrollment);
+              setEnrollmentId(retryEnrollment.id);
+              if (retryEnrollment.attributes?.finishedLectures) {
+                setCompletedLectureIds(retryEnrollment.attributes.finishedLectures);
+              }
+            }
+          }, 1000);
         }
       } catch (error) {
         console.error('Failed to fetch enrollment:', error);
