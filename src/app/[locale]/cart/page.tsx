@@ -11,6 +11,7 @@ import { formatPrice } from '@/lib/utils'
 const convertToCartItem = (course: CourseItemType) => {
   const originalPrice = course?.price ? Number(course.price) : 500000;
   const salePrice = course?.saleInfo?.salePrice ? Number(course.saleInfo.salePrice) : originalPrice;
+  const hasDiscount = course?.saleInfo?.salePrice && salePrice < originalPrice;
   
   const numericId = parseInt(course.id.replace(/\D/g, '').slice(0, 10)) || Math.abs(hashCode(course.id));
   
@@ -29,6 +30,7 @@ const convertToCartItem = (course: CourseItemType) => {
     level: course.level || 'Tất cả',
     price: salePrice,
     originalPrice: originalPrice,
+    hasDiscount: !!hasDiscount,
   };
 };
 
@@ -183,7 +185,9 @@ const CartPage = () => {
           <div className='w-1/4'>
             <h3 className='text-lg font-bold'>Tổng cộng:</h3>
             <h1 className='text-3xl font-bold'>{formatPrice(totalSale)}</h1>
-            <p className='line-through text-muted-foreground'>{formatPrice(totalOriginal)}</p>
+            {totalSale < totalOriginal && (
+              <p className='line-through text-muted-foreground'>{formatPrice(totalOriginal)}</p>
+            )}
             <p className='text-xs text-muted-foreground mt-2'>({orderListCourse.length} khóa học đã chọn)</p>
             <Button 
               className='w-full mt-4' 

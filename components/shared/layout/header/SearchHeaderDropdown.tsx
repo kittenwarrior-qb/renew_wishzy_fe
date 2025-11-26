@@ -7,6 +7,7 @@ import { Loader2, BookOpen, User, FileText, Search } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { formatPrice } from '@/lib/utils';
 
 
 interface Exam {
@@ -100,7 +101,7 @@ export const SearchHeaderDropdown = ({ query, isOpen, onClose }: SearchHeaderDro
   return (
     <div 
       ref={dropdownRef}
-      className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-[400px] overflow-y-auto"
+      className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-[400px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
     >
       {debouncedQuery.length <= 2 && (
         <div className="p-4 text-sm text-gray-500 dark:text-gray-400">
@@ -149,11 +150,14 @@ export const SearchHeaderDropdown = ({ query, isOpen, onClose }: SearchHeaderDro
                       </div>
                     )}
                   </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">{course.name}</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {course.level} • {course.price.toLocaleString('vi-VN')}đ
-                    </p>
+                  <div className='flex justify-between items-center flex-1'>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">{course.name}</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {course.creator?.fullName || 'Giảng viên'}
+                      </p>
+                    </div>
+                    <p className="text-sm font-semibold text-primary">{formatPrice(Number(course.saleInfo?.salePrice || course.price))}</p>
                   </div>
                 </Link>
               </li>

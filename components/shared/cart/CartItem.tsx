@@ -6,6 +6,7 @@ import Image from "next/image"
 import { useAppStore } from "@/src/stores/useAppStore"
 import { Checkbox } from "@/components/ui/checkbox"
 import { formatPrice } from "@/lib/utils"
+import { useState } from "react"
 
 interface CartItemProps {
   course: {
@@ -23,19 +24,33 @@ interface CartItemProps {
     level: string
     price: number
     originalPrice: number
+    hasDiscount: boolean
   }
   isSelected: boolean
   onToggleSelect: (courseId: string) => void
 }
 
 const CartItem = ({ course, isSelected, onToggleSelect }: CartItemProps) => {
-  const { cart, removeFromCart } = useAppStore()
+  const { cart, removeFromCart, addToWishlist, wishlist } = useAppStore()
+  const [imageError, setImageError] = useState(false)
   
   const handleRemoveFromCart = () => {
     // Find the course in cart by the original string courseId
     const courseToRemove = cart.find(c => c.id === course.courseId)
     if (courseToRemove) {
       removeFromCart(courseToRemove)
+    }
+  }
+
+  const handleAddToWishlist = () => {
+    const courseToAdd = cart.find(c => c.id === course.courseId)
+    if (courseToAdd) {
+      const isAlreadyInWishlist = wishlist.some(c => c.id === course.courseId)
+      if (!isAlreadyInWishlist) {
+        addToWishlist(courseToAdd)
+        // Optionally remove from cart after adding to wishlist
+        removeFromCart(courseToAdd)
+      }
     }
   }
 
@@ -55,14 +70,22 @@ const CartItem = ({ course, isSelected, onToggleSelect }: CartItemProps) => {
           {/* Left - Image & Course Info */}
           <div className="flex flex-1 gap-4">
             {/* Course Image */}
-            <div className="h-[90px] w-[160px] shrink-0 overflow-hidden rounded-md">
-              <Image 
-                src={course.image} 
-                alt={course.title} 
-                width={240} 
-                height={135}
-                className="size-full object-cover"
-              />
+            <div className="h-[90px] w-40 shrink-0 overflow-hidden rounded-md bg-muted">
+              {!imageError ? (
+                <Image 
+                  src={course.image} 
+                  alt={course.title} 
+                  width={240} 
+                  height={135}
+                  className="size-full object-cover"
+                  onError={() => setImageError(true)}
+                  unoptimized
+                />
+              ) : (
+                <div className="flex size-full items-center justify-center bg-muted">
+                  <span className="text-xs text-muted-foreground">No image</span>
+                </div>
+              )}
             </div>
             
             {/* Course Information */}
@@ -115,7 +138,10 @@ const CartItem = ({ course, isSelected, onToggleSelect }: CartItemProps) => {
                 >
                   Xoá khỏi giỏ hàng
                 </button>
-                <button className="font-semibold text-foreground hover:text-primary">
+                <button 
+                  onClick={handleAddToWishlist}
+                  className="font-semibold text-foreground hover:text-primary"
+                >
                   Đưa vào danh sách yêu thích
                 </button>
               </div>
@@ -128,9 +154,11 @@ const CartItem = ({ course, isSelected, onToggleSelect }: CartItemProps) => {
               <div className="text-lg font-bold text-foreground">
                 {formatPrice(course.price)}
               </div>
-              <div className="text-sm text-muted-foreground line-through">
-                {formatPrice(course.originalPrice)}
-              </div>
+              {course.hasDiscount && (
+                <div className="text-sm text-muted-foreground line-through">
+                  {formatPrice(course.originalPrice)}
+                </div>
+              )}
             </div>
           </div>
         </div>
