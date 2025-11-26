@@ -124,23 +124,42 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
     }
 
     return (
-        <Accordion type="single" collapsible className="w-full" defaultValue="item-1">
-            {chapters?.map((chapter) => (
-                <AccordionItem className="py-2 px-3 rounded-md border mb-3" value={chapter.id} key={chapter.id}>
-                    <div className="flex items-center justify-between gap-3">
-                        <Trigger className="flex items-center justify-between cursor-pointer gap-2">
-                            <div className="flex items-center justify-between w-full">
-                                <span>{chapter.name}</span>
-                                <span className="flex gap-2 text-muted-foreground">
-                                    <span>{chapter.lecture?.length} bài học</span>•
-                                    <span>{chapter.lecture?.reduce((t, l) => t + (l?.duration || 0), 0)} phút</span>
-                                </span>
+        <Accordion type="single" collapsible className="w-full space-y-4" defaultValue="item-1">
+            {chapters?.map((chapter, idx) => (
+                <AccordionItem 
+                    className="overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-background to-muted/20 shadow-sm hover:shadow-md transition-all duration-200" 
+                    value={chapter.id} 
+                    key={chapter.id}
+                >
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-muted/30 to-transparent border-b border-border/40">
+                        <Trigger className="flex items-center justify-between cursor-pointer gap-3 flex-1">
+                            <div className="flex items-center justify-between w-full gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
+                                        <span className="text-sm font-bold">{idx + 1}</span>
+                                    </div>
+                                    <span className="font-semibold text-base">{chapter.name}</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm">
+                                    <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                        </svg>
+                                        <span className="font-medium">{chapter.lecture?.length || 0} bài học</span>
+                                    </div>
+                                    <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span className="font-medium">{chapter.lecture?.reduce((t, l) => t + (l?.duration || 0), 0)} phút</span>
+                                    </div>
+                                </div>
                             </div>
                         </Trigger>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
                             <button
                                 type="button"
-                                className="p-2 cursor-pointer rounded-md text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                                className="p-2 cursor-pointer rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
                                 title="Sửa chương"
                                 onClick={() => openEdit(chapter)}
                             >
@@ -148,7 +167,7 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
                             </button>
                             <button
                                 type="button"
-                                className="p-2 cursor-pointer rounded-md text-red-500 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+                                className="p-2 cursor-pointer rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors focus:outline-none focus:ring-2 focus:ring-red-300"
                                 title="Xoá chương"
                                 disabled={deleting && deletingId === chapter.id}
                                 onClick={() => setOpenDeleteId(chapter.id)}
@@ -158,66 +177,99 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
                         </div>
                     </div>
 
-                    <AccordionContent className="flex flex-col gap-2">
-                        <div className="flex items-center justify-start mb-2">
-                            <Button size="sm" variant="outline" className="h-8 gap-1 cursor-pointer" onClick={() => { setLectureChapterId(chapter.id); setOpenLecture(true) }}>
-                                <Plus className="h-4 w-4" />Thêm bài học
+                    <AccordionContent className="px-4 pb-4 pt-3">
+                        <div className="flex items-center justify-start mb-3">
+                            <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-9 gap-2 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors shadow-sm"
+                                onClick={() => { setLectureChapterId(chapter.id); setOpenLecture(true) }}
+                            >
+                                <Plus className="h-4 w-4" />
+                                Thêm bài học
                             </Button>
                         </div>
                         {chapter.lecture && chapter.lecture.length > 0 ? (
-                            chapter.lecture.map((lecture) => (
-                                <div key={lecture.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                                    <div className="flex items-center gap-3">
-                                        <Play className="w-4 h-4 text-muted-foreground" />
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium">{lecture.name}</span>
-                                            {lecture.isPreview && lecture.fileUrl && (
-                                                <button
-                                                    className="text-xs cursor-pointer text-blue-600 font-medium hover:text-blue-800 hover:underline transition-colors w-fit"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        setPreviewLecture({ name: lecture.name, fileUrl: lecture.fileUrl, duration: Number(lecture.duration || 0) })
-                                                    }}
-                                                >
-                                                    Xem trước
-                                                </button>
-                                            )}
+                            <div className="space-y-2">
+                                {chapter.lecture.map((lecture, lectureIdx) => (
+                                    <div 
+                                        key={lecture.id} 
+                                        className="group flex items-center justify-between p-3 rounded-lg border border-border/50 bg-background hover:border-primary/30 hover:bg-accent/50 transition-all duration-200"
+                                    >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 text-primary flex-shrink-0">
+                                                <Play className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex flex-col min-w-0 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium truncate">{lecture.name}</span>
+                                                    {lecture.isPreview && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-300 flex-shrink-0">
+                                                            Miễn phí
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {lecture.isPreview && lecture.fileUrl && (
+                                                    <button
+                                                        className="text-xs cursor-pointer text-primary font-medium hover:underline transition-colors w-fit mt-1"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setPreviewLecture({ name: lecture.name, fileUrl: lecture.fileUrl, duration: Number(lecture.duration || 0) })
+                                                        }}
+                                                    >
+                                                        → Xem trước
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                                            <span className="text-sm text-muted-foreground whitespace-nowrap hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50">
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                {lecture.duration} phút
+                                            </span>
+                                            <button
+                                                type="button"
+                                                className="p-1.5 cursor-pointer rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring opacity-0 group-hover:opacity-100"
+                                                title="Sửa bài học"
+                                                onClick={() => {
+                                                    setEditingLecture({
+                                                        id: lecture.id,
+                                                        name: lecture.name,
+                                                        description: (lecture as any).description,
+                                                        fileUrl: lecture.fileUrl,
+                                                        duration: Number(lecture.duration || 0),
+                                                        isPreview: !!lecture.isPreview,
+                                                        orderIndex: Number(lecture.orderIndex || 0),
+                                                    })
+                                                    setOpenLectureEdit(true)
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="p-1.5 cursor-pointer rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors focus:outline-none focus:ring-2 focus:ring-red-300 opacity-0 group-hover:opacity-100"
+                                                title="Xoá bài học"
+                                                onClick={() => setOpenDeleteLectureId(lecture.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-sm text-muted-foreground whitespace-nowrap">{lecture.duration} phút</span>
-                                        <button
-                                            type="button"
-                                            className="p-1.5 cursor-pointer rounded-md text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                                            title="Sửa bài học"
-                                            onClick={() => {
-                                                setEditingLecture({
-                                                    id: lecture.id,
-                                                    name: lecture.name,
-                                                    description: (lecture as any).description,
-                                                    fileUrl: lecture.fileUrl,
-                                                    duration: Number(lecture.duration || 0),
-                                                    isPreview: !!lecture.isPreview,
-                                                    orderIndex: Number(lecture.orderIndex || 0),
-                                                })
-                                                setOpenLectureEdit(true)
-                                            }}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="p-1.5 cursor-pointer rounded-md text-red-500 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
-                                            title="Xoá bài học"
-                                            onClick={() => setOpenDeleteLectureId(lecture.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))
+                                ))}
+                            </div>
                         ) : (
-                            <div className="py-4 text-center text-sm text-muted-foreground">Chưa có bài học</div>
+                            <div className="py-12 text-center rounded-lg border-2 border-dashed border-border/50 bg-muted/20">
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                        <Play className="w-6 h-6 text-muted-foreground" />
+                                    </div>
+                                    <p className="text-sm text-muted-foreground font-medium">Chưa có bài học</p>
+                                    <p className="text-xs text-muted-foreground">Bấm "Thêm bài học" để bắt đầu</p>
+                                </div>
+                            </div>
                         )}
                     </AccordionContent>
 
