@@ -7,6 +7,8 @@ import { useCourseDetail, useUpdateCourse } from "@/components/shared/course/use
 import { CourseForm, type CourseFormValue, useUnsavedChanges } from "@/components/shared/course/CourseForm"
 import { notify } from "@/components/shared/admin/Notifications"
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
+import { SaleManagementSection } from "../../components"
+import type { SaleInfo } from "@/types/sale"
 
 export default function EditCoursePage() {
   const params = useParams<{ locale: string; id: string }>()
@@ -21,6 +23,7 @@ export default function EditCoursePage() {
   const { mutate: updateCourse, isPending: updating } = useUpdateCourse()
 
   const [form, setForm] = React.useState<CourseFormValue>({ name: "", categoryId: "", level: "beginner", price: 0, totalDuration: 0, status: false, description: "", notes: "", thumbnail: "" })
+  const [saleInfo, setSaleInfo] = React.useState<SaleInfo | null | undefined>((data as any)?.saleInfo)
   const [dirty, setDirty] = React.useState(false)
   useUnsavedChanges(dirty)
 
@@ -52,6 +55,7 @@ export default function EditCoursePage() {
 
       // Luôn update form với dữ liệu mới
       setForm(formData)
+      setSaleInfo((data as any).saleInfo || null)
       setDirty(false)
     }
   }, [data])
@@ -109,18 +113,41 @@ export default function EditCoursePage() {
     return () => setPrimaryAction(null)
   }, [setPrimaryAction, updating, handleSubmit])
 
+  const handleSaveSale = React.useCallback((newSaleInfo: SaleInfo | null) => {
+    // TODO: Gọi API PATCH /courses/:id/sale khi backend sẵn sàng
+    // Hiện tại chỉ update local state với mock data
+    setSaleInfo(newSaleInfo)
+    setDirty(true)
+    notify({
+      title: "Đã lưu sale",
+      description: "Sale đã được cập nhật (mock data)",
+      variant: "success",
+    })
+  }, [])
+
   return (
-    <div className="relative py-4 px-4 md:px-6">
+    <div className="relative py-4 px-4 md:px-6 space-y-6">
       {!isPending && data && (data as any).id ? (
-        <CourseForm
-          key={`course-form-${id}-${(data as any).id}`}
-          value={form}
-          onChange={(v) => { setForm(v); setDirty(true) }}
-          categories={categories}
-          loading={updating}
-          onDirtyChange={setDirty}
-          onSubmit={handleSubmit}
-        />
+        <>
+          <CourseForm
+            key={`course-form-${id}-${(data as any).id}`}
+            value={form}
+            onChange={(v) => { setForm(v); setDirty(true) }}
+            categories={categories}
+            loading={updating}
+            onDirtyChange={setDirty}
+            onSubmit={handleSubmit}
+          />
+          
+          <div className="border-t pt-6">
+            <SaleManagementSection
+              price={form.price}
+              saleInfo={saleInfo}
+              onSave={handleSaveSale}
+              loading={updating}
+            />
+          </div>
+        </>
       ) : (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-sm text-muted-foreground">Đang tải dữ liệu...</div>

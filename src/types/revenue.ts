@@ -9,6 +9,8 @@ export interface RevenueStatistics {
   growthRate: number; // Tỷ lệ tăng trưởng (%)
 }
 
+export type RevenueMode = 'day' | 'week' | 'month' | 'year'
+
 export interface CourseRevenue {
   courseId: string;
   courseName: string;
@@ -46,5 +48,61 @@ export interface RevenueFilter {
   endDate?: string; // ISO date string
   period?: 'day' | 'week' | 'month' | 'year'; // Period for grouping
   limit?: number; // Limit for top courses
+}
+
+// API responses
+export interface RevenueApiDataPoint {
+  period: string
+  year?: number
+  month?: number
+  week?: number
+  day?: number
+  startDate?: string
+  endDate?: string
+  revenue: number
+  orderCount: number
+  courseSoldCount: number
+}
+
+export interface RevenueApiResponse {
+  mode: RevenueMode
+  totalRevenue: number
+  monthlyRevenue: number
+  totalOrders: number
+  totalStudents: number
+  totalCourses: number
+  averageRevenuePerCourse: number
+  growthRate: number
+  details: RevenueApiDataPoint[]
+  startDate?: string
+  endDate?: string
+}
+
+export interface InstructorCourseStats {
+  courseId: string
+  courseName: string
+  studentCount: number
+  revenue: number
+  averageRating: number
+  commentCount: number
+}
+
+export interface InstructorRecentComment {
+  commentId: string
+  content: string
+  studentName: string
+  courseName: string
+  rating: number
+  createdAt: string
+}
+
+export interface InstructorStatsResponse {
+  totalCourses: number
+  totalStudents: number
+  totalRevenue: number
+  totalComments: number
+  overallRating: number
+  courses: InstructorCourseStats[]
+  recentComments: InstructorRecentComment[]
 }
 
