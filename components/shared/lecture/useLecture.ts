@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { lectureService } from '@/services/lecture'
+import { clearPersistedQueryData } from '@/lib/queryClient'
 
 const CHAPTER_ENDPOINT = 'chapters'
 
@@ -27,7 +28,11 @@ export const useCreateLecture = () => {
   return useMutation<any, unknown, CreateLecturePayload>({
     mutationFn: async ({ chapterId, courseId, ...data }) => lectureService.create({ ...(data as any), chapterId }),
     onSuccess: (_d, vars) => {
-      if (vars?.courseId) qc.invalidateQueries({ queryKey: [CHAPTER_ENDPOINT, 'course', vars.courseId] })
+      if (vars?.courseId) {
+        // Clear localStorage cache
+        clearPersistedQueryData([CHAPTER_ENDPOINT, 'course', vars.courseId])
+        qc.invalidateQueries({ queryKey: [CHAPTER_ENDPOINT, 'course', vars.courseId] })
+      }
     },
   })
 }
@@ -37,7 +42,11 @@ export const useUpdateLecture = () => {
   return useMutation<any, unknown, UpdateLecturePayload>({
     mutationFn: async ({ id, ...data }) => lectureService.update(id, data as any),
     onSuccess: (_d, vars) => {
-      if (vars?.courseId) qc.invalidateQueries({ queryKey: [CHAPTER_ENDPOINT, 'course', vars.courseId] })
+      if (vars?.courseId) {
+        // Clear localStorage cache
+        clearPersistedQueryData([CHAPTER_ENDPOINT, 'course', vars.courseId])
+        qc.invalidateQueries({ queryKey: [CHAPTER_ENDPOINT, 'course', vars.courseId] })
+      }
       if (vars?.id) qc.invalidateQueries({ queryKey: [`lectures/${vars.id}`] })
     },
   })
@@ -48,7 +57,11 @@ export const useDeleteLecture = () => {
   return useMutation<any, unknown, { id: string; courseId?: string }>({
     mutationFn: async ({ id }) => lectureService.remove(id),
     onSuccess: (_d, vars) => {
-      if (vars?.courseId) qc.invalidateQueries({ queryKey: [CHAPTER_ENDPOINT, 'course', vars.courseId] })
+      if (vars?.courseId) {
+        // Clear localStorage cache
+        clearPersistedQueryData([CHAPTER_ENDPOINT, 'course', vars.courseId])
+        qc.invalidateQueries({ queryKey: [CHAPTER_ENDPOINT, 'course', vars.courseId] })
+      }
     },
   })
 }
