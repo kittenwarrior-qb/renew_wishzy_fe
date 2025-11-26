@@ -10,7 +10,7 @@ import { formatPrice } from '@/lib/utils'
 
 const convertToCartItem = (course: CourseItemType) => {
   const originalPrice = course?.price ? Number(course.price) : 500000;
-  const salePrice = course?.salePrice ? Number(course.salePrice) : originalPrice;
+  const salePrice = course?.saleInfo?.salePrice ? Number(course.saleInfo.salePrice) : originalPrice;
   
   const numericId = parseInt(course.id.replace(/\D/g, '').slice(0, 10)) || Math.abs(hashCode(course.id));
   
@@ -115,7 +115,7 @@ const CartPage = () => {
   
   const totalSale = orderListCourse.reduce((sum, course) => {
     const originalPrice = course?.price ? Number(course.price) : 500000;
-    const salePrice = course?.salePrice ? Number(course.salePrice) : originalPrice;
+    const salePrice = course?.saleInfo?.salePrice ? Number(course.saleInfo.salePrice) : originalPrice;
     return sum + salePrice;
   }, 0);
 

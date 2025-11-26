@@ -112,8 +112,8 @@ const CartPopover = () => {
           <div className="divide-y divide-gray-100 dark:divide-gray-800">
             {cart.slice(0, 5).map((course) => {
               const originalPrice = course?.price ? Number(course.price) : 500000
-              const salePrice = course?.salePrice 
-                ? Number(course.salePrice) 
+              const salePrice = course?.saleInfo?.salePrice 
+                ? Number(course.saleInfo.salePrice) 
                 : originalPrice
               const hasSale = salePrice < originalPrice
 

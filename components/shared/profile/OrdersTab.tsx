@@ -8,17 +8,18 @@ import { OrderCard } from "./OrderCard";
 interface OrderDetail {
     id: string;
     courseId: string;
-    price: number;
+    price: number | string;
     course: {
         id: string;
-        title: string;
+        name: string;
         thumbnail: string;
+        createdBy?: string;
     };
 }
 
 interface Order {
     id: string;
-    totalPrice: number;
+    totalPrice: number | string;
     status: string;
     paymentMethod: string;
     createdAt: string;
@@ -26,7 +27,7 @@ interface Order {
 }
 
 export const OrdersTab = () => {
-    const { data, isLoading } = useQueryHook(
+    const { data, isLoading, error, isError } = useQueryHook(
         ['my-orders'],
         () => orderService.getMyOrders(),
         {
@@ -43,8 +44,20 @@ export const OrdersTab = () => {
         );
     }
 
-    // Backend returns { items: [...], pagination: {...}, message: '...' }
-    const orders: Order[] = data?.items || [];
+    if (isError) {
+        console.error('Error fetching orders:', error);
+        return (
+            <div className="bg-card rounded-lg border border-red-500 p-12 text-center">
+                <div className="text-red-500">
+                    <p className="text-lg mb-2">Có lỗi xảy ra</p>
+                    <p className="text-sm">{error?.message || 'Không thể tải đơn hàng'}</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Backend returns { success: true, data: { items: [...], pagination: {...} }, message: '...' }
+    const orders: Order[] = data?.data?.items || [];
 
     if (orders.length === 0) {
         return (

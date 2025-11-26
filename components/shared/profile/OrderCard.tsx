@@ -7,17 +7,18 @@ import { vi } from "date-fns/locale";
 interface OrderDetail {
     id: string;
     courseId: string;
-    price: number;
+    price: number | string;
     course: {
         id: string;
-        title: string;
+        name: string;
         thumbnail: string;
+        createdBy?: string;
     };
 }
 
 interface Order {
     id: string;
-    totalPrice: number;
+    totalPrice: number | string;
     status: string;
     paymentMethod: string;
     createdAt: string;
@@ -83,7 +84,10 @@ export const OrderCard = ({ order }: OrderCardProps) => {
                             {statusLabels[order.status] || order.status}
                         </span>
                         <div className="text-base sm:text-lg font-bold text-primary whitespace-nowrap">
-                            {Number(order.totalPrice).toLocaleString('vi-VN')} ₫
+                            {Number(order.totalPrice) === 0 
+                                ? 'Miễn phí' 
+                                : `${Number(order.totalPrice).toLocaleString('vi-VN')} ₫`
+                            }
                         </div>
                     </div>
                 </div>
@@ -102,16 +106,19 @@ export const OrderCard = ({ order }: OrderCardProps) => {
                         >
                             <img 
                                 src={detail.course.thumbnail} 
-                                alt={detail.course.title}
+                                alt={detail.course.name}
                                 className="w-16 h-12 sm:w-20 sm:h-14 object-cover rounded shrink-0"
                             />
                             <div className="flex-1 min-w-0">
                                 <h4 className="font-medium text-xs sm:text-sm line-clamp-2 text-foreground">
-                                    {detail.course.title}
+                                    {detail.course.name}
                                 </h4>
                             </div>
                             <div className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">
-                                {Number(detail.price).toLocaleString('vi-VN')} ₫
+                                {Number(detail.price) === 0 
+                                    ? 'Miễn phí' 
+                                    : `${Number(detail.price).toLocaleString('vi-VN')} ₫`
+                                }
                             </div>
                         </div>
                     ))}
