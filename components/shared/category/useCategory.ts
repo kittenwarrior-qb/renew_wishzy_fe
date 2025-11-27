@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryService } from '@/services/category';
+import { categoryService } from '@/src/services/category';
 import type {
   Category,
   CategoryFilter,

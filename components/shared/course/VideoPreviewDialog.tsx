@@ -54,7 +54,17 @@ export function VideoPreviewDialog({
     }
 
     const videoSource = getVideoSourceInfo(videoUrl);
-    console.log('Video preview source:', videoSource);
+    console.log('Video preview - Original URL:', videoUrl);
+    console.log('Video preview - Processed source:', videoSource);
+
+    // Safety timeout to prevent infinite loading
+    const safetyTimeout = setTimeout(() => {
+      if (isLoading && !videoError) {
+        console.warn('Video loading timeout - taking too long');
+        setIsLoading(false);
+        setVideoError('Video is taking too long to load. Please try again.');
+      }
+    }, 15000); // 15 seconds timeout
 
     const initTimeout = setTimeout(() => {
       if (!videoRef.current || !open) return;
@@ -84,59 +94,76 @@ export function VideoPreviewDialog({
         },
       };
 
-      const player = videojs(videoRef.current, options);
-      playerRef.current = player;
+      try {
+        const player = videojs(videoRef.current, options);
+        playerRef.current = player;
 
-      player.src({
-        src: videoSource.url,
-        type: videoSource.mimeType,
-      });
+        console.log('Setting video source:', {
+          src: videoSource.url,
+          type: videoSource.mimeType,
+        });
 
-      player.on('error', () => {
-        const error = player.error();
-        console.error('Video preview error:', error);
-        setIsLoading(false);
-        
-        if (error) {
-          let errorMessage = 'Failed to load video';
+        player.src({
+          src: videoSource.url,
+          type: videoSource.mimeType,
+        });
+
+        player.on('error', () => {
+          const error = player.error();
+          console.error('Video preview error:', error);
+          setIsLoading(false);
           
-          switch (error.code) {
-            case 1:
-              errorMessage = 'Video loading aborted';
-              break;
-            case 2:
-              errorMessage = 'Network error - please check your connection';
-              break;
-            case 3:
-              errorMessage = 'Video format not supported';
-              break;
-            case 4:
-              errorMessage = 'Video source not found or CORS blocked';
-              break;
-            default:
-              errorMessage = `Video error (code: ${error.code})`;
+          if (error) {
+            let errorMessage = 'Failed to load video';
+            
+            switch (error.code) {
+              case 1:
+                errorMessage = 'Video loading aborted';
+                break;
+              case 2:
+                errorMessage = 'Network error - please check your connection';
+                break;
+              case 3:
+                errorMessage = 'Video format not supported';
+                break;
+              case 4:
+                errorMessage = 'Video source not found or CORS blocked';
+                break;
+              default:
+                errorMessage = `Video error (code: ${error.code})`;
+            }
+            
+            setVideoError(errorMessage);
           }
-          
-          setVideoError(errorMessage);
-        }
-      });
+        });
 
-      player.one('loadedmetadata', () => {
-        console.log('Video metadata loaded');
-      });
+        player.one('loadedmetadata', () => {
+          console.log('Video metadata loaded successfully');
+          setIsLoading(false);
+        });
 
-      player.one('canplay', () => {
-        console.log('Video can play');
+        player.one('canplay', () => {
+          console.log('Video can play');
+          setIsLoading(false);
+        });
+
+        player.one('loadstart', () => {
+          console.log('Video load started');
+        });
+
+        player.ready(() => {
+          console.log('Player ready');
+        });
+      } catch (error) {
+        console.error('Error initializing video player:', error);
         setIsLoading(false);
-      });
-
-      player.ready(() => {
-        console.log('Player ready');
-      });
+        setVideoError('Failed to initialize video player');
+      }
     }, 150);
 
     return () => {
       clearTimeout(initTimeout);
+      clearTimeout(safetyTimeout);
       if (playerRef.current && !playerRef.current.isDisposed()) {
         try {
           playerRef.current.dispose();
@@ -194,7 +221,21 @@ export function VideoPreviewDialog({
                 </div>
                 <div>
                   <h3 className="text-white text-lg font-semibold mb-2">Video Error</h3>
-                  <p className="text-white/80 text-sm">{videoError}</p>
+                  <p className="text-white/80 text-sm mb-2">{videoError}</p>
+                  {process.env.NODE_ENV === 'development' && (
+                    <details className="text-left mt-2">
+                      <summary className="text-white/60 text-xs cursor-pointer hover:text-white/80">
+                        Debug Info
+                      </summary>
+                      <div className="mt-2 p-2 bg-black/40 rounded text-white/70 text-xs break-all">
+                        <div><strong>Original URL:</strong></div>
+                        <div className="mb-2">{videoUrl}</div>
+                        <div><strong>Processed:</strong></div>
+                        <div>{getVideoSourceInfo(videoUrl).url}</div>
+                        <div className="mt-1"><strong>Type:</strong> {getVideoSourceInfo(videoUrl).type}</div>
+                      </div>
+                    </details>
+                  )}
                 </div>
                 <Button
                   onClick={() => {

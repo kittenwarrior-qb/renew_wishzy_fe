@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Loader2 } from "lucide-react";
-import { useTranslations } from "@/providers/TranslationProvider";
 import type { Enrollment } from "@/types/enrollment";
 import { CourseEnrollmentCard } from "@/components/shared/profile/CourseEnrollmentCard";
 
@@ -15,9 +14,6 @@ export const CoursesSection = ({
   enrollments,
   isLoading,
 }: CoursesSectionProps) => {
-  const t = useTranslations();
-  const translate = (key: string) => t(`students.${key}`);
-
   const inProgressCourses = enrollments.filter(
     (e) => e.status === "ongoing"
   );
@@ -37,7 +33,7 @@ export const CoursesSection = ({
         <div className="space-y-4">
           <h4 className="font-semibold text-lg flex items-center gap-2 mb-4">
             <BookOpen className="h-5 w-5 text-primary" />
-            {translate("continueLearning")}
+            Continue Learning
           </h4>
           <div className="flex flex-col gap-4">
             {inProgressCourses.map((enrollment) => (
@@ -51,13 +47,13 @@ export const CoursesSection = ({
         <div className="flex items-center justify-between mb-4">
           <h4 className="font-semibold text-lg flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
-            {translate("allMaterials")}
+            All Materials
           </h4>
           <Badge variant="secondary">{allCourses.length}</Badge>
         </div>
         {allCourses.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>{translate("noCoursesEnrolled")}</p>
+            <p>No courses enrolled</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">

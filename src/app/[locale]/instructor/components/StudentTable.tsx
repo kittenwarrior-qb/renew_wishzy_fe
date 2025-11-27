@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Mail, Phone } from "lucide-react";
 import type { Student } from "@/types/user";
-import { useTranslations } from "@/providers/TranslationProvider";
 
 interface StudentTableProps {
   students: Student[];
@@ -13,8 +12,6 @@ interface StudentTableProps {
 }
 
 export const StudentTable = ({ students, onViewDetails }: StudentTableProps) => {
-  const t = useTranslations();
-  const translate = (key: string) => t(`students.${key}`);
 
   const getInitials = (name: string) => {
     return name
@@ -36,22 +33,22 @@ export const StudentTable = ({ students, onViewDetails }: StudentTableProps) => 
           <thead className="bg-muted/50 border-b">
             <tr>
               <th className="px-6 py-4 text-left text-sm font-semibold text-foreground whitespace-nowrap">
-                {translate("student")}
+                Student
               </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-foreground whitespace-nowrap">
-                {translate("email")}
+                Email
               </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-foreground whitespace-nowrap">
-                {translate("phone")}
+                Phone
               </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-foreground whitespace-nowrap">
-                {translate("joinDate")}
+                Join Date
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-foreground whitespace-nowrap">
-                {translate("status")}
+                Status
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-foreground whitespace-nowrap">
-                {translate("actions")}
+                Actions
               </th>
             </tr>
           </thead>
@@ -63,7 +60,7 @@ export const StudentTable = ({ students, onViewDetails }: StudentTableProps) => 
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3 min-w-[200px]">
-                    <Avatar className="h-10 w-10 flex-shrink-0">
+                    <Avatar className="h-10 w-10 shrink-0">
                       <AvatarImage src={student.avatar} alt={student.name} />
                       <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                         {getInitials(student.name)}
@@ -84,14 +81,14 @@ export const StudentTable = ({ students, onViewDetails }: StudentTableProps) => 
 
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2 text-sm min-w-[200px]">
-                    <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="text-muted-foreground truncate">{student.email}</span>
                   </div>
                 </td>
 
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2 text-sm whitespace-nowrap">
-                    <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="text-muted-foreground">
                       {student.phone || "—"}
                     </span>
@@ -109,11 +106,11 @@ export const StudentTable = ({ students, onViewDetails }: StudentTableProps) => 
                 <td className="px-6 py-4 text-center">
                   {student.verified ? (
                     <Badge variant="default" className="bg-green-500/10 text-green-600 hover:bg-green-500/20">
-                      {translate("verified")}
+                      Verified
                     </Badge>
                   ) : (
                     <Badge variant="secondary" className="bg-gray-500/10 text-gray-600">
-                      {translate("notVerified")}
+                      Not Verified
                     </Badge>
                   )}
                 </td>
@@ -126,7 +123,7 @@ export const StudentTable = ({ students, onViewDetails }: StudentTableProps) => 
                     className="gap-2"
                   >
                     <Eye className="h-4 w-4" />
-                    {translate("view")}
+                    View
                   </Button>
                 </td>
               </tr>

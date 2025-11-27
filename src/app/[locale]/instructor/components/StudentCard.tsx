@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Mail, Phone, BookOpen, Eye } from "lucide-react";
 import type { Student } from "@/types/user";
-import { useTranslations } from "@/providers/TranslationProvider";
 
 interface StudentCardProps {
   student: Student;
@@ -14,9 +13,6 @@ interface StudentCardProps {
 }
 
 export const StudentCard = ({ student, onSelect }: StudentCardProps) => {
-  const t = useTranslations();
-  const translate = (key: string) => t(`students.${key}`);
-
   return (
     <Card
       className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 hover:border-primary/20"
@@ -36,7 +32,7 @@ export const StudentCard = ({ student, onSelect }: StudentCardProps) => {
                 {student.name}
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {translate("joinedOn")}{" "}
+                Joined on{" "}
                 {new Date(student.joinDate).toLocaleDateString("vi-VN", {
                   year: "numeric",
                   month: "short",
@@ -55,7 +51,7 @@ export const StudentCard = ({ student, onSelect }: StudentCardProps) => {
             }}
           >
             <Eye className="h-4 w-4" />
-            <span className="sr-only">{translate("view")}</span>
+            <span className="sr-only">View</span>
           </Button>
         </div>
 
@@ -74,13 +70,11 @@ export const StudentCard = ({ student, onSelect }: StudentCardProps) => {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center text-sm font-medium text-muted-foreground">
               <BookOpen className="mr-1.5 h-4 w-4" />
-              {translate("enrolledCourses")}
+              Enrolled Courses
             </div>
             <Badge variant="secondary" className="text-xs">
               {student.courses.length}{" "}
-              {student.courses.length === 1
-                ? translate("course")
-                : translate("courses")}
+              {student.courses.length === 1 ? "course" : "courses"}
             </Badge>
           </div>
           <div className="flex flex-wrap gap-1.5 mt-2">
@@ -97,7 +91,7 @@ export const StudentCard = ({ student, onSelect }: StudentCardProps) => {
               ))}
             {student.courses.length > 2 && (
               <Badge variant="outline" className="text-xs">
-                +{student.courses.length - 2} {translate("more")}
+                +{student.courses.length - 2} more
               </Badge>
             )}
           </div>

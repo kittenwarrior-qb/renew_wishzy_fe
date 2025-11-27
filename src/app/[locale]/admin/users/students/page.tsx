@@ -101,7 +101,7 @@ export default function Page() {
           if (queryState.verified === 'all') return true
           const ok = !!u.verified
           return queryState.verified === 'verified' ? ok : !ok
-        })
+        }).filter((u: any) => u.id) // Filter out items without valid ID
         const columns: Column<StudentRow>[] = [
           {
             key: 'stt',

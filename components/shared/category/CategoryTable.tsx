@@ -97,7 +97,6 @@ export function CategoryTable({ items, currentPage, pageSize, total, totalPages,
                                         <td className="p-3 font-medium text-left">
                                             <button className="inline-flex items-center gap-1 hover:underline cursor-pointer" onClick={() => toggleExpanded(String(item.id))}>
                                                 <span>{item.name}</span>
-                                                <span className="text-muted-foreground">(<ChildCount parentId={String(item.id)} />)</span>
                                                 <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expanded.has(String(item.id)) ? "rotate-180" : ""}`} />
                                             </button>
                                         </td>

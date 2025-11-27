@@ -96,14 +96,14 @@ export default function Page() {
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-2 items-center">
             <Input value={name} onChange={(e) => { setName(e.target.value); setPage(1) }} placeholder="Tìm theo tên" className="h-9 w-52" />
-            <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1) }}>
+            {/* <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1) }}>
               <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all">Tất cả</SelectItem>
                 <SelectItem value="true">Đã xuất bản</SelectItem>
                 <SelectItem value="false">Nháp</SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
             <Select value={level} onValueChange={(v) => { setLevel(v); setPage(1) }}>
               <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Cấp độ" /></SelectTrigger>
               <SelectContent>

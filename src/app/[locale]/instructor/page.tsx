@@ -42,7 +42,7 @@ const StudentsPage = () => {
   );
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="w-full h-full min-h-screen space-y-6">
       <StudentListHeader
         instructorName={fullName || undefined}
         isInstructor={isInstructor}

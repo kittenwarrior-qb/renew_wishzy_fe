@@ -3,7 +3,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useUserDetail } from "@/components/shared/user/useUser"
 import { Button } from "@/components/ui/button"
 import { useAppStore } from "@/stores/useAppStore"
@@ -12,10 +12,23 @@ export default function Page() {
     const params = useParams<{ locale: string; id: string }>()
     const locale = params?.locale || "vi"
     const id = params?.id as string
+    const router = useRouter()
     const { theme } = useAppStore()
     const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
 
+    // Redirect if ID is invalid
+    React.useEffect(() => {
+        if (!id || id === 'undefined') {
+            router.replace(`/${locale}/admin/users/students`)
+        }
+    }, [id, locale, router])
+
     const { data: user, isPending, isError } = useUserDetail(id)
+
+    // Don't render if ID is invalid
+    if (!id || id === 'undefined') {
+        return null
+    }
 
     return (
         <div className="relative p-4 md:p-6">

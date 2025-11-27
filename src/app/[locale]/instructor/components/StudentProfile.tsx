@@ -1,7 +1,6 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useTranslations } from "@/providers/TranslationProvider";
 import type { Student } from "@/types/user";
 
 interface StudentProfileProps {
@@ -9,9 +8,6 @@ interface StudentProfileProps {
 }
 
 export const StudentProfile = ({ student }: StudentProfileProps) => {
-  const t = useTranslations();
-  const translate = (key: string) => t(`students.${key}`);
-
   return (
     <div className="flex flex-col items-center md:items-start space-y-4 md:min-w-[200px]">
       <Avatar className="h-28 w-28 ring-4 ring-primary/10">
@@ -23,7 +19,7 @@ export const StudentProfile = ({ student }: StudentProfileProps) => {
       <div className="text-center md:text-left">
         <h3 className="text-2xl font-bold mb-1">{student.name}</h3>
         <p className="text-sm text-muted-foreground">
-          {translate("studentId")}: #{student.id.slice(0, 8).toUpperCase()}
+          Student ID: #{student.id.slice(0, 8).toUpperCase()}
         </p>
       </div>
     </div>

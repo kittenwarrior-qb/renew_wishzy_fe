@@ -82,7 +82,12 @@ export default function Page() {
                                 ) : details.map((d) => (
                                     <div key={d.id} className="p-4 flex items-center justify-between">
                                         <div>
-                                            <div className="font-medium">{d.course?.name || d.courseId}</div>
+                                            <button
+                                                onClick={() => router.push(`/${locale}/profile?tab=my-learning`)}
+                                                className="font-medium text-left hover:text-primary hover:underline transition-colors"
+                                            >
+                                                {d.course?.name || d.courseId}
+                                            </button>
                                             <div className="text-xs text-muted-foreground">Mã chi tiết: {d.id}</div>
                                         </div>
                                         <div className="font-medium">{Number(d.price).toLocaleString()} VNĐ</div>

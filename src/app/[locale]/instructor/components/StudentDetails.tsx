@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "@/providers/TranslationProvider";
 import type { Student } from "@/types/user";
 import type { Enrollment } from "@/types/enrollment";
 import { StudentProfile } from "./StudentProfile";
@@ -20,18 +19,15 @@ export const StudentDetails = ({
   isLoadingCourses,
   onBack,
 }: StudentDetailsProps) => {
-  const t = useTranslations();
-  const translate = (key: string) => t(`students.${key}`);
-
   return (
     <div className="space-y-6">
       <div className="pb-4">
         <div>
           <h2 className="text-2xl font-semibold mb-1">
-            {translate("studentDetails")}
+            Student Details
           </h2>
           <p className="text-sm text-muted-foreground">
-            {translate("viewStudentInfo")}
+            View detailed student information and course progress
           </p>
         </div>
       </div>
