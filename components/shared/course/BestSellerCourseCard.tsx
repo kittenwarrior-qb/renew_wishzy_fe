@@ -1,9 +1,10 @@
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, Users, Clock } from "lucide-react";
+import { Star } from "lucide-react";
 import { CourseItemType } from "@/src/types/course/course-item.types";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
+import { formatDuration } from "@/lib/format-duration";
 
 interface BestSellerCourseCardProps {
   course: CourseItemType;
@@ -13,7 +14,23 @@ const BestSellerCourseCard = ({ course }: BestSellerCourseCardProps) => {
   const router = useRouter();
 
   const originalPrice = course?.price ? Number(course.price) : 500000;
-  const salePrice = Math.floor(originalPrice * 0.7);
+  
+  const now = new Date();
+  const saleStartDate = course?.saleInfo?.saleStartDate ? new Date(course.saleInfo.saleStartDate) : null;
+  const saleEndDate = course?.saleInfo?.saleEndDate ? new Date(course.saleInfo.saleEndDate) : null;
+  const isSaleActive = saleStartDate && saleEndDate && now >= saleStartDate && now <= saleEndDate;
+  
+  let salePrice = originalPrice;
+  if (isSaleActive && course?.saleInfo?.value) {
+    if (course.saleInfo.saleType === 'PERCENT') {
+      salePrice = originalPrice * (1 - course.saleInfo.value / 100);
+    } else if (course.saleInfo.saleType === 'FIXED') {
+      salePrice = originalPrice - course.saleInfo.value;
+    }
+  }
+  
+  const hasSale = isSaleActive && salePrice < originalPrice;
+  const displayPrice = hasSale ? salePrice : originalPrice;
 
   return (
     <Card 
@@ -21,7 +38,7 @@ const BestSellerCourseCard = ({ course }: BestSellerCourseCardProps) => {
       className="w-full overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer bg-muted/20"
     >
       <div className="flex flex-row gap-0">
-        <div className="relative w-[380px] h-[220px] flex-shrink-0 overflow-hidden">
+        <div className="relative w-[380px] h-[220px] shrink-0 overflow-hidden">
           <Image
             src={course?.thumbnail || '/images/course-placeholder.jpg'} 
             alt={course?.name || 'Khóa học'} 
@@ -47,9 +64,7 @@ const BestSellerCourseCard = ({ course }: BestSellerCourseCardProps) => {
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>Đã cập nhật tháng {new Date().getMonth() + 1} năm {new Date().getFullYear()}</span>
               <span>•</span>
-              <span>Tổng số {course?.totalDuration ? Math.floor(course.totalDuration / 60) : 4} giờ</span>
-              <span>•</span>
-              {/* <span>{course?.totalLectures || 38} bài giảng</span> */}
+              <span>Tổng số {course?.totalDuration ? formatDuration(course.totalDuration, 'long') : '4 giờ'}</span>
               <span>•</span>
               <span>Tất cả các cấp độ</span>
             </div>
@@ -66,9 +81,20 @@ const BestSellerCourseCard = ({ course }: BestSellerCourseCardProps) => {
           </div>
 
           <div className="mt-4">
-            <p className="text-2xl font-bold">
-              {formatPrice(salePrice)}
-            </p>
+            {hasSale ? (
+              <div className="flex items-center gap-3">
+                <p className="text-2xl font-bold">
+                  {formatPrice(displayPrice)}
+                </p>
+                <p className="text-lg text-muted-foreground line-through">
+                  {formatPrice(originalPrice)}
+                </p>
+              </div>
+            ) : (
+              <p className="text-2xl font-bold">
+                {formatPrice(displayPrice)}
+              </p>
+            )}
           </div>
         </CardContent>
       </div>

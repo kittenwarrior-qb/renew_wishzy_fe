@@ -6,6 +6,7 @@ import { BookOpen, Clock, Star, Users } from "lucide-react";
 import Link from "next/link";
 import type { Enrollment } from "@/types/enrollment";
 import { useTranslations } from "@/providers/TranslationProvider";
+import { formatDuration as formatDurationUtil } from "@/lib/format-duration";
 
 interface CourseCardProps {
   enrollment: Enrollment;
@@ -17,11 +18,9 @@ export const CourseCard = ({ enrollment }: CourseCardProps) => {
   const { course, progress, status } = enrollment;
   const progressValue = progress || 0;
   
-  const formatDuration = (minutes: number) => {
-    if (minutes < 60) return `${minutes} ${translate("minutes")}`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}${translate("hour")} ${mins}${translate("minutes")}` : `${hours}${translate("hour")}`;
+  const formatDuration = (seconds: number) => {
+    // Use the utility function which handles seconds correctly
+    return formatDurationUtil(seconds, 'short');
   };
 
   const formatPrice = (price: string) => {

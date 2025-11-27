@@ -24,7 +24,7 @@ export default function NotFound() {
                   Về trang chủ
                 </Button>
               </Link>
-              <Link href="/courses">
+              <Link href="/search">
                 <Button size="lg" variant="outline" className="border-border text-foreground px-8">
                   Xem khóa học
                 </Button>

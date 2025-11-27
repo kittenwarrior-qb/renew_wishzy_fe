@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, FileText, PlayCircle, CheckCircle } from "lucide-react";
+import { getQuizzes, getMyQuizAttempts, type QuizAttempt } from "@/services/quiz";
+import { toast } from "sonner";
 
 interface QuizItem {
   id: string;
@@ -22,6 +24,7 @@ interface QuizItem {
   totalQuestions: number;
   status: "not-started" | "in-progress" | "completed";
   score?: number;
+  attemptId?: string;
 }
 
 export default function QuizListPage() {
@@ -31,45 +34,72 @@ export default function QuizListPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch danh sách quiz từ API
-    // fetchQuizzes()
-
-    // Mock data để demo
-    setTimeout(() => {
-      const mockQuizzes: QuizItem[] = [
-        {
-          id: "quiz-1",
-          title: "Bài kiểm tra Lập trình Web",
-          description: "Kiểm tra kiến thức về HTML, CSS và JavaScript cơ bản",
-          duration: 30,
-          totalQuestions: 20,
-          status: "not-started",
-        },
-        {
-          id: "quiz-2",
-          title: "Bài kiểm tra React & Next.js",
-          description:
-            "Kiểm tra kiến thức về React hooks, components và Next.js routing",
-          duration: 45,
-          totalQuestions: 25,
-          status: "in-progress",
-        },
-        {
-          id: "quiz-3",
-          title: "Bài kiểm tra TypeScript",
-          description:
-            "Kiểm tra kiến thức về TypeScript types, interfaces và generics",
-          duration: 40,
-          totalQuestions: 30,
-          status: "completed",
-          score: 85,
-        },
-      ];
-
-      setQuizzes(mockQuizzes);
-      setLoading(false);
-    }, 1000);
+    fetchQuizzes();
   }, []);
+
+  const fetchQuizzes = async () => {
+    try {
+      setLoading(true);
+      
+      // Lấy danh sách quiz
+      const quizzesResponse = await getQuizzes(1, 100);
+      
+      // Lấy attempts (có thể fail nếu chưa đăng nhập)
+      let attemptsData: QuizAttempt[] = [];
+      try {
+        attemptsData = await getMyQuizAttempts();
+      } catch (error) {
+        console.log("User not logged in or no attempts found");
+      }
+
+      // Tạo map attempts theo quizId
+      const attemptsMap = new Map<string, QuizAttempt>();
+      attemptsData.forEach((attempt) => {
+        const existing = attemptsMap.get(attempt.quizId);
+        // Giữ attempt mới nhất
+        if (!existing || new Date(attempt.startedAt) > new Date(existing.startedAt)) {
+          attemptsMap.set(attempt.quizId, attempt);
+        }
+      });
+
+      // Kết hợp dữ liệu quiz với attempts
+      const combinedQuizzes: QuizItem[] = quizzesResponse.data.map((quiz: any) => {
+        const attempt = attemptsMap.get(quiz.id);
+        
+        let status: "not-started" | "in-progress" | "completed" = "not-started";
+        let score: number | undefined;
+        let attemptId: string | undefined;
+
+        if (attempt) {
+          attemptId = attempt.id;
+          if (attempt.status === "completed") {
+            status = "completed";
+            score = Math.round(attempt.percentage);
+          } else if (attempt.status === "in-progress") {
+            status = "in-progress";
+          }
+        }
+
+        return {
+          id: quiz.id,
+          title: quiz.title,
+          description: quiz.description || "",
+          duration: quiz.timeLimit || 0,
+          totalQuestions: quiz.questions?.length || 0,
+          status,
+          score,
+          attemptId,
+        };
+      });
+
+      setQuizzes(combinedQuizzes);
+    } catch (error: any) {
+      console.error("Error fetching quizzes:", error);
+      toast.error("Không thể tải danh sách bài kiểm tra");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: QuizItem["status"]) => {
     switch (status) {
@@ -90,8 +120,12 @@ export default function QuizListPage() {
     router.push(`/${params.locale}/quiz/${quizId}`);
   };
 
-  const handleViewResult = (quizId: string) => {
-    router.push(`/${params.locale}/quiz/${quizId}/result`);
+  const handleViewResult = (quiz: QuizItem) => {
+    if (quiz.attemptId) {
+      router.push(`/${params.locale}/quiz/${quiz.id}/result?attemptId=${quiz.attemptId}`);
+    } else {
+      router.push(`/${params.locale}/quiz/${quiz.id}/result`);
+    }
   };
 
   if (loading) {
@@ -152,7 +186,7 @@ export default function QuizListPage() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => handleViewResult(quiz.id)}
+                  onClick={() => handleViewResult(quiz)}
                 >
                   Xem kết quả
                 </Button>

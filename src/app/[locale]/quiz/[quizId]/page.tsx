@@ -46,9 +46,8 @@ export default function QuizPage() {
 
   const handleSubmit = async (submission: QuizSubmission) => {
     try {
-      await submitQuiz(submission);
-
-      router.push(`/${params.locale}/quiz/${quizId}/result`);
+      const result = await submitQuiz(submission);
+      router.push(`/${params.locale}/quiz/${quizId}/result?attemptId=${result.attemptId}`);
     } catch (error) {
       console.error("Error submitting quiz:", error);
       setError("Có lỗi xảy ra khi nộp bài. Vui lòng thử lại.");

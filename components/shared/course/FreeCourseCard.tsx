@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Star, Users, Clock } from "lucide-react";
 import { CourseItemType } from "@/src/types/course/course-item.types";
 import { useRouter } from "next/navigation";
+import { formatDuration } from "@/lib/format-duration";
 
 interface FreeCourseCardProps {
   course: CourseItemType;
@@ -50,7 +51,7 @@ const FreeCourseCard = ({ course }: FreeCourseCardProps) => {
           </div>
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
-            <span>{course?.totalDuration ? `${Math.floor(course.totalDuration / 60)}h` : '0h'}</span>
+            <span>{course?.totalDuration ? formatDuration(course.totalDuration, 'short') : '0h'}</span>
           </div>
         </div>
 

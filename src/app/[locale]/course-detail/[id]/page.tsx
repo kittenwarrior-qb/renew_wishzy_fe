@@ -6,6 +6,7 @@ import { useQueryHook } from "@/src/hooks/useQueryHook";
 import { courseService } from "@/src/services/course";
 import { CourseItemType } from "@/src/types/course/course-item.types";
 import { formatPrice } from "@/lib/utils";
+import { formatDuration } from "@/lib/format-duration";
 import { Button } from "@/components/ui/button";
 import { chapterService } from "@/src/services/chapter";
 import { CourseChapter } from "@/components/shared/course/CourseChapter";
@@ -67,7 +68,7 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     }
 
     const totalLessons = course.chapters?.length || 0;
-    const durationHours = Math.round(course.totalDuration / 60);
+    const durationText = formatDuration(course.totalDuration, 'long');
     
     const originalPrice = course?.price ? Number(course.price) : 0;
     
@@ -201,7 +202,7 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                                         </div>
                                         <div>
                                             <p className="font-medium">Thời lượng khoá học</p>
-                                            <p className="text-sm">{durationHours} giờ</p>
+                                            <p className="text-sm">{durationText}</p>
                                         </div>
                                     </div>
 

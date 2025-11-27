@@ -12,6 +12,7 @@ import { useQueryHook } from "@/src/hooks/useQueryHook"
 import { orderService } from "@/src/services/order"
 import { CourseItemType } from "@/src/types/course/course-item.types"
 import { formatPrice } from "@/lib/utils"
+import { formatDuration } from "@/lib/format-duration"
 import { useQueryClient } from "@tanstack/react-query"
 import { enrollmentService } from "@/src/services/enrollment"
 
@@ -258,7 +259,7 @@ const CheckoutSuccessContent = () => {
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="capitalize">{item.course.level}</span>
                         <span>•</span>
-                        <span>{Math.floor(item.course.totalDuration / 60)} phút</span>
+                        <span>{formatDuration(item.course.totalDuration, 'long')}</span>
                       </div>
                     </div>
                     <div className="text-right">

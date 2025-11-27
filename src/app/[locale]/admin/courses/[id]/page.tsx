@@ -31,8 +31,7 @@ export default function CourseDetailPage() {
     const [openCreate, setOpenCreate] = React.useState(false)
     const [name, setName] = React.useState("")
     const [description, setDescription] = React.useState("")
-    const [duration, setDuration] = React.useState<string>("")
-    const [errors, setErrors] = React.useState<{ name?: string; duration?: string }>({})
+    const [errors, setErrors] = React.useState<{ name?: string }>({})
     const { mutate: createChapter, isPending: creating } = useCreateChapter()
     const [dirty, setDirty] = React.useState(false)
     useUnsavedChanges(dirty && openCreate)
@@ -42,22 +41,18 @@ export default function CourseDetailPage() {
     const [openDiscard, setOpenDiscard] = React.useState(false)
 
     const validate = () => {
-        const next: { name?: string; duration?: string } = {}
+        const next: { name?: string } = {}
         const n = name.trim()
         if (!n) next.name = "Tên chương là bắt buộc"
         else if (n.length > 255) next.name = "Tên tối đa 255 ký tự"
-        if (duration !== "") {
-            const d = Number(duration)
-            if (Number.isNaN(d) || d < 0) next.duration = "Thời lượng phải >= 0"
-        }
         setErrors(next)
         return Object.keys(next).length === 0
     }
 
     const onCreate = () => {
         if (!validate()) return
-        createChapter({ courseId, name: name.trim(), description: description.trim() || undefined, duration: duration ? Number(duration) : undefined }, {
-            onSuccess: () => { setOpenCreate(false); setName(""); setDescription(""); setDuration(""); setDirty(false) }
+        createChapter({ courseId, name: name.trim(), description: description.trim() || undefined }, {
+            onSuccess: () => { setOpenCreate(false); setName(""); setDescription(""); setDirty(false) }
         })
     }
 
@@ -106,7 +101,7 @@ export default function CourseDetailPage() {
                     return
                 }
                 setOpenCreate(o)
-                if (!o) { setErrors({}); setName(""); setDescription(""); setDuration(""); setDirty(false) }
+                if (!o) { setErrors({}); setName(""); setDescription(""); setDirty(false) }
             }}>
                 <DialogContent>
                     <DialogHeader>
@@ -122,11 +117,7 @@ export default function CourseDetailPage() {
                             <Label htmlFor="description">Mô tả</Label>
                             <Textarea id="description" value={description} onChange={(e) => { setDescription(e.target.value); setDirty(true) }} placeholder="Mô tả ngắn cho chương" rows={4} />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="duration">Thời lượng (phút)</Label>
-                            <Input id="duration" type="number" min={0} value={duration} onChange={(e) => { setDuration(e.target.value); setDirty(true); if (errors.duration) setErrors({ ...errors, duration: undefined }) }} placeholder="Ví dụ: 60" />
-                            {errors.duration ? <p className="text-sm text-destructive">{errors.duration}</p> : null}
-                        </div>
+                        <p className="text-xs text-muted-foreground">Thời lượng chương sẽ tự động tính từ tổng thời lượng các bài học</p>
                     </div>
                     <DialogFooter>
                         <Button variant="ghost" onClick={() => {
@@ -157,7 +148,6 @@ export default function CourseDetailPage() {
                     setErrors({})
                     setName("")
                     setDescription("")
-                    setDuration("")
                     setOpenDiscard(false)
                 }}
             />

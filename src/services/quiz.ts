@@ -18,6 +18,19 @@ export interface QuizListItem {
   score?: number;
 }
 
+export interface QuizAttempt {
+  id: string;
+  quizId: string;
+  userId: string;
+  startedAt: string;
+  completedAt: string | null;
+  totalScore: number;
+  maxScore: number;
+  percentage: number;
+  status: "in-progress" | "completed" | "abandoned";
+  quiz?: any;
+}
+
 export interface QuizResult {
   id: string;
   quizId: string;
@@ -33,8 +46,22 @@ export interface QuizResult {
 // Các type admin quiz đã được định nghĩa tại '@/types/quiz'
 
 // Lấy danh sách bài kiểm tra
-export const getQuizzes = async (): Promise<QuizListItem[]> => {
-  const response = await api.get("/quizzes");
+export const getQuizzes = async (page: number = 1, limit: number = 100): Promise<{
+  data: any[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}> => {
+  const response = await api.get("/quizzes", {
+    params: { page, limit, isPublic: true }
+  });
+  return response.data;
+};
+
+// Lấy danh sách quiz attempts của user
+export const getMyQuizAttempts = async (): Promise<QuizAttempt[]> => {
+  const response = await api.get("/quiz-attempts/my-attempts");
   return response.data;
 };
 
@@ -49,15 +76,28 @@ export const getQuiz = async (
   return response.data.data;
 };
 
-// Nộp bài kiểm tra
+// Nộp bài kiểm tra (sử dụng quiz-attempts API)
 export const submitQuiz = async (
   submission: QuizSubmission
-): Promise<QuizResult> => {
-  const response = await api.post(
-    `/quizzes/${submission.quizId}/submit`,
-    submission
-  );
-  return response.data;
+): Promise<{ attemptId: string }> => {
+  // 1. Start attempt
+  const attemptResponse = await api.post(`/quiz-attempts/start/${submission.quizId}`);
+  const attemptId = attemptResponse.data.id;
+
+  // 2. Submit all answers
+  for (const [questionId, selectedOptionIds] of Object.entries(submission.answers)) {
+    if (selectedOptionIds.length > 0) {
+      await api.post(`/quiz-attempts/${attemptId}/answer`, {
+        questionId,
+        selectedOptionId: selectedOptionIds[0], // Backend chỉ hỗ trợ single choice
+      });
+    }
+  }
+
+  // 3. Complete attempt
+  await api.post(`/quiz-attempts/${attemptId}/complete`);
+
+  return { attemptId };
 };
 
 // Lấy kết quả bài kiểm tra
@@ -66,11 +106,17 @@ export const getQuizResult = async (quizId: string): Promise<QuizResult> => {
   return response.data;
 };
 
-// Bắt đầu làm bài (tạo session)
+// Bắt đầu làm bài (tạo attempt)
 export const startQuiz = async (
   quizId: string
-): Promise<{ sessionId: string }> => {
-  const response = await api.post(`/quizzes/${quizId}/start`);
+): Promise<QuizAttempt> => {
+  const response = await api.post(`/quiz-attempts/start/${quizId}`);
+  return response.data;
+};
+
+// Lấy kết quả attempt
+export const getAttemptResults = async (attemptId: string): Promise<any> => {
+  const response = await api.get(`/quiz-attempts/${attemptId}/results`);
   return response.data;
 };
 

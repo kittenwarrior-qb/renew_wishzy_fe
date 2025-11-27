@@ -5,6 +5,7 @@ import { Accordion, AccordionContent, AccordionItem } from "@/components/ui/acco
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import { ChevronDownIcon, Play, Trash2, Pencil, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatDuration } from "@/lib/format-duration"
 import { ChapterType } from "@/src/types/chapter/chapter.types"
 import { Button } from "@/components/ui/button"
 import { useDeleteChapter, useUpdateChapter } from "@/components/shared/chapter/useChapter"
@@ -49,8 +50,7 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
     const [lectureChapterId, setLectureChapterId] = React.useState<string | null>(null)
     const [name, setName] = React.useState("")
     const [description, setDescription] = React.useState("")
-    const [duration, setDuration] = React.useState<string>("")
-    const [errors, setErrors] = React.useState<{ name?: string; duration?: string }>({})
+    const [errors, setErrors] = React.useState<{ name?: string }>({})
     const [dirtyEdit, setDirtyEdit] = React.useState(false)
     const [openEditDiscard, setOpenEditDiscard] = React.useState(false)
     useUnsavedChanges(dirtyEdit && !!openEditId)
@@ -82,20 +82,15 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
         setOpenEditId(ch.id)
         setName(ch.name || "")
         setDescription(ch.description || "")
-        setDuration(ch.duration != null ? String(ch.duration) : "")
         setErrors({})
         setDirtyEdit(false)
     }
 
     const validate = () => {
-        const next: { name?: string; duration?: string } = {}
+        const next: { name?: string } = {}
         const n = (name || "").trim()
         if (!n) next.name = "Tên chương là bắt buộc"
         else if (n.length > 255) next.name = "Tên tối đa 255 ký tự"
-        if (duration !== "") {
-            const d = Number(duration)
-            if (Number.isNaN(d) || d < 0) next.duration = "Thời lượng phải >= 0"
-        }
         setErrors(next)
         return Object.keys(next).length === 0
     }
@@ -103,16 +98,12 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
     const onUpdate = () => {
         if (!openEditId) return
         if (!validate()) return
-        const payload: { id: string; courseId: string; name?: string; description?: string; duration?: number } = {
+        const payload: { id: string; courseId: string; name?: string; description?: string } = {
             id: openEditId,
             courseId,
             name: name.trim(),
         }
         if (description.trim()) payload.description = description.trim()
-        if (duration !== "") {
-            const d = Number(duration)
-            if (!Number.isNaN(d)) payload.duration = d
-        }
         updateChapter(payload as any, {
             onSuccess: () => {
                 notify({ title: "Đã cập nhật chương", variant: "success" })
@@ -151,7 +142,7 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        <span className="font-medium">{chapter.lecture?.reduce((t, l) => t + (l?.duration || 0), 0)} phút</span>
+                                        <span className="font-medium">{formatDuration(chapter.lecture?.reduce((t, l) => t + (l?.duration || 0), 0) || 0, 'long')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -227,7 +218,7 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
                                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                {lecture.duration} phút
+                                                {formatDuration(lecture.duration, 'long')}
                                             </span>
                                             <button
                                                 type="button"
@@ -307,11 +298,7 @@ export function AdminCourseChapters({ chapters, courseId, locale }: { chapters: 
                             <Label htmlFor="edit-description">Mô tả</Label>
                             <Textarea id="edit-description" value={description} onChange={(e) => { setDescription(e.target.value); setDirtyEdit(true) }} placeholder="Mô tả ngắn cho chương" rows={4} />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="edit-duration">Thời lượng (phút)</Label>
-                            <Input id="edit-duration" type="number" min={0} value={duration} onChange={(e) => { setDuration(e.target.value); setDirtyEdit(true); if (errors.duration) setErrors({ ...errors, duration: undefined }) }} placeholder="Ví dụ: 60" />
-                            {errors.duration ? <p className="text-sm text-destructive">{errors.duration}</p> : null}
-                        </div>
+                        <p className="text-xs text-muted-foreground">Thời lượng chương sẽ tự động tính từ tổng thời lượng các bài học</p>
                     </div>
                     <DialogFooter>
                         <Button variant="ghost" onClick={() => { if (dirtyEdit) { setOpenEditDiscard(true) } else { setOpenEditId(null); setDirtyEdit(false) } }}>Huỷ</Button>

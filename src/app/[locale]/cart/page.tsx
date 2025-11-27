@@ -7,6 +7,7 @@ import { useAppStore } from '@/src/stores/useAppStore'
 import { CourseItemType } from '@/src/types/course/course-item.types'
 import { useEffect, useRef } from 'react'
 import { formatPrice } from '@/lib/utils'
+import { formatDuration } from '@/lib/format-duration'
 
 const convertToCartItem = (course: CourseItemType) => {
   const originalPrice = course?.price ? Number(course.price) : 500000;
@@ -25,7 +26,7 @@ const convertToCartItem = (course: CourseItemType) => {
     ratingCount: course.numberOfStudents?.toString() || '0',
     badge: 'Khóa học',
     badgeColor: 'bg-[#eceb98] text-[#3d3c0a]',
-    hours: course.totalDuration ? `${Math.floor(course.totalDuration / 60)}h` : '0h',
+    hours: course.totalDuration ? formatDuration(course.totalDuration, 'short') : '0h',
     lectures: `${course.chapters?.length || 0} chương`,
     level: course.level || 'Tất cả',
     price: salePrice,

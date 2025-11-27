@@ -12,6 +12,7 @@ import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
 import UploadProgressOverlay from "@/components/shared/upload/UploadProgressOverlay"
 import { uploadVideo } from "@/services/uploads"
 import { notify } from "@/components/shared/admin/Notifications"
+import { formatDuration } from "@/lib/format-duration"
 
 export type LectureFormValue = {
     name: string
@@ -117,6 +118,7 @@ export function LectureFormModal({
     }, [open])
 
     const setField = (k: keyof LectureFormValue, v: string | boolean) => {
+        console.log(`setField: ${k} =`, v)
         setForm((prev) => ({ ...prev, [k]: v as any }))
         setDirty(true)
         if (errors[k]) setErrors((e) => ({ ...e, [k]: undefined }))
@@ -131,10 +133,12 @@ export function LectureFormModal({
         const fileUrl = form.fileUrl.trim()
         if (!fileUrl) next.fileUrl = "Video là bắt buộc"
 
-        if (form.duration === "") next.duration = "Thời lượng là bắt buộc"
-        else {
+        // Duration is auto-filled from video, but still validate it exists
+        if (!form.duration || form.duration === "") {
+            next.fileUrl = "Vui lòng đợi video tải lên hoàn tất"
+        } else {
             const d = Number(form.duration)
-            if (Number.isNaN(d) || d <= 0) next.duration = "Thời lượng phải > 0"
+            if (Number.isNaN(d) || d <= 0) next.fileUrl = "Thời lượng video không hợp lệ"
         }
 
         if (form.orderIndex === "") next.orderIndex = "Thứ tự là bắt buộc"
@@ -149,14 +153,16 @@ export function LectureFormModal({
 
     const submit = () => {
         if (!validate()) return
-        onSubmit({
+        const payload = {
             name: form.name.trim(),
             description: form.description?.trim() || undefined,
             fileUrl: form.fileUrl.trim(),
             duration: Number(form.duration),
             isPreview: !!form.isPreview,
             orderIndex: Number(form.orderIndex),
-        })
+        }
+        console.log('Submitting lecture payload:', payload)
+        onSubmit(payload)
     }
 
     return (
@@ -248,22 +254,22 @@ export function LectureFormModal({
                         </div>
                         {errors.fileUrl ? <p className="text-sm text-destructive">{errors.fileUrl}</p> : null}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="l-duration">Thời lượng (phút)<span className="text-destructive">*</span></Label>
-                            <Input id="l-duration" type="number" min={1} value={form.duration} onChange={(e) => setField("duration", e.target.value)} placeholder="60" />
-                            {errors.duration ? <p className="text-sm text-destructive">{errors.duration}</p> : null}
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="l-order">Thứ tự<span className="text-destructive">*</span></Label>
                             <Input id="l-order" type="number" min={0} value={form.orderIndex} onChange={(e) => setField("orderIndex", e.target.value)} placeholder="0" />
                             {errors.orderIndex ? <p className="text-sm text-destructive">{errors.orderIndex}</p> : null}
                         </div>
-                        <div className="space-y-2 flex items-center gap-2">
+                        <div className="space-y-2 flex items-center gap-2 pt-8">
                             <Switch id="l-preview" checked={form.isPreview} onCheckedChange={(v: boolean) => setField("isPreview", v)} />
                             <Label htmlFor="l-preview">Cho phép xem trước</Label>
                         </div>
                     </div>
+                    {form.duration && (
+                        <div className="text-sm text-muted-foreground">
+                            Thời lượng video: {formatDuration(Number(form.duration), 'long')}
+                        </div>
+                    )}
                 </div>
                 <DialogFooter>
                     <Button variant="ghost" onClick={() => { if (dirty) setOpenDiscard(true); else onOpenChange(false) }}>Huỷ</Button>
@@ -301,13 +307,39 @@ async function handleFileUpload(
     setUploading(true)
     setUploadProgress(0)
     try {
-        const { url, durationSeconds } = await uploadVideo(file, "/uploads/video", { onProgress: (p) => setUploadProgress(p) })
-        setField("fileUrl", url)
+        const result = await uploadVideo(file, "/uploads/video", { onProgress: (p) => setUploadProgress(p) })
+        
+        console.log('Upload video result:', result)
+        
+        const videoUrl = result.url || (result as any).videoUrl
+        console.log('Extracted videoUrl:', videoUrl)
+        
+        if (!videoUrl) {
+            console.error('No video URL in response:', result)
+            throw new Error("Không nhận được URL video từ server")
+        }
+        
+        setField("fileUrl", videoUrl)
         setSelectedName((file as any).name || 'video')
         setSelectedSize(file.size || 0)
-        if (typeof durationSeconds === 'number' && durationSeconds > 0) {
-            const minutes = Math.max(1, Math.round(durationSeconds / 60))
-            setFormDuration(String(minutes))
+        
+        if (typeof result.durationSeconds === 'number' && result.durationSeconds > 0) {
+            setFormDuration(String(Math.round(result.durationSeconds)))
+        } else {
+            try {
+                const videoEl = document.createElement('video')
+                videoEl.preload = 'metadata'
+                videoEl.onloadedmetadata = () => {
+                    const duration = videoEl.duration
+                    if (duration && duration > 0) {
+                        setFormDuration(String(Math.round(duration)))
+                    }
+                    URL.revokeObjectURL(videoEl.src)
+                }
+                videoEl.src = URL.createObjectURL(file)
+            } catch (err) {
+                console.warn('Could not extract video duration from file:', err)
+            }
         }
     } catch (_err) {
         setErrors((prev) => ({ ...prev, fileUrl: "Tải video thất bại" }))

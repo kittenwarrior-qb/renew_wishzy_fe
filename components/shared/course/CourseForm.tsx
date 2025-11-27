@@ -12,6 +12,7 @@ import { uploadImage } from "@/services/uploads"
 import UploadProgressOverlay from "@/components/shared/upload/UploadProgressOverlay"
 import Switch from "@/components/ui/switch"
 import type { Category } from "@/types/category"
+import { formatDuration } from "@/lib/format-duration"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -71,7 +72,7 @@ export function CourseForm({
         if (!value.categoryId) errs.categoryId = 'Bắt buộc'
         if (!value.level) errs.level = 'Bắt buộc'
         if (value.price == null || value.price < 0) errs.price = 'Giá không hợp lệ'
-        if (value.totalDuration == null || value.totalDuration < 0) errs.totalDuration = 'Thời lượng không hợp lệ'
+        // totalDuration is auto-calculated from chapters/lectures, no validation needed
         return errs
     }, [value])
 
@@ -314,19 +315,11 @@ export function CourseForm({
                                 ) : null}
                             </div>
                             <div>
-                                <label className="mb-1 block text-sm font-medium">Tổng thời lượng (phút)</label>
-                                <Input
-                                    type="number"
-                                    value={value.totalDuration as any}
-                                    onChange={(e) => setField('totalDuration', Number(e.target.value || 0))}
-                                    onBlur={() => setTouched((t) => ({ ...t, totalDuration: true }))}
-                                    placeholder="0"
-                                    disabled={loading}
-                                    aria-invalid={!!errors.totalDuration}
-                                />
-                                {touched.totalDuration && errors.totalDuration ? (
-                                    <p className="mt-1 text-xs text-destructive">{errors.totalDuration}</p>
-                                ) : null}
+                                <label className="mb-1 block text-sm font-medium">Tổng thời lượng</label>
+                                <div className="rounded-md border border-input bg-muted px-3 py-2 text-sm">
+                                    {value.totalDuration ? formatDuration(value.totalDuration, 'long') : 'Tự động tính từ các bài học'}
+                                </div>
+                                <p className="mt-1 text-xs text-muted-foreground">Thời lượng sẽ tự động cập nhật khi thêm/sửa bài học</p>
                             </div>
                         </div>
                     </div>

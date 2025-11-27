@@ -65,16 +65,25 @@ export async function uploadVideo(
             },
         })
         const data: any = res?.data
-        const url = data?.url
-            || data?.data?.url
+        
+        console.log('Upload video response:', data)
+        
+        const url = data?.data?.url
+            || data?.data?.videoUrl
+            || data?.url
+            || data?.videoUrl
             || data?.result?.url
             || data?.data?.[0]?.url
             || data?.video
-        const durationSeconds = data?.duration
-            || data?.data?.duration
+        const durationSeconds = data?.data?.duration
+            || data?.duration
             || data?.result?.duration
             || data?.meta?.duration
             || data?.metadata?.duration
+            
+        console.log('Parsed URL:', url)
+        console.log('Parsed duration:', durationSeconds)
+        
         if (!url) throw new Error("Upload không trả về URL")
         return { url, durationSeconds: typeof durationSeconds === 'number' ? durationSeconds : undefined }
     } catch (err: any) {

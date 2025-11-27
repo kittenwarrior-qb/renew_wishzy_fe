@@ -7,14 +7,16 @@ import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/src/stores/useAppStore";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
+import { formatDuration } from "@/lib/format-duration";
 import { wishlistService } from "@/src/services/wishlist";
+import { toast } from "sonner";
 
 interface CourseCardProps {
   course: CourseItemType;
 }
 
 const CourseCard = ({ course }: CourseCardProps) => {
-  const { cart, addToCart, wishlist, addToWishlist, removeFromWishlist, addToOrderList, clearOrderList } = useAppStore();
+  const { cart, addToCart, wishlist, addToWishlist, removeFromWishlist, addToOrderList, clearOrderList, isAuthenticated } = useAppStore();
   const [isHovered, setIsHovered] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [leaveTimeout, setLeaveTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -83,16 +85,28 @@ const CourseCard = ({ course }: CourseCardProps) => {
   
   const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Kiểm tra authentication trước khi thêm vào wishlist
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để thêm khóa học vào danh sách yêu thích');
+      router.push('/login');
+      return;
+    }
+    
     try {
       if (isInWishlist) {
         removeFromWishlist(course);
         await wishlistService.removeFromWishlist(course.id);
+        toast.success('Đã xóa khỏi danh sách yêu thích');
       } else {
         addToWishlist(course);
         await wishlistService.addToWishlist(course.id);
+        toast.success('Đã thêm vào danh sách yêu thích');
       }
     } catch (error) {
       console.error('Failed to toggle wishlist:', error);
+      toast.error('Có lỗi xảy ra, vui lòng thử lại');
+      // Rollback state nếu có lỗi
       if (isInWishlist) {
         addToWishlist(course);
       } else {
@@ -212,7 +226,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              <span>{course?.totalDuration ? `${Math.floor(course.totalDuration / 60)}h` : '0h'}</span>
+              <span>{course?.totalDuration ? formatDuration(course.totalDuration, 'short') : '0h'}</span>
             </div>
           </div>
 
@@ -248,6 +262,13 @@ const CourseCard = ({ course }: CourseCardProps) => {
               {course?.description || 'Mô tả khóa học sẽ được cập nhật sau'}
             </p>
 
+            {/* Category */}
+            {course?.category?.name && (
+              <p className="text-xs text-muted-foreground">
+                Danh mục: <span className="font-medium">{course.category.name}</span>
+              </p>
+            )}
+
             {/* Creator */}
             <p className="text-xs text-muted-foreground">
               Giảng viên: <span className="font-medium">{course?.creator?.fullName || 'Chưa cập nhật'}</span>
@@ -268,7 +289,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                <span>{course?.totalDuration ? `${Math.floor(course.totalDuration / 60)}h` : '0h'}</span>
+                <span>{course?.totalDuration ? formatDuration(course.totalDuration, 'short') : '0h'}</span>
               </div>
             </div>
 

@@ -5,10 +5,13 @@ import {
     AccordionItem,
 } from "@/components/ui/accordion"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
-import { ChevronDownIcon, Play } from "lucide-react"
+import { ChevronDownIcon, Play, Eye } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ChapterType } from "@/src/types/chapter/chapter.types";
 import { useTranslations } from "@/providers/TranslationProvider";
+import { formatDuration } from "@/lib/format-duration";
+import { VideoPreviewDialog } from "./VideoPreviewDialog";
+import { Button } from "@/components/ui/button";
 
 function CustomAccordionTrigger({
     className,
@@ -34,15 +37,17 @@ function CustomAccordionTrigger({
 export function CourseChapter({ chapters }: { chapters: ChapterType[] }) {
     const t = useTranslations();
     const translate = (key: string) => t(`courses.${key}`);
+    const [previewVideo, setPreviewVideo] = React.useState<{ url: string; title: string } | null>(null);
     
     return (
-        <Accordion
-            type="single"
-            collapsible
-            className="w-full"
-            defaultValue="item-1"
-        >
-            {chapters?.map((chapter) => {
+        <>
+            <Accordion
+                type="single"
+                collapsible
+                className="w-full"
+                defaultValue="item-1"
+            >
+                {chapters?.map((chapter) => {
                 const chapterDuration = chapter.lecture?.reduce((total, lecture) => total + lecture.duration, 0) || chapter.duration || 0;
                 const lectureCount = chapter.lecture?.length || 0;
                 
@@ -56,7 +61,7 @@ export function CourseChapter({ chapters }: { chapters: ChapterType[] }) {
                                     {chapterDuration > 0 && (
                                         <>
                                             <span>•</span>
-                                            <span>{chapterDuration} {translate("minutes")}</span>
+                                            <span>{formatDuration(chapterDuration, 'short')}</span>
                                         </>
                                     )}
                                 </span>
@@ -72,25 +77,33 @@ export function CourseChapter({ chapters }: { chapters: ChapterType[] }) {
                                 chapter.lecture
                                     .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
                                     .map((lecture) => (
-                                        <div key={lecture.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                        <div key={lecture.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group hover:bg-gray-50/50 transition-colors px-2 -mx-2 rounded">
                                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                <Play className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                                <Play className="w-4 h-4 text-muted-foreground shrink-0" />
                                                 <div className="flex flex-col flex-1 min-w-0">
                                                     <span className="text-sm font-medium truncate">{lecture.name}</span>
-                                                    {lecture.isPreview && (
-                                                        <button
-                                                            className="text-xs text-blue-600 font-medium hover:text-blue-800 hover:underline transition-colors w-fit mt-1"
+                                                    {lecture.isPreview && lecture.fileUrl && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-auto p-0 text-xs font-medium  hover:bg-transparent w-fit mt-1 gap-1.5"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                console.log('Preview clicked for lecture:', lecture.id);
+                                                                setPreviewVideo({
+                                                                    url: lecture.fileUrl!,
+                                                                    title: lecture.name
+                                                                });
                                                             }}
                                                         >
+                                                            <Eye className="w-3 h-3" />
                                                             {translate("preview")}
-                                                        </button>
+                                                        </Button>
                                                     )}
                                                 </div>
                                             </div>
-                                            <span className="text-sm text-muted-foreground flex-shrink-0 ml-2">{lecture.duration} {translate("minutes")}</span>
+                                            <span className="text-sm text-muted-foreground shrink-0 ml-2">
+                                                {formatDuration(lecture.duration, 'time')}
+                                            </span>
                                         </div>
                                     ))
                             ) : (
@@ -101,7 +114,17 @@ export function CourseChapter({ chapters }: { chapters: ChapterType[] }) {
                         </AccordionContent>
                     </AccordionItem>
                 );
-            })}
-        </Accordion>
+                })}
+            </Accordion>
+            
+            {previewVideo && (
+                <VideoPreviewDialog
+                    open={!!previewVideo}
+                    onOpenChange={(open) => !open && setPreviewVideo(null)}
+                    videoUrl={previewVideo.url}
+                    title={previewVideo.title}
+                />
+            )}
+        </>
     )
 }

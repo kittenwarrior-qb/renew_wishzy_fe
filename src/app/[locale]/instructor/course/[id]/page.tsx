@@ -84,19 +84,24 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
         return total + (chapter.lecture?.length || 0);
     }, 0) || 0;
 
-    const totalDurationMinutes = chapters?.items?.reduce((total, chapter) => {
+    const totalDurationSeconds = chapters?.items?.reduce((total, chapter) => {
         const chapterDuration = chapter.lecture?.reduce((sum, lecture) => sum + lecture.duration, 0) || 0;
         return total + chapterDuration;
     }, 0) || course.totalDuration || 0;
     
-    const formatDuration = (minutes: number) => {
-        if (minutes < 60) return `${minutes} ${translate("minutes")}`;
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        return mins > 0 ? `${hours} ${translate("hours")} ${mins} ${translate("minutes")}` : `${hours} ${translate("hours")}`;
+    const formatDurationText = (seconds: number) => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        
+        if (hours > 0) {
+            return minutes > 0 
+                ? `${hours} ${translate("hours")} ${minutes} ${translate("minutes")}` 
+                : `${hours} ${translate("hours")}`;
+        }
+        return `${minutes} ${translate("minutes")}`;
     };
     
-    const durationText = formatDuration(totalDurationMinutes);
+    const durationText = formatDurationText(totalDurationSeconds);
     
     const averageRating = parseFloat(course.averageRating || '0');
 

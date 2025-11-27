@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -20,53 +20,71 @@ import {
   Home,
   RotateCcw,
 } from "lucide-react";
-import { Quiz } from "@/src/types/quiz";
+import { getAttemptResults } from "@/services/quiz";
+import { toast } from "sonner";
 
 interface QuizResult {
-  score: number;
-  correctCount: number;
-  totalQuestions: number;
-  timeSpent: number;
-  answers: Record<string, string[]>;
-  quiz: Quiz;
+  attempt: {
+    id: string;
+    startedAt: string;
+    completedAt: string;
+    totalScore: number;
+    maxScore: number;
+    percentage: number;
+  };
+  quiz: {
+    id: string;
+    title: string;
+    description: string;
+  };
+  results: Array<{
+    question: string;
+    points: number;
+    userAnswer: string;
+    correctAnswer: string;
+    isCorrect: boolean;
+    pointsEarned: number;
+  }>;
 }
 
 export default function QuizResultPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const quizId = params.quizId as string;
+  const attemptId = searchParams.get("attemptId");
 
   const [result, setResult] = useState<QuizResult | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch kết quả từ server
-    // fetchQuizResult(quizId)
-
-    // Mock data để demo
-    setTimeout(() => {
-      const mockResult: QuizResult = {
-        score: 80,
-        correctCount: 4,
-        totalQuestions: 5,
-        timeSpent: 450,
-        answers: {},
-        quiz: {
-          id: quizId,
-          title: "Bài kiểm tra Lập trình Web",
-          description: "Kiểm tra kiến thức về HTML, CSS và JavaScript cơ bản",
-          duration: 30,
-          timeLimit: 30,
-          questions: [],
-        },
-      };
-
-      setResult(mockResult);
+    if (attemptId) {
+      fetchResult();
+    } else {
       setLoading(false);
-    }, 1000);
-  }, [quizId]);
+      toast.error("Không tìm thấy kết quả bài kiểm tra");
+    }
+  }, [attemptId]);
 
-  const formatTime = (seconds: number) => {
+  const fetchResult = async () => {
+    if (!attemptId) return;
+    
+    try {
+      setLoading(true);
+      const data = await getAttemptResults(attemptId);
+      setResult(data);
+    } catch (error: any) {
+      console.error("Error fetching result:", error);
+      toast.error("Không thể tải kết quả bài kiểm tra");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTime = (startedAt: string, completedAt: string) => {
+    const start = new Date(startedAt).getTime();
+    const end = new Date(completedAt).getTime();
+    const seconds = Math.floor((end - start) / 1000);
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${minutes} phút ${secs} giây`;
@@ -118,7 +136,10 @@ export default function QuizResultPage() {
     );
   }
 
-  const scoreBadge = getScoreBadge(result.score);
+  const score = Math.round(result.attempt.percentage);
+  const correctCount = result.results.filter((r) => r.isCorrect).length;
+  const totalQuestions = result.results.length;
+  const scoreBadge = getScoreBadge(score);
 
   return (
     <div className="max-w-[1300px] mx-auto py-12 px-4">
@@ -138,9 +159,9 @@ export default function QuizResultPage() {
           <div className="text-center py-8 bg-muted rounded-lg">
             <div className="flex items-center justify-center gap-3 mb-2">
               <span
-                className={`text-6xl font-bold ${getScoreColor(result.score)}`}
+                className={`text-6xl font-bold ${getScoreColor(score)}`}
               >
-                {result.score}
+                {score}
               </span>
               <span className="text-3xl text-muted-foreground">/100</span>
             </div>
@@ -155,7 +176,7 @@ export default function QuizResultPage() {
               <CardContent className="p-4 text-center">
                 <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-green-600">
-                  {result.correctCount}
+                  {correctCount}
                 </div>
                 <div className="text-sm text-muted-foreground">Câu đúng</div>
               </CardContent>
@@ -165,7 +186,7 @@ export default function QuizResultPage() {
               <CardContent className="p-4 text-center">
                 <XCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-red-600">
-                  {result.totalQuestions - result.correctCount}
+                  {totalQuestions - correctCount}
                 </div>
                 <div className="text-sm text-muted-foreground">Câu sai</div>
               </CardContent>
@@ -175,7 +196,7 @@ export default function QuizResultPage() {
               <CardContent className="p-4 text-center">
                 <Clock className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-blue-600">
-                  {formatTime(result.timeSpent)}
+                  {formatTime(result.attempt.startedAt, result.attempt.completedAt)}
                 </div>
                 <div className="text-sm text-muted-foreground">Thời gian</div>
               </CardContent>
@@ -190,28 +211,30 @@ export default function QuizResultPage() {
                   <span className="text-muted-foreground">
                     Tổng số câu hỏi:
                   </span>
-                  <span className="font-semibold">{result.totalQuestions}</span>
+                  <span className="font-semibold">{totalQuestions}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Số câu đúng:</span>
                   <span className="font-semibold text-green-600">
-                    {result.correctCount}
+                    {correctCount}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Số câu sai:</span>
                   <span className="font-semibold text-red-600">
-                    {result.totalQuestions - result.correctCount}
+                    {totalQuestions - correctCount}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tỷ lệ đúng:</span>
                   <span className="font-semibold">
-                    {(
-                      (result.correctCount / result.totalQuestions) *
-                      100
-                    ).toFixed(1)}
-                    %
+                    {result.attempt.percentage.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Điểm số:</span>
+                  <span className="font-semibold">
+                    {result.attempt.totalScore}/{result.attempt.maxScore}
                   </span>
                 </div>
               </div>
