@@ -169,7 +169,7 @@ export function QuizForm({ value, onChange, error, mode = "create" }: QuizFormPr
                 {error?.questions && (
                     <p className="text-xs text-red-500">{error.questions}</p>
                 )}
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                <div className="space-y-4">
                     {value.questions.map((q, qi) => (
                         <Card key={qi} className="border">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -195,6 +195,7 @@ export function QuizForm({ value, onChange, error, mode = "create" }: QuizFormPr
                                 />
                                 <Input
                                     type="number"
+                                    min="0"
                                     placeholder="Điểm"
                                     value={q.points}
                                     onChange={(e) => updateQuestion(qi, { points: e.target.value })}

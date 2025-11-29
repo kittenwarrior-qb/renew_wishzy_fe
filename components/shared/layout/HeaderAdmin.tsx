@@ -1,38 +1,55 @@
-"use client"
-import React from "react"
-import { usePathname } from "next/navigation"
-import { Search, LogOut, User } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useAppStore } from "@/stores/useAppStore"
-import { useQueryHook } from "@/src/hooks/useQueryHook"
-import { courseService } from "@/src/services/course"
-import { CourseItemType } from "@/src/types/course/course-item.types"
+"use client";
+import React from "react";
+import { usePathname } from "next/navigation";
+import { Search, LogOut, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAppStore } from "@/stores/useAppStore";
+import { useQueryHook } from "@/src/hooks/useQueryHook";
+import { courseService } from "@/src/services/course";
+import { CourseItemType } from "@/src/types/course/course-item.types";
 
 export default function HeaderAdmin() {
-  const pathname = usePathname() || ""
-  const { user, logout } = useAppStore()
-  const { primaryAction } = useAdminHeaderStore()
+  const pathname = usePathname() || "";
+  const { user, logout } = useAppStore();
+  const { primaryAction } = useAdminHeaderStore();
   const initials = React.useMemo(() => {
-    if (user?.fullName) return user.fullName.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase()
-    if (user?.email) return user.email[0]?.toUpperCase() ?? "U"
-    return "U"
-  }, [user])
+    if (user?.fullName)
+      return user.fullName
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+    if (user?.email) return user.email[0]?.toUpperCase() ?? "U";
+    return "U";
+  }, [user]);
 
   // Extract course ID from pathname if in instructor/course/[id]
   // Handle both with and without locale prefix
-  const courseIdMatch = pathname.match(/(?:\/[^/]+)?\/instructor\/course\/([^/]+)/)
-  const courseId = courseIdMatch?.[1]
+  const courseIdMatch = pathname.match(
+    /(?:\/[^/]+)?\/instructor\/course\/([^/]+)/
+  );
+  const courseId = courseIdMatch?.[1];
 
   const { data: course } = useQueryHook<CourseItemType>(
-    courseId ? ['course', courseId, 'header'] : ['course', 'header', 'disabled'],
+    courseId
+      ? ["course", courseId, "header"]
+      : ["course", "header", "disabled"],
     () => courseService.getCourseById(courseId!),
     { enabled: !!courseId }
-  )
+  );
   return (
     <header className="sticky top-0 z-20 h-14 border-b bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center gap-3 px-3 md:px-6">
       <SidebarTrigger className="mr-2 md:hidden" />
@@ -54,17 +71,26 @@ export default function HeaderAdmin() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="gap-2">
               <Avatar className="h-7 w-7">
-                <AvatarImage src={user?.avatar ?? ""} alt={user?.fullName ?? user?.email ?? "User"} />
+                <AvatarImage
+                  src={user?.avatar ?? ""}
+                  alt={user?.fullName ?? user?.email ?? "User"}
+                />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-60">
-            <DropdownMenuLabel className="text-base">Tài khoản</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-base">
+              Tài khoản
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <div className="px-2 pb-2">
-              <div className="text-sm font-medium">{user?.fullName ?? "Người dùng"}</div>
-              <div className="text-xs text-muted-foreground">{user?.email ?? "user@example.com"}</div>
+              <div className="text-sm font-medium">
+                {user?.fullName ?? "Người dùng"}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {user?.email ?? "user@example.com"}
+              </div>
             </div>
             <DropdownMenuItem>
               <User className="mr-2 size-4" />
@@ -79,72 +105,75 @@ export default function HeaderAdmin() {
         </DropdownMenu>
       </div>
     </header>
-  )
+  );
 }
 
 function mapAdminPathToLabel(subpath: string): string {
   const map: Record<string, string> = {
     "categories/create": "Tạo danh mục",
-    "categories": "Danh mục",
+    categories: "Danh mục",
     "categories/trash": "Danh mục / Thùng rác",
     "users/students": "Học sinh",
     "users/teachers": "Giảng viên",
     "users/admins": "Quản trị viên",
-    "courses": "Khoá học",
-    "courses/create": "Tạo khoá học",
-    "courses/:id": "Khoá học",
-    "exams": "Bài kiểm tra",
+    exams: "Bài kiểm tra",
     "communication/reviews": "Đánh giá",
     "communication/comments": "Bình luận",
-    "posts": "Danh sách bài viết",
+    posts: "Danh sách bài viết",
     "posts/categories": "Danh mục bài viết",
     "posts/comments": "Bình luận bài viết",
-    "orders": "Lịch sử thanh toán",
-    "banners": "Banner",
-    "vouchers": "Voucher",
-    "settings": "Thiết lập",
-  }
-  const keys = Object.keys(map).sort((a, b) => b.length - a.length)
-  for (const k of keys) if (subpath.startsWith(k)) return map[k]
-  return subpath
+    orders: "Lịch sử thanh toán",
+    banners: "Banner",
+    vouchers: "Voucher",
+    settings: "Thiết lập",
+  };
+  const keys = Object.keys(map).sort((a, b) => b.length - a.length);
+  for (const k of keys) if (subpath.startsWith(k)) return map[k];
+  return "";
 }
 
 function mapInstructorPathToLabel(subpath: string): string {
   const map: Record<string, string> = {
     "user/students": "Học viên",
-    "courses": "Khoá học",
-  }
-  const keys = Object.keys(map).sort((a, b) => b.length - a.length)
-  for (const k of keys) if (subpath.startsWith(k)) return map[k]
-  return subpath
+    courses: "Khoá học",
+  };
+  const keys = Object.keys(map).sort((a, b) => b.length - a.length);
+  for (const k of keys) if (subpath.startsWith(k)) return map[k];
+  return subpath;
 }
 
-function HeaderTitle({ pathname, courseName }: { pathname: string; courseName?: string }) {
-  const parts = pathname.split("/").filter(Boolean)
-  const adminIndex = parts.indexOf("admin")
-  const instructorIndex = parts.indexOf("instructor")
-  
+function HeaderTitle({
+  pathname,
+  courseName,
+}: {
+  pathname: string;
+  courseName?: string;
+}) {
+  const parts = pathname.split("/").filter(Boolean);
+  const adminIndex = parts.indexOf("admin");
+  const instructorIndex = parts.indexOf("instructor");
+
   // Check if we're in instructor/course/[id] route
   if (instructorIndex !== -1) {
-    const rest = parts.slice(instructorIndex + 1)
+    const rest = parts.slice(instructorIndex + 1);
     if (rest[0] === "course" && rest[1] && courseName) {
-      return <span>{courseName}</span>
+      return <span>{courseName}</span>;
     }
   }
-  
+
   if (adminIndex !== -1) {
-    const rest = parts.slice(adminIndex + 1)
-    if (rest.length === 0) return <span>Tổng quan</span>
-    const label = mapAdminPathToLabel(rest.join("/"))
-    return <span>{label}</span>
+    const rest = parts.slice(adminIndex + 1);
+    if (rest.length === 0) return <span>Tổng quan</span>;
+    const label = mapAdminPathToLabel(rest.join("/"));
+    return <span>{label}</span>;
   }
-  
+
   if (instructorIndex !== -1) {
-    const rest = parts.slice(instructorIndex + 1)
-    if (rest.length === 0) return <span>Tổng quan</span>
-    const label = mapInstructorPathToLabel(rest.join("/"))
-    return <span>{label}</span>
+    const rest = parts.slice(instructorIndex + 1);
+    if (rest.length === 0) return <span>Tổng quan</span>;
+    const label = mapInstructorPathToLabel(rest.join("/"));
+    return <span>{label}</span>;
   }
-  
-  return <span>Admin</span>
+
+  return <span>Admin</span>;
 }

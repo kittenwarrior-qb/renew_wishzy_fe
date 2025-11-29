@@ -1,8 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { useParams } from "next/navigation"
-import { Pencil, Trash2 } from "lucide-react"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { Plus, Search, Pencil, Trash2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
@@ -13,7 +15,6 @@ import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 import {
   useAdminQuizList,
   useDeleteAdminQuiz,
-  useCreateAdminQuiz,
   useUpdateAdminQuiz,
 } from "@/components/shared/quiz/useQuiz"
 import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog"
@@ -23,20 +24,35 @@ import type { AdminQuiz } from "@/types/quiz"
 export default function Page() {
   const params = useParams<{ locale: string }>()
   const locale = params?.locale || "vi"
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { setPrimaryAction } = useAdminHeaderStore()
 
-  const [page, setPage] = React.useState(1)
-  const [limit, setLimit] = React.useState(10)
+  // Read initial values from URL or use defaults
+  const initialPage = parseInt(searchParams.get("page") || "1", 10)
+  const initialLimit = parseInt(searchParams.get("limit") || "10", 10)
+  const initialSearch = searchParams.get("search") || ""
+
+  const [page, setPage] = React.useState(initialPage)
+  const [limit, setLimit] = React.useState(initialLimit)
+  const [search, setSearch] = React.useState(initialSearch)
+
+  // Sync URL when page, limit, or search changes
+  const updateURL = React.useCallback((newPage: number, newLimit: number, newSearch: string) => {
+    const params = new URLSearchParams()
+    params.set("page", String(newPage))
+    params.set("limit", String(newLimit))
+    if (newSearch) params.set("search", newSearch)
+    router.replace(`/${locale}/admin/exams?${params.toString()}`, { scroll: false })
+  }, [router, locale])
 
   const { data, isPending, isFetching, isError, refetch } = useAdminQuizList({ page, limit })
   const { mutate: deleteQuiz, isPending: deleting } = useDeleteAdminQuiz()
-  const { mutate: createQuiz, isPending: creating } = useCreateAdminQuiz()
   const { mutate: updateQuiz, isPending: updating } = useUpdateAdminQuiz()
 
   const [openDeleteConfirm, setOpenDeleteConfirm] = React.useState(false)
   const [target, setTarget] = React.useState<AdminQuiz | null>(null)
 
-  const [openCreate, setOpenCreate] = React.useState(false)
   const [openEdit, setOpenEdit] = React.useState(false)
   const [editing, setEditing] = React.useState<AdminQuiz | null>(null)
 
@@ -56,89 +72,52 @@ export default function Page() {
   const currentPage = data?.page ?? page
   const pageSize = data?.limit ?? limit
 
-  const resetForm = React.useCallback(() => {
-    setForm({
-      title: "",
-      description: "",
-      isPublic: true,
-      isFree: true,
-      price: 0,
-      timeLimit: "",
-      questions: [
-        {
-          questionText: "",
-          points: "",
-          answerOptions: [
-            { optionText: "", isCorrect: true },
-            { optionText: "", isCorrect: false },
-          ],
-        },
-      ],
-    })
-    setErrors({})
-  }, [])
+  // Filter items based on search
+  const filteredItems = React.useMemo(() => {
+    if (!search) return items
+    const searchLower = search.toLowerCase()
+    return items.filter((item) => 
+      item.title?.toLowerCase().includes(searchLower) ||
+      item.description?.toLowerCase().includes(searchLower)
+    )
+  }, [items, search])
 
-  const validateCreate = (v: QuizFormValue): QuizFormError => {
-    const e: QuizFormError = {}
-    if (!v.title.trim()) e.title = "Vui lòng nhập tiêu đề"
-
-    const priceNum = v.price === "" ? 0 : Number(v.price)
-    if (Number.isNaN(priceNum) || priceNum < 0) e.price = "Giá không hợp lệ"
-
-    const tlNum = v.timeLimit === "" ? 0 : Number(v.timeLimit)
-    if (tlNum <= 0) e.timeLimit = "Thời gian làm phải > 0"
-
-    if (!v.questions.length) {
-      e.questions = "Cần ít nhất 1 câu hỏi"
-      return e
-    }
-
-    for (let i = 0; i < v.questions.length; i++) {
-      const q = v.questions[i]
-      if (!q.questionText.trim()) {
-        e.questions = `Câu hỏi ${i + 1} thiếu nội dung`
-        break
-      }
-      const pts = q.points === "" ? 0 : Number(q.points)
-      if (pts <= 0) {
-        e.questions = `Điểm của câu hỏi ${i + 1} phải > 0`
-        break
-      }
-      if (!q.answerOptions || q.answerOptions.length < 2) {
-        e.questions = `Câu hỏi ${i + 1} cần ít nhất 2 đáp án`
-        break
-      }
-      const hasCorrect = q.answerOptions.some((a) => a.isCorrect)
-      if (!hasCorrect) {
-        e.questions = `Câu hỏi ${i + 1} cần ít nhất 1 đáp án đúng`
-        break
-      }
-      const hasEmpty = q.answerOptions.some((a) => !a.optionText.trim())
-      if (hasEmpty) {
-        e.questions = `Một số đáp án của câu hỏi ${i + 1} còn trống`
-        break
-      }
-    }
-
-    return e
-  }
+  // Debounced search to avoid updating URL too frequently
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      updateURL(page, limit, search)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search, page, limit, updateURL])
 
   React.useEffect(() => {
-    setPrimaryAction({
-      label: "Thêm bài kiểm tra",
-      variant: "default",
-      onClick: () => {
-        resetForm()
-        setOpenCreate(true)
-      },
-    })
+    setPrimaryAction(null)
 
-    return () => setPrimaryAction(null)
   }, [setPrimaryAction])
 
   return (
     <div className="relative p-4 md:p-6">
       <LoadingOverlay show={isPending || isFetching} />
+
+      {/* Search and Actions Bar */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Tìm kiếm bài kiểm tra..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button
+          onClick={() => router.push(`/${locale}/admin/exams/create`)}
+          className="shrink-0"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Thêm bài kiểm tra
+        </Button>
+      </div>
 
       {isError ? (
         <AdminDataErrorState
@@ -256,17 +235,21 @@ export default function Page() {
           return (
             <DynamicTable
               columns={columns}
-              data={items as any}
+              data={filteredItems as any}
               loading={isPending || isFetching}
               pagination={{
                 totalItems: total,
                 currentPage,
                 itemsPerPage: pageSize,
-                onPageChange: (np) => setPage(np),
+                onPageChange: (np) => {
+                  setPage(np)
+                  updateURL(np, limit, search)
+                },
                 pageSizeOptions: [10, 20, 50],
                 onPageSizeChange: (sz) => {
                   setLimit(sz)
                   setPage(1)
+                  updateURL(1, sz, search)
                 },
               }}
             />
@@ -306,55 +289,6 @@ export default function Page() {
           )
         }}
       />
-
-      {/* Create Dialog */}
-      <AdminActionDialog
-        open={openCreate}
-        onOpenChange={setOpenCreate}
-        title="Thêm bài kiểm tra"
-        confirmText={creating ? "Đang lưu..." : "Lưu"}
-        loading={creating}
-        position="top"
-        confirmVariant="default"
-        onConfirm={() => {
-          const e = validateCreate(form)
-          setErrors(e)
-          if (Object.keys(e).length) return
-
-          createQuiz(
-            {
-              title: form.title.trim(),
-              description: form.description?.trim() || undefined,
-              isPublic: !!form.isPublic,
-              isFree: !!form.isFree,
-              price: form.price === "" ? 0 : Number(form.price),
-              timeLimit: form.timeLimit === "" ? undefined : Number(form.timeLimit),
-              questions: form.questions.map((q, idx) => ({
-                questionText: q.questionText.trim(),
-                points: q.points === "" ? 1 : Number(q.points),
-                answerOptions: q.answerOptions.map((a) => ({
-                  optionText: a.optionText.trim(),
-                  isCorrect: !!a.isCorrect,
-                })),
-              })),
-            },
-            {
-              onSuccess: () => {
-                setOpenCreate(false)
-                notify({ title: "Đã tạo", variant: "success" })
-              },
-              onError: (err: any) =>
-                notify({
-                  title: "Lỗi",
-                  description: String(err?.message || "Không thể tạo bài kiểm tra"),
-                  variant: "destructive",
-                }),
-            },
-          )
-        }}
-      >
-        <QuizForm value={form} onChange={setForm} error={errors} mode="create" />
-      </AdminActionDialog>
 
       {/* Edit Dialog */}
       <AdminActionDialog

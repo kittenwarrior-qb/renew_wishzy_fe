@@ -22,18 +22,20 @@ export type User = {
 };
 
 export type UserListResponse = {
-  data: {
-    items: User[];
-    pagination: {
-      totalPage: number;
-      totalItems: number;
-      currentPage: number;
-      itemsPerPage: number;
-    };
-  } | User[];
+  data:
+    | {
+        items: User[];
+        pagination: {
+          totalPage: number;
+          totalItems: number;
+          currentPage: number;
+          itemsPerPage: number;
+        };
+      }
+    | User[];
 };
 
-export type InstructorStatus = 'approved' | 'rejected' | 'pending';
+export type InstructorStatus = "approved" | "rejected" | "pending";
 
 const BASE = "/users";
 
@@ -58,12 +60,20 @@ export const usersService = {
     const res = await api.delete(`${BASE}/${id}`);
     return res.data;
   },
+  async listInstructors(params?: Record<string, any>) {
+    const res = await api.get(`${BASE}/instructors/list`, { params });
+    return res.data;
+  },
+  async listPendingInstructors(params?: Record<string, any>) {
+    const res = await api.get(`${BASE}/pending-instructors`, { params });
+    return res.data;
+  },
   async approveInstructor(id: string) {
-    const res = await api.post(`${BASE}/${id}/instructor/approve`);
+    const res = await api.patch(`${BASE}/${id}/approve-instructor`);
     return res.data;
   },
   async rejectInstructor(id: string, data?: { reason?: string }) {
-    const res = await api.post(`${BASE}/${id}/instructor/reject`, data ?? {});
+    const res = await api.patch(`${BASE}/${id}/reject-instructor`, data ?? {});
     return res.data;
   },
 };

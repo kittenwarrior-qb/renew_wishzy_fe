@@ -1,14 +1,14 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { useUserList } from "@/components/shared/user/useUser"
+import { useUserList, useUserDetail } from "@/components/shared/user/useUser"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Eye, Search, RotateCcw } from "lucide-react"
 import { useAppStore } from "@/stores/useAppStore"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
 import QueryController from "@/components/shared/common/QueryController"
@@ -28,6 +28,10 @@ export default function Page() {
     q: searchParams.get("q") || '',
     verified: (searchParams.get("verified") as 'all' | 'verified' | 'unverified' | null) || 'all',
   }))
+
+  const [selectedStudentId, setSelectedStudentId] = React.useState<string | null>(null)
+  const [openDetailModal, setOpenDetailModal] = React.useState(false)
+  const { data: studentDetail, isLoading: isLoadingDetail } = useUserDetail(selectedStudentId || undefined)
 
   React.useEffect(() => {
     const qs = new URLSearchParams()
@@ -52,39 +56,46 @@ export default function Page() {
   const total = data?.total ?? 0
   const baseIndex = (page - 1) * limit
 
+  // Debug logs
+  React.useEffect(() => {
+    console.log('📋 User list data:', data)
+    console.log('📋 Items:', items)
+  }, [data, items])
+
+  React.useEffect(() => {
+    console.log('👤 Selected student ID:', selectedStudentId)
+    console.log('👤 Student detail data:', studentDetail)
+    console.log('👤 Is loading detail:', isLoadingDetail)
+  }, [selectedStudentId, studentDetail, isLoadingDetail])
+
   return (
-    <div className="relative">
+    <div className="relative p-4 md:p-6">
       <QueryController initial={{ type: queryState.type, q: queryState.q, verified: queryState.verified }} debounceMs={300} onChange={(q: any) => { setQueryState(q); setPage(1) }}>
         {({ query, setQuery, reset }) => (
-          <form className="mb-3 flex flex-col md:flex-row md:items-center gap-2" onSubmit={(e) => e.preventDefault()}>
-            <Select value={query.type} onValueChange={(v) => setQuery({ type: v as any })}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Chọn kiểu tìm kiếm" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Theo tên</SelectItem>
-                <SelectItem value="email">Theo email</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="relative md:w-64">
-              <Input placeholder={query.type === 'name' ? 'Tên học sinh' : 'Email'} value={query.q || ''} onChange={(e) => setQuery({ q: e.target.value })} className="pr-10" />
-              <Button className="cursor-pointer absolute right-1 top-1/2 -translate-y-1/2" variant="outline" size="icon" aria-label="Tìm kiếm" type="button">
-                <Search className="h-4 w-4" />
-              </Button>
+          <form className="mb-4 space-y-3" onSubmit={(e) => e.preventDefault()}>
+            <div className="flex gap-3">
+              <div className="space-y-2 flex-1 md:max-w-md">
+                <label className="text-sm font-medium">Từ khóa tìm kiếm</label>
+                <div className="relative">
+                  <Input placeholder={query.type === 'name' ? 'Nhập tên học sinh...' : 'Nhập email...'} value={query.q || ''} onChange={(e) => setQuery({ q: e.target.value })} className="h-10 pr-10" />
+                  <Button className="cursor-pointer absolute right-1 top-1/2 -translate-y-1/2" variant="outline" size="icon" aria-label="Tìm kiếm" type="button">
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Loại tìm kiếm</label>
+                <Select value={query.type} onValueChange={(v) => setQuery({ type: v as any })}>
+                  <SelectTrigger className="h-10 w-40">
+                    <SelectValue placeholder="Chọn kiểu tìm kiếm" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" sideOffset={4}>
+                    <SelectItem value="name">Theo tên</SelectItem>
+                    <SelectItem value="email">Theo email</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <Select value={query.verified} onValueChange={(v) => setQuery({ verified: v as any })}>
-              <SelectTrigger className="h-9 w-32 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="verified">Đã xác minh</SelectItem>
-                <SelectItem value="unverified">Chưa xác minh</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button className="cursor-pointer" variant="outline" size="icon" aria-label="Đặt lại" onClick={() => { reset(); setPage(1) }}>
-              <RotateCcw className="h-4 w-4" />
-            </Button>
           </form>
         )}
       </QueryController>
@@ -146,11 +157,21 @@ export default function Page() {
             )
           },
           {
-            key: 'actions', title: 'Hành động', align: 'center', type: 'action', render: (_v: unknown, r: StudentRow) => (
-              <Link href={`/${locale}/admin/users/students/${r.id}`} className="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-accent cursor-pointer" title="Xem chi tiết">
-                <Eye className="h-4 w-4" />
-              </Link>
-            )
+            key: 'actions', title: 'Hành động', align: 'center', type: 'action', render: (row: StudentRow) => {
+              return (
+                <button
+                  onClick={() => {
+                    setSelectedStudentId(String(row?.id))
+                    setOpenDetailModal(true)
+                  }}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-accent cursor-pointer"
+                  title="Xem chi tiết"
+                  type="button"
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
+              )
+            }
           },
         ]
         return (
@@ -172,6 +193,83 @@ export default function Page() {
           />
         )
       })()}
+
+      {/* Student Detail Modal */}
+      <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Thông tin chi tiết học viên</DialogTitle>
+          </DialogHeader>
+          {isLoadingDetail ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">Đang tải...</div>
+            </div>
+          ) : studentDetail ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                {studentDetail.avatar ? (
+                  <img
+                    src={studentDetail.avatar}
+                    alt={studentDetail.fullName}
+                    className="h-20 w-20 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center text-2xl font-semibold">
+                    {studentDetail.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-lg font-semibold">{studentDetail.fullName}</h3>
+                  <p className="text-sm text-muted-foreground">{studentDetail.email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">Trạng thái xác minh</label>
+                  <p>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${studentDetail.verified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {studentDetail.verified ? 'Đã xác minh' : 'Chưa xác minh'}
+                    </span>
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">Số điện thoại</label>
+                  <p className="text-sm">{studentDetail.phone || 'Chưa cập nhật'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">Ngày sinh</label>
+                  <p className="text-sm">
+                    {studentDetail.dob
+                      ? new Date(studentDetail.dob).toLocaleDateString('vi-VN')
+                      : 'Chưa cập nhật'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">Ngày tạo</label>
+                  <p className="text-sm">
+                    {studentDetail.createdAt
+                      ? new Date(studentDetail.createdAt).toLocaleDateString('vi-VN')
+                      : 'N/A'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">Cập nhật lần cuối</label>
+                  <p className="text-sm">
+                    {studentDetail.updatedAt
+                      ? new Date(studentDetail.updatedAt).toLocaleDateString('vi-VN')
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">Không tìm thấy thông tin</div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

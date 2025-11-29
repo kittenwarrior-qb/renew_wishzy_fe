@@ -10,6 +10,8 @@ const USER_ENDPOINTS = {
   base: '/users',
   byId: (id: string) => `/users/${id}`,
   instructorStudents: '/users/instructors/my-students',
+  approveInstructor: (id: string) => `/users/${id}/approve-instructor`,
+  rejectInstructor: (id: string) => `/users/${id}/reject-instructor`,
 } as const;
 
 export const userService = {
