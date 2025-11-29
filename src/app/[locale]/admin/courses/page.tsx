@@ -1,127 +1,248 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
-import Switch from "@/components/ui/switch"
-import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog"
-import Link from "next/link"
-import { notify } from "@/components/shared/admin/Notifications"
-import { useAppStore } from "@/stores/useAppStore"
-import { useCourseList, useToggleCourseStatus, useDeleteCourse, type Course } from "@/components/shared/course/useCourse"
-import { useParentCategories } from "@/components/shared/category/useCategory"
-import { Plus, Pencil, Trash2, Inbox, ExternalLink, Image as ImageIcon } from "lucide-react"
-import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
-import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
-import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
+import * as React from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
-type CourseFormValue = Partial<Pick<Course, "name" | "price" | "level" | "totalDuration" | "categoryId" | "description" | "notes" | "thumbnail">>
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import Switch from "@/components/ui/switch";
+import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog";
+import Link from "next/link";
+import { notify } from "@/components/shared/admin/Notifications";
+import { useAppStore } from "@/stores/useAppStore";
+import {
+  useCourseList,
+  useToggleCourseStatus,
+  useDeleteCourse,
+  type Course,
+} from "@/components/shared/course/useCourse";
+import { useParentCategories } from "@/components/shared/category/useCategory";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Inbox,
+  ExternalLink,
+  Image as ImageIcon,
+} from "lucide-react";
+import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay";
+import DynamicTable, {
+  type Column,
+} from "@/components/shared/common/DynamicTable";
+import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore";
 
 export default function Page() {
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { theme } = useAppStore()
-  const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
-  const { setPrimaryAction } = useAdminHeaderStore()
+  const params = useParams<{ locale: string }>();
+  const locale = params?.locale || "vi";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { setPrimaryAction } = useAdminHeaderStore();
 
-  const [page, setPage] = React.useState<number>(Number(searchParams.get("page") || 1))
-  const [limit, setLimit] = React.useState<number>(Number(searchParams.get("limit") || 10))
-  const [name, setName] = React.useState<string>(searchParams.get("name") || "")
-  const [status, setStatus] = React.useState<string>(searchParams.get("status") || "__all")
-  const [level, setLevel] = React.useState<string>(searchParams.get("level") || "__all")
-  const [categoryId, setCategoryId] = React.useState<string>(searchParams.get("categoryId") || "__all")
+  const [page, setPage] = React.useState<number>(
+    Number(searchParams.get("page") || 1)
+  );
+  const [limit, setLimit] = React.useState<number>(
+    Number(searchParams.get("limit") || 10)
+  );
+  const [name, setName] = React.useState<string>(
+    searchParams.get("name") || ""
+  );
+  const [debouncedName, setDebouncedName] = React.useState<string>(
+    searchParams.get("name") || ""
+  );
+  const [status, setStatus] = React.useState<string>(
+    searchParams.get("status") || "__all"
+  );
+  const [level, setLevel] = React.useState<string>(
+    searchParams.get("level") || "__all"
+  );
+  const [categoryId, setCategoryId] = React.useState<string>(
+    searchParams.get("categoryId") || "__all"
+  );
 
-  const prevRef = React.useRef<{ page: number; limit: number; name?: string; status?: string; level?: string; categoryId?: string } | null>(null)
+  // Debounce name search
   React.useEffect(() => {
-    const qs = new URLSearchParams()
-    if (name) qs.append("name", name)
-    if (status && status !== "__all") qs.append("status", status)
-    if (level && level !== "__all") qs.append("level", level)
-    if (categoryId && categoryId !== "__all") qs.append("categoryId", categoryId)
-    qs.append("page", String(page))
-    qs.append("limit", String(limit))
-    const href = `/${locale}/admin/courses${qs.toString() ? `?${qs.toString()}` : ""}`
-    const prev = prevRef.current
-    const normStatus = status === "__all" ? undefined : status
-    const normLevel = level === "__all" ? undefined : level
-    const normCategoryId = categoryId === "__all" ? undefined : categoryId
-    const onlyPaging = !!prev && prev.name === (name || undefined) && prev.status === normStatus && prev.level === normLevel && prev.categoryId === normCategoryId && (prev.page !== page || prev.limit !== limit)
-    if (onlyPaging) router.push(href); else router.replace(href)
-    prevRef.current = { page, limit, name: name || undefined, status: normStatus, level: normLevel, categoryId: normCategoryId }
-  }, [page, limit, name, status, level, categoryId, locale, router])
+    const timer = setTimeout(() => {
+      setDebouncedName(name);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [name]);
 
-  const filter = React.useMemo(() => ({
-    page,
-    limit,
-    name: name || undefined,
-    status: status !== '__all' ? (status === 'true') : undefined,
-    courseLevel: level !== '__all' ? (level as 'beginner' | 'intermediate' | 'advanced') : undefined,
-    categoryId: categoryId !== '__all' ? categoryId : undefined,
-  }), [page, limit, name, status, level, categoryId])
-  const { data, isPending, isFetching, isError } = useCourseList(filter)
-  const { data: parentsData } = useParentCategories()
-  const categories = (parentsData?.data ?? []) as Array<{ id: string; name: string }>
-  const items = (data?.data ?? []) as Course[]
-  const total = data?.total ?? 0
-  const currentPage = data?.page ?? page
-  const pageSize = data?.limit ?? limit
-  const totalPages = data?.totalPages ?? Math.ceil((total || 0) / (pageSize || 10))
+  const prevRef = React.useRef<{
+    page: number;
+    limit: number;
+    name?: string;
+    status?: string;
+    level?: string;
+    categoryId?: string;
+  } | null>(null);
+  React.useEffect(() => {
+    const qs = new URLSearchParams();
+    if (debouncedName) qs.append("name", debouncedName);
+    if (status && status !== "__all") qs.append("status", status);
+    if (level && level !== "__all") qs.append("level", level);
+    if (categoryId && categoryId !== "__all")
+      qs.append("categoryId", categoryId);
+    qs.append("page", String(page));
+    qs.append("limit", String(limit));
+    const href = `/${locale}/admin/courses${
+      qs.toString() ? `?${qs.toString()}` : ""
+    }`;
+    const prev = prevRef.current;
+    const normStatus = status === "__all" ? undefined : status;
+    const normLevel = level === "__all" ? undefined : level;
+    const normCategoryId = categoryId === "__all" ? undefined : categoryId;
+    const onlyPaging =
+      !!prev &&
+      prev.name === (debouncedName || undefined) &&
+      prev.status === normStatus &&
+      prev.level === normLevel &&
+      prev.categoryId === normCategoryId &&
+      (prev.page !== page || prev.limit !== limit);
+    if (onlyPaging) router.push(href);
+    else router.replace(href);
+    prevRef.current = {
+      page,
+      limit,
+      name: debouncedName || undefined,
+      status: normStatus,
+      level: normLevel,
+      categoryId: normCategoryId,
+    };
+  }, [page, limit, debouncedName, status, level, categoryId, locale, router]);
 
-  const { mutate: toggleStatus, isPending: toggling } = useToggleCourseStatus()
-  const { mutate: deleteCourse, isPending: deleting } = useDeleteCourse()
+  const filter = React.useMemo(
+    () => ({
+      page,
+      limit,
+      name: debouncedName || undefined,
+      status: status !== "__all" ? status === "true" : undefined,
+      courseLevel:
+        level !== "__all"
+          ? (level as "beginner" | "intermediate" | "advanced")
+          : undefined,
+      categoryId: categoryId !== "__all" ? categoryId : undefined,
+    }),
+    [page, limit, debouncedName, status, level, categoryId]
+  );
+  const { data, isPending, isFetching, isError } = useCourseList(filter);
+  const { data: parentsData } = useParentCategories();
+  const categories = (parentsData?.data ?? []) as Array<{
+    id: string;
+    name: string;
+  }>;
+  const items = (data?.data ?? []) as Course[];
+  const total = data?.total ?? 0;
+  const currentPage = data?.page ?? page;
+  const pageSize = data?.limit ?? limit;
+  const totalPages =
+    data?.totalPages ?? Math.ceil((total || 0) / (pageSize || 10));
 
-  const [openDelete, setOpenDelete] = React.useState(false)
-  const [deletingTarget, setDeletingTarget] = React.useState<Course | null>(null)
-  const onConfirmDelete = (c: Course) => { setDeletingTarget(c); setOpenDelete(true) }
+  const { mutate: toggleStatus, isPending: toggling } = useToggleCourseStatus();
+  const { mutate: deleteCourse, isPending: deleting } = useDeleteCourse();
+
+  const [openDelete, setOpenDelete] = React.useState(false);
+  const [deletingTarget, setDeletingTarget] = React.useState<Course | null>(
+    null
+  );
+  const onConfirmDelete = (c: Course) => {
+    setDeletingTarget(c);
+    setOpenDelete(true);
+  };
 
   React.useEffect(() => {
-    setPrimaryAction({
-      label: "Thêm khoá học",
-      variant: "default",
-      onClick: () => router.push(`/${locale}/admin/courses/create`),
-    })
-
-    return () => setPrimaryAction(null)
-  }, [setPrimaryAction, router, locale])
+    setPrimaryAction(null);
+    return () => setPrimaryAction(null);
+  }, [setPrimaryAction]);
 
   return (
     <div className="relative py-4 px-4 md:px-6">
       <div className="mb-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-2 items-center">
-            <Input value={name} onChange={(e) => { setName(e.target.value); setPage(1) }} placeholder="Tìm theo tên" className="h-9 w-52" />
-            {/* <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1) }}>
-              <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all">Tất cả</SelectItem>
-                <SelectItem value="true">Đã xuất bản</SelectItem>
-                <SelectItem value="false">Nháp</SelectItem>
-              </SelectContent>
-            </Select> */}
-            <Select value={level} onValueChange={(v) => { setLevel(v); setPage(1) }}>
-              <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Cấp độ" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all">Tất cả</SelectItem>
-                <SelectItem value="beginner">Beginner</SelectItem>
-                <SelectItem value="intermediate">Intermediate</SelectItem>
-                <SelectItem value="advanced">Advanced</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={categoryId} onValueChange={(v) => { setCategoryId(v); setPage(1) }}>
-              <SelectTrigger className="h-9 w-56"><SelectValue placeholder="Danh mục" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all">Tất cả</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={String((c as any).id)} value={String((c as any).id)}>{(c as any).name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-4 items-end justify-between">
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="search-name" className="text-sm font-medium">
+                  Tìm kiếm
+                </label>
+                <Input
+                  id="search-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Nhập tên khoá học..."
+                  className="h-9 w-64"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="filter-level" className="text-sm font-medium">
+                  Cấp độ
+                </label>
+                <Select
+                  value={level}
+                  onValueChange={(v) => {
+                    setLevel(v);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger id="filter-level" className="h-9 w-44">
+                    <SelectValue placeholder="Chọn cấp độ" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all">Tất cả</SelectItem>
+                    <SelectItem value="beginner">Beginner</SelectItem>
+                    <SelectItem value="intermediate">Intermediate</SelectItem>
+                    <SelectItem value="advanced">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="filter-category"
+                  className="text-sm font-medium"
+                >
+                  Danh mục
+                </label>
+                <Select
+                  value={categoryId}
+                  onValueChange={(v) => {
+                    setCategoryId(v);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger id="filter-category" className="h-9 w-56">
+                    <SelectValue placeholder="Chọn danh mục" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all">Tất cả</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem
+                        key={String((c as any).id)}
+                        value={String((c as any).id)}
+                      >
+                        {(c as any).name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button
+              onClick={() => router.push(`/${locale}/admin/courses/create`)}
+              className="h-9"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Thêm khoá học
+            </Button>
           </div>
         </div>
       </div>
@@ -130,7 +251,9 @@ export default function Page() {
         <LoadingOverlay show={isPending || isFetching} />
 
         {isError ? (
-          <div className="py-16 text-center text-sm text-destructive">Lỗi tải dữ liệu</div>
+          <div className="py-16 text-center text-sm text-destructive">
+            Lỗi tải dữ liệu
+          </div>
         ) : items.length === 0 ? (
           <div className="py-16 flex items-center justify-center">
             <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
@@ -142,9 +265,9 @@ export default function Page() {
           (() => {
             const columns: Column<Course & any>[] = [
               {
-                key: 'thumbnail',
-                label: 'Ảnh',
-                type: 'short',
+                key: "thumbnail",
+                label: "Ảnh",
+                type: "short",
                 render: (row: Course) => (
                   <Dialog>
                     <DialogTrigger asChild>
@@ -184,9 +307,9 @@ export default function Page() {
                 ),
               },
               {
-                key: 'name',
-                label: 'Tên',
-                type: 'text',
+                key: "name",
+                label: "Tên",
+                type: "text",
                 render: (row: Course) => (
                   <Link
                     href={`/${locale}/admin/courses/${row.id}`}
@@ -201,43 +324,44 @@ export default function Page() {
                 ),
               },
               {
-                key: 'category',
-                label: 'Danh mục',
-                type: 'short',
-                render: (row: Course) => row.category?.name || '-',
+                key: "category",
+                label: "Danh mục",
+                type: "short",
+                render: (row: Course) => row.category?.name || "-",
               },
               {
-                key: 'price',
-                label: 'Giá',
-                type: 'number',
-                render: (row: Course) => Number(row.price).toLocaleString() + ' VNĐ',
+                key: "price",
+                label: "Giá",
+                type: "number",
+                render: (row: Course) =>
+                  Number(row.price).toLocaleString() + " VNĐ",
               },
               {
-                key: 'level',
-                label: 'Cấp độ',
-                type: 'short',
+                key: "level",
+                label: "Cấp độ",
+                type: "short",
                 render: (row: Course) => {
-                  const level = String(row.level || '').toLowerCase()
-                  const base = "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium"
-                  const color = level === 'beginner'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : level === 'intermediate'
-                      ? 'bg-amber-50 text-amber-700 border-amber-200'
-                      : level === 'advanced'
-                        ? 'bg-sky-50 text-sky-700 border-sky-200'
-                        : 'bg-muted text-muted-foreground border-transparent'
+                  const level = String(row.level || "").toLowerCase();
+                  const base =
+                    "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium";
+                  const color =
+                    level === "beginner"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : level === "intermediate"
+                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                      : level === "advanced"
+                      ? "bg-sky-50 text-sky-700 border-sky-200"
+                      : "bg-muted text-muted-foreground border-transparent";
 
                   return (
-                    <span className={`${base} ${color}`}>
-                      {level || '-'}
-                    </span>
-                  )
+                    <span className={`${base} ${color}`}>{level || "-"}</span>
+                  );
                 },
               },
               {
-                key: 'status',
-                label: 'Trạng thái',
-                type: 'short',
+                key: "status",
+                label: "Trạng thái",
+                type: "short",
                 render: (row: Course) => (
                   <div className="flex flex-col items-center gap-1">
                     <Switch
@@ -248,24 +372,28 @@ export default function Page() {
                           { id: String(row.id) },
                           {
                             onError: (e: any) => {
-                              const backendMessage = e?.response?.data?.message as string | undefined
-                              const statusCode = e?.response?.status as number | undefined
+                              const backendMessage = e?.response?.data
+                                ?.message as string | undefined;
+                              const statusCode = e?.response?.status as
+                                | number
+                                | undefined;
 
                               const isUnauthorizedToggle =
                                 statusCode === 403 ||
-                                backendMessage === "You are not authorized to perform this action on this course"
+                                backendMessage ===
+                                  "You are not authorized to perform this action on this course";
 
                               const description = isUnauthorizedToggle
                                 ? "Bạn không có quyền thay đổi trạng thái của khoá học này."
-                                : "Không thể cập nhật trạng thái khoá học. Vui lòng thử lại sau."
+                                : "Không thể cập nhật trạng thái khoá học. Vui lòng thử lại sau.";
 
                               notify({
                                 title: "Lỗi",
                                 description,
                                 variant: "destructive",
-                              })
+                              });
                             },
-                          },
+                          }
                         )
                       }
                       aria-label={row.status ? "Đang xuất bản" : "Đang nháp"}
@@ -277,15 +405,16 @@ export default function Page() {
                 ),
               },
               {
-                key: 'createdAt',
-                label: 'Ngày tạo',
-                type: 'short',
-                render: (row: Course) => new Date(row.createdAt).toLocaleDateString(),
+                key: "createdAt",
+                label: "Ngày tạo",
+                type: "short",
+                render: (row: Course) =>
+                  new Date(row.createdAt).toLocaleDateString(),
               },
               {
-                key: 'actions',
-                label: 'Hành động',
-                type: 'action',
+                key: "actions",
+                label: "Hành động",
+                type: "action",
                 render: (row: Course) => (
                   <div className="flex items-center justify-center gap-3">
                     <Link
@@ -305,7 +434,7 @@ export default function Page() {
                   </div>
                 ),
               },
-            ]
+            ];
             return (
               <DynamicTable
                 columns={columns}
@@ -318,12 +447,12 @@ export default function Page() {
                   onPageChange: (p) => setPage(p),
                   pageSizeOptions: [10, 20, 50],
                   onPageSizeChange: (sz) => {
-                    setLimit(sz)
-                    setPage(1)
+                    setLimit(sz);
+                    setPage(1);
                   },
                 }}
               />
-            )
+            );
           })()
         )}
       </div>
@@ -333,19 +462,34 @@ export default function Page() {
         open={openDelete}
         onOpenChange={setOpenDelete}
         title="Xác nhận xoá"
-        description={<span>Bạn có chắc muốn xoá khoá học "<b>{deletingTarget?.name}</b>"?</span>}
+        description={
+          <span>
+            Bạn có chắc muốn xoá khoá học "<b>{deletingTarget?.name}</b>"?
+          </span>
+        }
         confirmText={deleting ? "Đang xoá..." : "Xoá"}
         confirmVariant="destructive"
         loading={deleting}
         position="top"
         onConfirm={() => {
-          if (!deletingTarget) return
-          deleteCourse({ id: String(deletingTarget.id) }, {
-            onSuccess: () => { setOpenDelete(false); notify({ title: "Đã xoá", variant: "success" }) },
-            onError: (e: any) => notify({ title: "Lỗi", description: String(e?.message || "Không thể xoá"), variant: "destructive" })
-          })
+          if (!deletingTarget) return;
+          deleteCourse(
+            { id: String(deletingTarget.id) },
+            {
+              onSuccess: () => {
+                setOpenDelete(false);
+                notify({ title: "Đã xoá", variant: "success" });
+              },
+              onError: (e: any) =>
+                notify({
+                  title: "Lỗi",
+                  description: String(e?.message || "Không thể xoá"),
+                  variant: "destructive",
+                }),
+            }
+          );
         }}
       />
     </div>
-  )
+  );
 }

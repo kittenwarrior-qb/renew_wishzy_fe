@@ -129,7 +129,7 @@ export function DynamicTable<T extends Record<string, any>>({
         <div />
         {headerExtra}
       </div>
-      <div className="relative overflow-auto border rounded-md max-h-[70vh]">
+      <div className="relative overflow-auto border rounded-md">
         {loadingOverlay ? <LoadingOverlay show={effectiveLoading || !!isRefetching} /> : null}
         <table className="w-full min-w-max text-sm">
           <thead className={cn("bg-muted", headerClassName, stickyHeader && "sticky top-0 z-10")}>
