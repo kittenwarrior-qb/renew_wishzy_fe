@@ -35,7 +35,20 @@ export interface RevenueByPeriod {
 export interface TopSellingCourse extends CourseRevenue {
   rank: number;
 }
-
+export interface HotCourse {
+  courseId: string;
+  courseName: string;
+  thumbnail?: string;
+  categoryName?: string;
+  price: number;
+  totalRevenue: number;
+  totalSales: number;
+  totalStudents: number;
+  enrollmentCount: number;
+  averageRating: number;
+  rank: number;
+  createdAt: string;
+}
 export interface RevenueResponse {
   statistics: RevenueStatistics;
   topSellingCourses: TopSellingCourse[];
