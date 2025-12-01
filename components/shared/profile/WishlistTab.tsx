@@ -15,7 +15,7 @@ export const WishlistTab = () => {
     isLoading,
     refetch,
   } = useQueryHook(["wishlist"], () => wishlistService.getWishlist(), {
-    refetchOnMount: "always",
+    refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
 
