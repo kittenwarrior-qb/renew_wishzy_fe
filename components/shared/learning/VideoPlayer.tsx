@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from 'react';
 import videojs from 'video.js';
 import '@videojs/http-streaming';
 import 'video.js/dist/video-js.css';
+import '@/styles/video-player.css';
 import { Button } from '@/components/ui/button';
 import { SkipBack, SkipForward, Loader2 } from 'lucide-react';
 import type { 

@@ -89,11 +89,34 @@ const CourseCard = ({ course }: CourseCardProps) => {
     }
   };
 
-  const handleBuyNow = (e: React.MouseEvent) => {
+  const handleBuyNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    clearOrderList();
-    addToOrderList(course);
-    router.push("/checkout");
+    
+    const isFree = displayPrice === 0;
+    
+    if (isFree) {
+      // Khóa học miễn phí - enroll trực tiếp
+      if (!isAuthenticated) {
+        toast.error("Vui lòng đăng nhập để đăng ký khóa học");
+        router.push("/login");
+        return;
+      }
+      
+      try {
+        const { enrollmentService } = await import("@/src/services/enrollment");
+        await enrollmentService.enrollFreeCourse(course.id);
+        toast.success("Đăng ký khóa học thành công!");
+        router.push(`/learning/${course.id}`);
+      } catch (error: any) {
+        console.error('Failed to enroll:', error);
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi đăng ký khóa học');
+      }
+    } else {
+      // Khóa học có phí - qua checkout
+      clearOrderList();
+      addToOrderList(course);
+      router.push("/checkout");
+    }
   };
 
   const handleToggleWishlist = async (e: React.MouseEvent) => {
@@ -348,54 +371,68 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
             {/* Action Buttons */}
             <div className="space-y-2">
-              <Button
-                onClick={handleAddToCart}
-                className={`w-full ${
-                  isInCart
-                    ? "bg-green-600 hover:bg-green-600"
-                    : "bg-primary hover:bg-primary/90"
-                }`}
-                size="sm"
-                disabled={isInCart}
-              >
-                {isInCart ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Đã thêm vào giỏ
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Thêm vào giỏ
-                  </>
-                )}
-              </Button>
-              <div className="flex gap-2">
+              {displayPrice === 0 ? (
+                // Khóa học miễn phí - chỉ hiển thị nút đăng ký
                 <Button
                   onClick={handleBuyNow}
-                  className="flex-1"
-                  variant="outline"
+                  className="w-full bg-primary hover:bg-primary/90"
                   size="sm"
                 >
-                  Mua ngay
+                  Đăng ký học miễn phí
                 </Button>
-                <Button
-                  onClick={handleToggleWishlist}
-                  variant="outline"
-                  size="sm"
-                  className={`px-3 ${
-                    isInWishlist
-                      ? "bg-red-50 border-red-500 hover:bg-red-100 dark:bg-red-950 dark:border-red-500"
-                      : ""
-                  }`}
-                >
-                  <Heart
-                    className={`w-4 h-4 ${
-                      isInWishlist ? "fill-red-500 text-red-500" : ""
+              ) : (
+                // Khóa học có phí - hiển thị đầy đủ các nút
+                <>
+                  <Button
+                    onClick={handleAddToCart}
+                    className={`w-full ${
+                      isInCart
+                        ? "bg-green-600 hover:bg-green-600"
+                        : "bg-primary hover:bg-primary/90"
                     }`}
-                  />
-                </Button>
-              </div>
+                    size="sm"
+                    disabled={isInCart}
+                  >
+                    {isInCart ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Đã thêm vào giỏ
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Thêm vào giỏ
+                      </>
+                    )}
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleBuyNow}
+                      className="flex-1"
+                      variant="outline"
+                      size="sm"
+                    >
+                      Mua ngay
+                    </Button>
+                    <Button
+                      onClick={handleToggleWishlist}
+                      variant="outline"
+                      size="sm"
+                      className={`px-3 ${
+                        isInWishlist
+                          ? "bg-red-50 border-red-500 hover:bg-red-100 dark:bg-red-950 dark:border-red-500"
+                          : ""
+                      }`}
+                    >
+                      <Heart
+                        className={`w-4 h-4 ${
+                          isInWishlist ? "fill-red-500 text-red-500" : ""
+                        }`}
+                      />
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

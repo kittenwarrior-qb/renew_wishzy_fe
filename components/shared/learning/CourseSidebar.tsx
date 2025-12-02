@@ -87,7 +87,7 @@ export function CourseSidebar({
   };
 
   return (
-    <div className="w-full h-screen bg-card border-r flex flex-col sticky top-16">
+    <div className="w-full h-[calc(100vh-4rem)] bg-card border-r flex flex-col sticky top-16">
       {/* Header */}
       <div className="p-4 border-b shrink-0">
         <h2 className="font-semibold text-lg mb-2">{course.title}</h2>
@@ -105,7 +105,11 @@ export function CourseSidebar({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-thin">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden"
+           style={{
+             scrollbarWidth: 'thin',
+             scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) transparent'
+           }}>
         {course.chapters.map((chapter) => (
           <div key={chapter.id} className="border-b">
             <Button

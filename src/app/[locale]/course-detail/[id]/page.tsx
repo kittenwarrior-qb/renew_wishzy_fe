@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryHook } from "@/src/hooks/useQueryHook";
 import { courseService } from "@/src/services/course";
@@ -16,12 +16,14 @@ import CourseComment from "@/components/shared/course/CourseComment";
 import CourseCard from "@/components/shared/course/CourseCard";
 import { useAppStore } from "@/src/stores/useAppStore";
 import { enrollmentService } from "@/src/services/enrollment";
+import { toast } from "sonner";
 
 const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     const { id } = use(params);
     const { addToCart, cart, addToOrderList, clearOrderList, user } = useAppStore();
     const searchParams = useSearchParams();
     const router = useRouter();
+    const [isEnrolling, setIsEnrolling] = useState(false);
 
     const { data: course } = useQueryHook<CourseItemType>(
         ['course', id],
@@ -98,11 +100,33 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     const displayPrice = hasSale ? salePrice : originalPrice;
     
     const isInCart = cart.some(c => c.id === course.id);
+    const isFree = displayPrice === 0;
 
-    const handleBuyCourse = () => {
+    const handleBuyCourse = async () => {
         if (isEnrolled) {
             router.push(`/learning/${id}`);
+        } else if (isFree) {
+            // Khóa học miễn phí - enroll trực tiếp
+            if (!user) {
+                router.push('/auth/login');
+                return;
+            }
+            
+            setIsEnrolling(true);
+            try {
+                await enrollmentService.enrollFreeCourse(id);
+                toast.success('Đăng ký khóa học thành công! Chúc bạn học tập vui vẻ 🎉');
+                // Refresh enrollments
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } catch (error: any) {
+                console.error('Failed to enroll:', error);
+                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi đăng ký khóa học');
+                setIsEnrolling(false);
+            }
         } else {
+            // Khóa học có phí - qua checkout
             clearOrderList();
             addToOrderList(course);
             router.push('/checkout');
@@ -270,7 +294,7 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                             </div>
 
                             {/* Enroll Button */}
-                            {!isEnrolled && (
+                            {!isEnrolled && !isFree && (
                                 <div className="flex gap-2 mb-3">
                                     <div className="w-1/2">
                                         <Button variant="outline" className="w-full">Thêm vào yêu thích</Button>
@@ -290,12 +314,17 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                             <Button 
                                 className={`w-full transition-all hover:bg-primary/90 hover:scale-105 `}
                                 onClick={handleBuyCourse}
+                                disabled={isEnrolling}
                             >
-                                {isEnrolled 
-                                    ? progress > 0 
-                                        ? `Tiếp tục học (${progress.toFixed(0)}%)` 
-                                        : 'Bắt đầu học'
-                                    : 'Mua khóa học ngay'
+                                {isEnrolling 
+                                    ? 'Đang đăng ký...'
+                                    : isEnrolled 
+                                        ? progress > 0 
+                                            ? `Tiếp tục học (${progress.toFixed(0)}%)` 
+                                            : 'Bắt đầu học'
+                                        : isFree
+                                            ? 'Đăng ký học miễn phí'
+                                            : 'Mua khóa học ngay'
                                 }
                             </Button>
                         </div>

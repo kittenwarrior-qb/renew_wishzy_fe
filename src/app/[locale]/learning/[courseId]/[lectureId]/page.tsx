@@ -193,16 +193,27 @@ export default function LearningPage() {
     });
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     // Update completed lectures immediately for sidebar (đồng bộ với API call ở 90%)
     if (lectureId && !completedLectureIds.includes(lectureId)) {
-      setCompletedLectureIds(prev => [...prev, lectureId]);
+      const newCompletedLectures = [...completedLectureIds, lectureId];
+      setCompletedLectureIds(newCompletedLectures);
       
-      // Show toast notification
-      toast.success('Lecture completed! 🎉', {
-        description: lecture?.title || 'Great job!',
+      // Show toast notification for lecture completion
+      toast.success('Bài học hoàn thành! 🎉', {
+        description: lecture?.title || 'Tuyệt vời!',
         duration: 3000,
       });
+
+      // Check if all lectures are completed
+      const totalLectures = allLectures.length;
+      if (newCompletedLectures.length === totalLectures) {
+        // All lectures completed - show certificate notification
+        toast.success('🎓 Chúc mừng! Bạn đã hoàn thành khóa học!', {
+          description: 'Chứng chỉ của bạn đã được tạo. Kiểm tra email hoặc xem trong trang học của tôi.',
+          duration: 5000,
+        });
+      }
     }
     
     setProgress(prev => {
