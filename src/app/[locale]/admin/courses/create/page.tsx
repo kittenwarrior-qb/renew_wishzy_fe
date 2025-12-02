@@ -54,7 +54,7 @@ export default function CreateCoursePage() {
       });
       return;
     }
-    const { status: _omitStatus, ...payload } = form;
+    const { ...payload } = form;
     createCourse(payload as any, {
       onSuccess: () => {
         notify({ title: "Đã tạo", variant: "success" });
@@ -77,6 +77,25 @@ export default function CreateCoursePage() {
 
   return (
     <div className="relative py-4 px-4 md:px-6 max-w-7xl mx-auto">
+      <button
+        onClick={() => router.push(`/${locale}/admin/courses`)}
+        className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        Trở về
+      </button>
       <CourseForm
         value={form}
         onChange={(v) => {

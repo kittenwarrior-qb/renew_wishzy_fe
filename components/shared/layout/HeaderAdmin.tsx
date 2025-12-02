@@ -110,22 +110,22 @@ export default function HeaderAdmin() {
 
 function mapAdminPathToLabel(subpath: string): string {
   const map: Record<string, string> = {
-    "categories/create": "Tạo danh mục",
-    categories: "Danh mục",
-    "categories/trash": "Danh mục / Thùng rác",
-    "users/students": "Học sinh",
-    "users/teachers": "Giảng viên",
-    "users/admins": "Quản trị viên",
-    exams: "Bài kiểm tra",
-    "communication/reviews": "Đánh giá",
-    "communication/comments": "Bình luận",
-    posts: "Danh sách bài viết",
-    "posts/categories": "Danh mục bài viết",
-    "posts/comments": "Bình luận bài viết",
-    orders: "Lịch sử thanh toán",
-    banners: "Banner",
-    vouchers: "Voucher",
-    settings: "Thiết lập",
+    // "categories/create": "Tạo danh mục",
+    // categories: "Danh mục",
+    // "categories/trash": "Danh mục / Thùng rác",
+    // "users/students": "Học sinh",
+    // "users/teachers": "Giảng viên",
+    // "users/admins": "Quản trị viên",
+    // exams: "Bài kiểm tra",
+    // "communication/reviews": "Đánh giá",
+    // "communication/comments": "Bình luận",
+    // posts: "Danh sách bài viết",
+    // "posts/categories": "Danh mục bài viết",
+    // "posts/comments": "Bình luận bài viết",
+    // orders: "Lịch sử thanh toán",
+    // banners: "Banner",
+    // vouchers: "Voucher",
+    // settings: "Thiết lập",
   };
   const keys = Object.keys(map).sort((a, b) => b.length - a.length);
   for (const k of keys) if (subpath.startsWith(k)) return map[k];
