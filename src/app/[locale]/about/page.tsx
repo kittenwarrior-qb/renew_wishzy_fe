@@ -1,7 +1,6 @@
 "use client";
 
 import { Phone, BookOpen, Users, Award, Clock, GraduationCap, FileText, Headset, Check, ChevronRight, Layers, BarChart, Shield, Globe, Zap, Bookmark, MessageSquare, Video, FileText as FileTextIcon, Code, PenTool, Layout, Lock, BarChart2, Settings, Users as UsersIcon, CreditCard, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube, User, Search, ShoppingCart, Play } from 'lucide-react';
-import { RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';

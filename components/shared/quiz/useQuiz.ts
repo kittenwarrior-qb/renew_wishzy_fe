@@ -69,7 +69,7 @@ export const useDeleteAdminQuiz = () => {
 
 export const useAdminQuizDetail = (id?: string) => {
   return useQueryHook<AdminQuiz>(
-    [ENDPOINT, { id }],
+    [ENDPOINT, id || ''],
     async () => {
       const api = (await import("@/services/api")).default;
       const response = await api.get(`/quizzes/${id}/admin-details`);
