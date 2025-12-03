@@ -42,19 +42,25 @@ export default function EditCoursePage() {
   useUnsavedChanges(dirty);
 
   React.useEffect(() => {
-    if (data && (data as any).id) {
-      setForm({
-        name: (data as any).name || "",
-        categoryId: (data as any).categoryId || "",
-        level: (data as any).level || "beginner",
-        price: Number((data as any).price || 0),
-        totalDuration: Number((data as any).totalDuration || 0),
-        status: Boolean((data as any).status),
-        description: (data as any).description || "",
-        notes: (data as any).notes || "",
-        thumbnail: (data as any).thumbnail || "",
-      });
-      setDirty(false);
+    console.log("Course data received:", data);
+    if (data) {
+      const courseData = (data as any).data || data;
+      console.log("Extracted course data:", courseData);
+
+      if (courseData && courseData.id) {
+        setForm({
+          name: courseData.name || "",
+          categoryId: courseData.categoryId || "",
+          level: courseData.level || "beginner",
+          price: Number(courseData.price || 0),
+          totalDuration: Number(courseData.totalDuration || 0),
+          status: Boolean(courseData.status),
+          description: courseData.description || "",
+          notes: courseData.notes || "",
+          thumbnail: courseData.thumbnail || "",
+        });
+        setDirty(false);
+      }
     }
   }, [data]);
 
@@ -100,20 +106,49 @@ export default function EditCoursePage() {
 
   return (
     <div className="relative py-4 px-4 md:px-6 max-w-7xl mx-auto">
-      <CourseForm
-        value={form}
-        onChange={(v) => {
-          setForm(v);
-          setDirty(true);
-        }}
-        categories={categories}
-        loading={isPending || updating}
-        onDirtyChange={setDirty}
-        onSubmit={handleSubmit}
-        submitLabel={updating ? "Đang lưu..." : "Lưu thay đổi"}
-        title="Chỉnh sửa khoá học"
-        description="Cập nhật thông tin khoá học"
-      />
+      <button
+        onClick={() => router.push(`/${locale}/admin/courses`)}
+        className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        Trở về
+      </button>
+      {isPending ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-12 h-12 mx-auto rounded-full border-4 border-primary/20 border-t-primary animate-spin mb-4"></div>
+            <p className="text-muted-foreground">Đang tải dữ liệu...</p>
+          </div>
+        </div>
+      ) : (
+        <CourseForm
+          key={id}
+          value={form}
+          onChange={(v) => {
+            setForm(v);
+            setDirty(true);
+          }}
+          categories={categories}
+          loading={updating}
+          onDirtyChange={setDirty}
+          onSubmit={handleSubmit}
+          submitLabel={updating ? "Đang lưu..." : "Lưu thay đổi"}
+          title="Chỉnh sửa khoá học"
+          description="Cập nhật thông tin khoá học"
+        />
+      )}
     </div>
   );
 }

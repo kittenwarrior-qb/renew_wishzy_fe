@@ -506,6 +506,21 @@ export function CourseForm({
                     </p>
                   ) : null}
                 </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Trạng thái
+                  </label>
+                  <div className="flex items-center gap-3 h-9">
+                    <Switch
+                      checked={value.status}
+                      onCheckedChange={(checked) => setField("status", checked)}
+                      disabled={loading}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {value.status ? "Hoạt động" : "Không hoạt động"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
             <div>

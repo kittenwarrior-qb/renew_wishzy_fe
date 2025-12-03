@@ -1,60 +1,75 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { Plus, Search, Pencil, Trash2 } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import * as React from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
-import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
-import { AdminDataErrorState } from "@/components/shared/admin/AdminDataErrorState"
-import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
-import { notify } from "@/components/shared/admin/Notifications"
-import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
+import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay";
+import DynamicTable, {
+  type Column,
+} from "@/components/shared/common/DynamicTable";
+import { AdminDataErrorState } from "@/components/shared/admin/AdminDataErrorState";
+import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog";
+import { notify } from "@/components/shared/admin/Notifications";
+import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore";
 import {
   useAdminQuizList,
   useDeleteAdminQuiz,
   useUpdateAdminQuiz,
-} from "@/components/shared/quiz/useQuiz"
-import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog"
-import { QuizForm, type QuizFormValue, type QuizFormError } from "@/components/shared/quiz/QuizForm"
-import type { AdminQuiz } from "@/types/quiz"
+} from "@/components/shared/quiz/useQuiz";
+import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog";
+import {
+  QuizForm,
+  type QuizFormValue,
+  type QuizFormError,
+} from "@/components/shared/quiz/QuizForm";
+import type { AdminQuiz } from "@/types/quiz";
+import errors from "video.js/dist/types/consts/errors";
 
 export default function Page() {
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { setPrimaryAction } = useAdminHeaderStore()
+  const params = useParams<{ locale: string }>();
+  const locale = params?.locale || "vi";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { setPrimaryAction } = useAdminHeaderStore();
 
   // Read initial values from URL or use defaults
-  const initialPage = parseInt(searchParams.get("page") || "1", 10)
-  const initialLimit = parseInt(searchParams.get("limit") || "10", 10)
-  const initialSearch = searchParams.get("search") || ""
+  const initialPage = parseInt(searchParams.get("page") || "1", 10);
+  const initialLimit = parseInt(searchParams.get("limit") || "10", 10);
+  const initialSearch = searchParams.get("search") || "";
 
-  const [page, setPage] = React.useState(initialPage)
-  const [limit, setLimit] = React.useState(initialLimit)
-  const [search, setSearch] = React.useState(initialSearch)
+  const [page, setPage] = React.useState(initialPage);
+  const [limit, setLimit] = React.useState(initialLimit);
+  const [search, setSearch] = React.useState(initialSearch);
 
   // Sync URL when page, limit, or search changes
-  const updateURL = React.useCallback((newPage: number, newLimit: number, newSearch: string) => {
-    const params = new URLSearchParams()
-    params.set("page", String(newPage))
-    params.set("limit", String(newLimit))
-    if (newSearch) params.set("search", newSearch)
-    router.replace(`/${locale}/admin/exams?${params.toString()}`, { scroll: false })
-  }, [router, locale])
+  const updateURL = React.useCallback(
+    (newPage: number, newLimit: number, newSearch: string) => {
+      const params = new URLSearchParams();
+      params.set("page", String(newPage));
+      params.set("limit", String(newLimit));
+      if (newSearch) params.set("search", newSearch);
+      router.replace(`/${locale}/admin/exams?${params.toString()}`, {
+        scroll: false,
+      });
+    },
+    [router, locale]
+  );
 
-  const { data, isPending, isFetching, isError, refetch } = useAdminQuizList({ page, limit })
-  const { mutate: deleteQuiz, isPending: deleting } = useDeleteAdminQuiz()
-  const { mutate: updateQuiz, isPending: updating } = useUpdateAdminQuiz()
+  const { data, isPending, isFetching, isError, refetch } = useAdminQuizList({
+    page,
+    limit,
+  });
+  const { mutate: deleteQuiz, isPending: deleting } = useDeleteAdminQuiz();
+  const { mutate: updateQuiz, isPending: updating } = useUpdateAdminQuiz();
 
-  const [openDeleteConfirm, setOpenDeleteConfirm] = React.useState(false)
-  const [target, setTarget] = React.useState<AdminQuiz | null>(null)
+  const [openDeleteConfirm, setOpenDeleteConfirm] = React.useState(false);
+  const [target, setTarget] = React.useState<AdminQuiz | null>(null);
 
-  const [openEdit, setOpenEdit] = React.useState(false)
-  const [editing, setEditing] = React.useState<AdminQuiz | null>(null)
+  const [openEdit, setOpenEdit] = React.useState(false);
+  const [editing, setEditing] = React.useState<AdminQuiz | null>(null);
 
   const [form, setForm] = React.useState<QuizFormValue>({
     title: "",
@@ -64,36 +79,36 @@ export default function Page() {
     price: 0,
     timeLimit: "",
     questions: [],
-  })
-  const [errors, setErrors] = React.useState<QuizFormError>({})
+  });
+  const [errors, setErrors] = React.useState<QuizFormError>({});
 
-  const items = data?.data ?? []
-  const total = data?.total ?? 0
-  const currentPage = data?.page ?? page
-  const pageSize = data?.limit ?? limit
+  const items = data?.data ?? [];
+  const total = data?.total ?? 0;
+  const currentPage = data?.page ?? page;
+  const pageSize = data?.limit ?? limit;
 
   // Filter items based on search
   const filteredItems = React.useMemo(() => {
-    if (!search) return items
-    const searchLower = search.toLowerCase()
-    return items.filter((item) => 
-      item.title?.toLowerCase().includes(searchLower) ||
-      item.description?.toLowerCase().includes(searchLower)
-    )
-  }, [items, search])
+    if (!search) return items;
+    const searchLower = search.toLowerCase();
+    return items.filter(
+      (item) =>
+        item.title?.toLowerCase().includes(searchLower) ||
+        item.description?.toLowerCase().includes(searchLower)
+    );
+  }, [items, search]);
 
   // Debounced search to avoid updating URL too frequently
   React.useEffect(() => {
     const timer = setTimeout(() => {
-      updateURL(page, limit, search)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [search, page, limit, updateURL])
+      updateURL(page, limit, search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, page, limit, updateURL]);
 
   React.useEffect(() => {
-    setPrimaryAction(null)
-
-  }, [setPrimaryAction])
+    setPrimaryAction(null);
+  }, [setPrimaryAction]);
 
   return (
     <div className="relative p-4 md:p-6">
@@ -137,9 +152,11 @@ export default function Page() {
               align: "center",
               render: (row: AdminQuiz) => (
                 <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${row.isPublic
-                    ? "bg-emerald-500/10 text-emerald-600"
-                    : "bg-muted text-muted-foreground"}`}
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    row.isPublic
+                      ? "bg-emerald-500/10 text-emerald-600"
+                      : "bg-muted text-muted-foreground"
+                  }`}
                 >
                   {row.isPublic ? "Công khai" : "Riêng tư"}
                 </span>
@@ -151,9 +168,11 @@ export default function Page() {
               align: "center",
               render: (row: AdminQuiz) => (
                 <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${row.isFree
-                    ? "bg-sky-500/10 text-sky-600"
-                    : "bg-amber-500/10 text-amber-600"}`}
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    row.isFree
+                      ? "bg-sky-500/10 text-sky-600"
+                      : "bg-amber-500/10 text-amber-600"
+                  }`}
                 >
                   {row.isFree ? "Miễn phí" : "Trả phí"}
                 </span>
@@ -195,23 +214,40 @@ export default function Page() {
               render: (row: AdminQuiz) => (
                 <div className="inline-flex items-center gap-1">
                   <button
+                    title="Xem chi tiết"
+                    type="button"
+                    className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer"
+                    onClick={() =>
+                      router.push(`/${locale}/admin/exams/${row.id}`)
+                    }
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  </button>
+                  <button
                     title="Sửa"
                     type="button"
                     className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer"
-                    onClick={() => {
-                      setEditing(row)
-                      setForm({
-                        title: row.title || "",
-                        description: row.description || "",
-                        isPublic: !!row.isPublic,
-                        isFree: !!row.isFree,
-                        price: row.price ?? 0,
-                        timeLimit: row.timeLimit ?? "",
-                        questions: [],
-                      })
-                      setErrors({})
-                      setOpenEdit(true)
-                    }}
+                    onClick={() =>
+                      router.push(`/${locale}/admin/exams/edit/${row.id}`)
+                    }
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -221,8 +257,8 @@ export default function Page() {
                     className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent text-destructive cursor-pointer"
                     disabled={deleting}
                     onClick={() => {
-                      setTarget(row)
-                      setOpenDeleteConfirm(true)
+                      setTarget(row);
+                      setOpenDeleteConfirm(true);
                     }}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -230,7 +266,7 @@ export default function Page() {
                 </div>
               ),
             },
-          ]
+          ];
 
           return (
             <DynamicTable
@@ -242,18 +278,18 @@ export default function Page() {
                 currentPage,
                 itemsPerPage: pageSize,
                 onPageChange: (np) => {
-                  setPage(np)
-                  updateURL(np, limit, search)
+                  setPage(np);
+                  updateURL(np, limit, search);
                 },
                 pageSizeOptions: [10, 20, 50],
                 onPageSizeChange: (sz) => {
-                  setLimit(sz)
-                  setPage(1)
-                  updateURL(1, sz, search)
+                  setLimit(sz);
+                  setPage(1);
+                  updateURL(1, sz, search);
                 },
               }}
             />
-          )
+          );
         })()
       )}
 
@@ -271,13 +307,13 @@ export default function Page() {
         loading={deleting}
         position="top"
         onConfirm={() => {
-          if (!target) return
+          if (!target) return;
           deleteQuiz(
             { id: target.id },
             {
               onSuccess: () => {
-                setOpenDeleteConfirm(false)
-                notify({ title: "Đã xoá", variant: "success" })
+                setOpenDeleteConfirm(false);
+                notify({ title: "Đã xoá", variant: "success" });
               },
               onError: (err: any) =>
                 notify({
@@ -285,8 +321,8 @@ export default function Page() {
                   description: String(err?.message || "Không thể xoá"),
                   variant: "destructive",
                 }),
-            },
-          )
+            }
+          );
         }}
       />
 
@@ -295,9 +331,9 @@ export default function Page() {
         open={openEdit}
         onOpenChange={(next) => {
           if (!next) {
-            setEditing(null)
+            setEditing(null);
           }
-          setOpenEdit(next)
+          setOpenEdit(next);
         }}
         title="Sửa bài kiểm tra"
         confirmText={updating ? "Đang lưu..." : "Lưu"}
@@ -305,15 +341,15 @@ export default function Page() {
         position="top"
         confirmVariant="default"
         onConfirm={() => {
-          if (!editing) return
+          if (!editing) return;
 
-          const trimmedTitle = form.title.trim()
-          const nextErrors: QuizFormError = {}
+          const trimmedTitle = form.title.trim();
+          const nextErrors: QuizFormError = {};
           if (!trimmedTitle) {
-            nextErrors.title = "Vui lòng nhập tiêu đề"
+            nextErrors.title = "Vui lòng nhập tiêu đề";
           }
-          setErrors(nextErrors)
-          if (Object.keys(nextErrors).length) return
+          setErrors(nextErrors);
+          if (Object.keys(nextErrors).length) return;
 
           updateQuiz(
             {
@@ -323,26 +359,29 @@ export default function Page() {
               isPublic: !!form.isPublic,
               isFree: !!form.isFree,
               price: form.price === "" ? 0 : Number(form.price),
-              timeLimit: form.timeLimit === "" ? undefined : Number(form.timeLimit),
+              timeLimit:
+                form.timeLimit === "" ? undefined : Number(form.timeLimit),
             },
             {
               onSuccess: () => {
-                setOpenEdit(false)
-                setEditing(null)
-                notify({ title: "Đã cập nhật", variant: "success" })
+                setOpenEdit(false);
+                setEditing(null);
+                notify({ title: "Đã cập nhật", variant: "success" });
               },
               onError: (err: any) =>
                 notify({
                   title: "Lỗi",
-                  description: String(err?.message || "Không thể cập nhật bài kiểm tra"),
+                  description: String(
+                    err?.message || "Không thể cập nhật bài kiểm tra"
+                  ),
                   variant: "destructive",
                 }),
-            },
-          )
+            }
+          );
         }}
       >
         <QuizForm value={form} onChange={setForm} error={errors} mode="edit" />
       </AdminActionDialog>
     </div>
-  )
+  );
 }

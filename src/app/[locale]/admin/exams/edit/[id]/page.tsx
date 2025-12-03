@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-
+import {
+  useAdminQuizDetail,
+  useUpdateAdminQuiz,
+} from "@/components/shared/quiz/useQuiz";
 import {
   QuizForm,
   type QuizFormValue,
@@ -10,16 +13,18 @@ import {
 } from "@/components/shared/quiz/QuizForm";
 import { notify } from "@/components/shared/admin/Notifications";
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore";
-import { useCreateAdminQuiz } from "@/components/shared/quiz/useQuiz";
+import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay";
 import { Button } from "@/components/ui/button";
 
-export default function CreateExamPage() {
-  const params = useParams<{ locale: string }>();
+export default function EditExamPage() {
+  const params = useParams<{ locale: string; id: string }>();
   const locale = params?.locale || "vi";
+  const id = params?.id as string;
   const router = useRouter();
   const { setPrimaryAction } = useAdminHeaderStore();
 
-  const { mutate: createQuiz, isPending: creating } = useCreateAdminQuiz();
+  const { data: quiz, isPending: loading } = useAdminQuizDetail(id);
+  const { mutate: updateQuiz, isPending: updating } = useUpdateAdminQuiz();
 
   const [form, setForm] = React.useState<QuizFormValue>({
     title: "",
@@ -41,7 +46,38 @@ export default function CreateExamPage() {
   });
   const [errors, setErrors] = React.useState<QuizFormError>({});
 
-  const validateCreate = React.useCallback(
+  // Fill form when data loaded
+  React.useEffect(() => {
+    if (quiz && !loading) {
+      const quizData = (quiz as any).data || quiz;
+      console.log("Quiz data for edit:", quizData);
+
+      setForm({
+        title: quizData.title || "",
+        description: quizData.description || "",
+        isPublic: Boolean(quizData.isPublic),
+        isFree: Boolean(quizData.isFree),
+        price: Number(quizData.price || 0),
+        timeLimit: quizData.timeLimit ? String(quizData.timeLimit) : "",
+        questions: (quizData.questions || [])
+          .sort((a: any, b: any) => (a.orderIndex || 0) - (b.orderIndex || 0))
+          .map((q: any) => ({
+            questionText: q.questionText || "",
+            points: q.points ? String(q.points) : "",
+            answerOptions: (q.answerOptions || [])
+              .sort(
+                (a: any, b: any) => (a.orderIndex || 0) - (b.orderIndex || 0)
+              )
+              .map((a: any) => ({
+                optionText: a.optionText || "",
+                isCorrect: Boolean(a.isCorrect),
+              })),
+          })),
+      });
+    }
+  }, [quiz, loading]);
+
+  const validateUpdate = React.useCallback(
     (v: QuizFormValue): QuizFormError => {
       const e: QuizFormError = {};
       if (!v.title.trim()) e.title = "Vui lòng nhập tiêu đề";
@@ -90,14 +126,15 @@ export default function CreateExamPage() {
   );
 
   const handleSubmit = React.useCallback(() => {
-    if (creating) return;
+    if (updating) return;
 
-    const e = validateCreate(form);
+    const e = validateUpdate(form);
     setErrors(e);
     if (Object.keys(e).length) return;
 
-    createQuiz(
+    updateQuiz(
       {
+        id,
         title: form.title.trim(),
         description: form.description?.trim() || undefined,
         isPublic: !!form.isPublic,
@@ -117,47 +154,68 @@ export default function CreateExamPage() {
       },
       {
         onSuccess: () => {
-          notify({ title: "Đã tạo", variant: "success" });
+          notify({ title: "Đã cập nhật", variant: "success" });
           router.push(`/${locale}/admin/exams`);
         },
         onError: (err: any) =>
           notify({
             title: "Lỗi",
-            description: String(err?.message || "Không thể tạo bài kiểm tra"),
+            description: String(
+              err?.message || "Không thể cập nhật bài kiểm tra"
+            ),
             variant: "destructive",
           }),
       }
     );
-  }, [creating, form, validateCreate, createQuiz, router, locale]);
+  }, [updating, form, validateUpdate, updateQuiz, id, router, locale]);
 
   React.useEffect(() => {
     setPrimaryAction(null);
     return () => setPrimaryAction(null);
   }, [setPrimaryAction]);
 
+  if (loading) {
+    return <LoadingOverlay show={true} />;
+  }
+
   return (
     <div className="relative">
-      <div className="sticky top-0 z-10 bg-background border-b px-4 md:px-6 py-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl md:text-2xl font-bold">Bài kiểm tra</h1>
+      <div className="sticky top-0 z-10 bg-background border-b px-4 md:px-6 py-4">
+        <h1 className="text-xl md:text-2xl font-bold">
+          Chỉnh sửa bài kiểm tra
+        </h1>
       </div>
       <div className="p-4 md:p-6">
-        <QuizForm
-          value={form}
-          onChange={setForm}
-          error={errors}
-          mode="create"
-        />
+        <Button
+          variant="ghost"
+          onClick={() => router.push(`/${locale}/admin/exams`)}
+          className="mb-4"
+        >
+          <svg
+            className="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          Trở về
+        </Button>
+        <QuizForm value={form} onChange={setForm} error={errors} mode="edit" />
         <div className="mt-6 flex justify-end gap-3">
           <Button
-            variant={"ghost"}
-            type="button"
+            variant="outline"
             onClick={() => router.push(`/${locale}/admin/exams`)}
-            className="px-4 py-2 border border-border rounded-md hover:bg-accent transition-colors"
           >
             Hủy
           </Button>
-          <Button onClick={handleSubmit} disabled={creating}>
-            {creating ? "Đang tạo..." : "Tạo bài kiểm tra"}
+          <Button onClick={handleSubmit} disabled={updating}>
+            {updating ? "Đang cập nhật..." : "Cập nhật bài kiểm tra"}
           </Button>
         </div>
       </div>
