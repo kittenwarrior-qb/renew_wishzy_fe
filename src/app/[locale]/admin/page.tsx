@@ -15,71 +15,13 @@ type TimeRangeData = Record<TimeRange, RevenueData>
 export default function AdminDashboard() {
   const {
     hotCourses: apiHotCourses,
+    topStudents,
+    topInstructors,
     isLoading,
     isError,
     totalStats,
     chartData,
   } = useDashboardData()
-
-  // Mock data for top students
-  const mockTopStudents = [
-    {
-      id: '1',
-      name: 'Nguyễn Văn A',
-      email: 'student1@example.com',
-      avatar: '',
-      coursesEnrolled: 5,
-      totalSpent: 2500000,
-      lastActive: '2025-11-30T10:30:00Z'
-    },
-    {
-      id: '2',
-      name: 'Lê Thị B',
-      email: 'student2@example.com',
-      avatar: '',
-      coursesEnrolled: 3,
-      totalSpent: 1800000,
-      lastActive: '2025-11-29T15:45:00Z'
-    },
-    {
-      id: '3',
-      name: 'Trần Văn C',
-      email: 'student3@example.com',
-      avatar: '',
-      coursesEnrolled: 7,
-      totalSpent: 3200000,
-      lastActive: '2025-11-30T08:15:00Z'
-    }
-  ]
-
-  // Mock data for top instructors
-  const mockTopInstructors = [
-    {
-      id: '1',
-      fullName: 'Trần Thị B',
-      email: 'instructor1@example.com',
-      avatar: '',
-      role: 'INSTRUCTOR',
-      rating: 4.8,
-      courses: 12,
-      students: 345,
-      specialties: ['Lập trình', 'Toán học']
-    },
-    {
-      id: '2',
-      fullName: 'Nguyễn Văn C',
-      email: 'instructor2@example.com',
-      avatar: '',
-      role: 'INSTRUCTOR',
-      rating: 4.9,
-      courses: 8,
-      students: 256,
-      specialties: ['Tiếng Anh', 'Văn học']
-    }
-  ]
-
-  const topStudents = mockTopStudents
-  const topInstructors = mockTopInstructors
 
   const stats = [
     {
@@ -142,7 +84,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6 px-4 py-2">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
           <StatsCard
             key={index}
@@ -157,7 +99,33 @@ export default function AdminDashboard() {
           />
         ))}
       </div>
+
+      <div className="bg-white rounded-lg shadow p-4">
+        <h3 className="text-lg font-semibold mb-4">Thống kê doanh thu</h3>
+        <RevenueChart
+          data={{
+            day: chartData?.day || null,
+            week: chartData?.week || null,
+            month: chartData?.month || null,
+            year: chartData?.year || null,
+            loading: isLoading,
+            error: isError ? 'Có lỗi khi tải dữ liệu biểu đồ' : null
+          }}
+        />
+      </div>
+
       <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 gap-4">
+          <div className="bg-white rounded-lg shadow p-4">
+            <TopCourses
+              hotCourses={apiHotCourses?.data}
+              total={apiHotCourses?.total}
+              isLoading={isLoading}
+              isError={isError}
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <TopInstructors
             instructors={topInstructors}
@@ -170,30 +138,6 @@ export default function AdminDashboard() {
             isLoading={isLoading}
             isError={isError}
           />
-        </div>
-        <div className="grid grid-cols-1 gap-4">
-          <div className="bg-white rounded-lg shadow p-4">
-            <TopCourses
-              hotCourses={apiHotCourses?.data}
-              total={apiHotCourses?.total}
-              isLoading={isLoading}
-              isError={isError}
-            />
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-lg font-semibold mb-4">Thống kê doanh thu</h3>
-            <RevenueChart
-              data={{
-                day: chartData?.day || null,
-                week: chartData?.week || null,
-                month: chartData?.month || null,
-                year: chartData?.year || null,
-                loading: isLoading,
-                error: isError ? 'Có lỗi khi tải dữ liệu biểu đồ' : null
-              }}
-            />
-          </div>
         </div>
       </div >
     </div >
