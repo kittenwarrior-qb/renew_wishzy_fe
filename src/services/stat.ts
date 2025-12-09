@@ -1,5 +1,14 @@
 import api from "./api"
-import type { InstructorStatsResponse, RevenueApiResponse, RevenueMode, HotCourse } from "@/types/revenue"
+import type { 
+  InstructorStatsResponse, 
+  RevenueApiResponse, 
+  RevenueMode, 
+  HotCourse,
+  TopStudentsResponse,
+  TopInstructorsResponse,
+  TopStudentsSortBy,
+  TopInstructorsSortBy
+} from "@/types/revenue"
 
 export const statService = {
   async getInstructorStats(): Promise<InstructorStatsResponse> {
@@ -22,6 +31,22 @@ export const statService = {
   }): Promise<{ data: HotCourse[]; total: number }> {
     const response = await api.get("/stat/hot-courses", { params });
     return response.data;
+  },
+  
+  async getTopStudents(params?: {
+    limit?: number;
+    sortBy?: TopStudentsSortBy;
+  }): Promise<TopStudentsResponse> {
+    const response = await api.get("/stat/top-students", { params });
+    return response.data?.data ?? response.data;
+  },
+
+  async getTopInstructors(params?: {
+    limit?: number;
+    sortBy?: TopInstructorsSortBy;
+  }): Promise<TopInstructorsResponse> {
+    const response = await api.get("/stat/top-instructors", { params });
+    return response.data?.data ?? response.data;
   },
 }
 

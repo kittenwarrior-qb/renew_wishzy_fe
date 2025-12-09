@@ -4,17 +4,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { statService } from "@/services/stat";
 import { userService } from "@/services/user";
 import { courseService } from "@/services/course";
-import type { HotCourse, RevenueApiResponse, RevenueMode } from "@/types/revenue";
+import type { HotCourse, RevenueApiResponse, RevenueMode, TopStudent, TopInstructor } from "@/types/revenue";
 
-export interface TopStudent {
-    id: string;
-    name: string;
-    email: string;
-    avatar?: string;
-    coursesEnrolled: number;
-    totalSpent: number;
-    lastActive: string;
-}
+
 
 export type TimeRange = "day" | "week" | "month" | "year";
 
@@ -117,17 +109,29 @@ export function useDashboardData() {
     const isLoadingCourses = isLoadingHotCourses || isLoadingTotalCourses;
     const isCoursesError = isHotCoursesError || isTotalCoursesError;
 
-    const topInstructors: Array<{
-        id: string;
-        fullName: string;
-        email: string;
-        avatar: string;
-        role: string;
-        rating: number;
-        courses: number;
-        students: number;
-        specialties: string[];
-    }> = [];
+    // Fetch top students
+    const {
+        data: topStudentsData,
+        isLoading: isLoadingTopStudents,
+        isError: isTopStudentsError
+    } = useQuery({
+        queryKey: ['dashboard', 'top-students'],
+        queryFn: () => statService.getTopStudents({ limit: 5, sortBy: 'totalSpent' }),
+        staleTime: 10 * 60 * 1000,
+        retry: 2
+    });
+
+    // Fetch top instructors
+    const {
+        data: topInstructorsData,
+        isLoading: isLoadingTopInstructors,
+        isError: isTopInstructorsError
+    } = useQuery({
+        queryKey: ['dashboard', 'top-instructors'],
+        queryFn: () => statService.getTopInstructors({ limit: 5, sortBy: 'rating' }),
+        staleTime: 10 * 60 * 1000,
+        retry: 2
+    });
 
     // Fetch total number of students with error handling
     const {
@@ -182,6 +186,8 @@ export function useDashboardData() {
         users: () => {
             queryClient.invalidateQueries({ queryKey: ['dashboard', 'students', 'count'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard', 'instructors', 'count'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard', 'top-students'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard', 'top-instructors'] });
         }
     }), [queryClient, refetchRevenue]);
 
@@ -213,13 +219,14 @@ export function useDashboardData() {
         hotCourses: hotCoursesData,
         hotCoursesTotal,
         totalCourses,
-        topInstructors,
+        topStudents: topStudentsData?.data || [],
+        topInstructors: topInstructorsData?.data || [],
         totalStudents: studentsCount,
         totalInstructors: instructorsCount,
         totalRevenue: totalRevenue,
         totalEnrollments: 0,
-        isLoading: isLoadingHotCourses || isLoadingTotalCourses || revenueData.loading || isLoadingStudentsCount || isLoadingInstructorsCount,
-        isError: isHotCoursesError || isTotalCoursesError || !!revenueData.error || isStudentsCountError || isInstructorsCountError,
+        isLoading: isLoadingHotCourses || isLoadingTotalCourses || revenueData.loading || isLoadingStudentsCount || isLoadingInstructorsCount || isLoadingTopStudents || isLoadingTopInstructors,
+        isError: isHotCoursesError || isTotalCoursesError || !!revenueData.error || isStudentsCountError || isInstructorsCountError || isTopStudentsError || isTopInstructorsError,
         refetch: refetchFns,
     };
 }
