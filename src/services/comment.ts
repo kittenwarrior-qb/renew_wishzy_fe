@@ -49,8 +49,9 @@ export type CommentMutationResponse = {
 
 export const commentService = {
   async list(params?: Record<string, any>): Promise<CommentListResponse> {
-    const res = await api.get<CommentListResponse>(BASE, { params });
-    return res.data;
+    const res = await api.get<any>(BASE, { params });
+    // Unwrap nested data structure: res.data.data
+    return res.data?.data ?? res.data;
   },
   async listByCourse(courseId: string, page: number = 1, limit: number = 10): Promise<CommentListResponse> {
     const res = await api.get<any>(`${BASE}/course/${courseId}`, {

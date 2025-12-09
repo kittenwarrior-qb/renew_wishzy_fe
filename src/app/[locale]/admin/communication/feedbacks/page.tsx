@@ -9,10 +9,10 @@ import QueryController from "@/components/shared/common/QueryController"
 import { AdminDataErrorState } from "@/components/shared/admin/AdminDataErrorState"
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useAdminCommentList, type AdminComment } from "@/hooks/useAdminComment"
+import { useAdminFeedbackList, type AdminFeedback } from "@/hooks/useAdminFeedback"
 import { Star } from "lucide-react"
 
-export default function Page() {
+export default function FeedbacksPage() {
   const params = useParams<{ locale: string }>()
   const locale = params?.locale || "vi"
   const router = useRouter()
@@ -33,11 +33,11 @@ export default function Page() {
       else qs.delete("courseId")
     }
 
-    const href = `/${locale}/admin/communication/comments?${qs.toString()}`
+    const href = `/${locale}/admin/communication/feedbacks?${qs.toString()}`
     router.replace(href)
   }
 
-  const { data, isPending, isFetching, isError, refetch } = useAdminCommentList({
+  const { data, isPending, isFetching, isError, refetch } = useAdminFeedbackList({
     page,
     limit,
     courseId: courseId || undefined,
@@ -49,7 +49,7 @@ export default function Page() {
   const pageSize = data?.limit ?? limit
   const baseIndex = (currentPage - 1) * pageSize
 
-  const [detail, setDetail] = React.useState<AdminComment | null>(null)
+  const [detail, setDetail] = React.useState<AdminFeedback | null>(null)
   const [openDetail, setOpenDetail] = React.useState(false)
 
   const renderStars = (rating: number) => (
@@ -67,19 +67,28 @@ export default function Page() {
     </div>
   )
 
-  const columns: Column<AdminComment & any>[] = [
+  const columns: Column<AdminFeedback & any>[] = [
     {
       key: "stt",
       title: "STT",
       align: "center",
       type: "short",
       width: 70,
-      render: (_v: unknown, _r: AdminComment, i: number) => baseIndex + i + 1,
+      render: (_v: unknown, _r: AdminFeedback, i: number) => baseIndex + i + 1,
+    },
+    {
+      key: "user",
+      title: "Người dùng",
+      render: (row: AdminFeedback) => (
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground">{row.user?.email || row.userId}</span>
+        </div>
+      ),
     },
     {
       key: "course",
       title: "Khoá học",
-      render: (row: AdminComment) => (
+      render: (row: AdminFeedback) => (
         <Link
           href={`/${locale}/course-detail/${row.courseId}`}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -98,21 +107,11 @@ export default function Page() {
       ),
     },
     {
-      key: "user",
-      title: "Người dùng",
-      render: (row: AdminComment) => (
-        <div className="flex flex-col">
-          <span className="text-sm font-medium">{row.user?.name || "Ẩn danh"}</span>
-          <span className="text-xs text-muted-foreground">{row.user?.email || row.userId}</span>
-        </div>
-      ),
-    },
-    {
       key: "rating",
       title: "Đánh giá",
       type: "short",
       align: "center",
-      render: (row: AdminComment) => (
+      render: (row: AdminFeedback) => (
         <div className="flex flex-col items-center gap-1">
           {renderStars(row.rating)}
           <span className="text-xs text-muted-foreground">{row.rating}/5</span>
@@ -122,7 +121,7 @@ export default function Page() {
     {
       key: "content",
       title: "Nội dung",
-      render: (row: AdminComment) => (
+      render: (row: AdminFeedback) => (
         <TruncateTooltipWrapper className="max-w-[320px]">
           {row.content}
         </TruncateTooltipWrapper>
@@ -133,21 +132,21 @@ export default function Page() {
       title: "👍",
       type: "short",
       align: "center",
-      render: (row: AdminComment) => row.like || 0,
+      render: (row: AdminFeedback) => row.like || 0,
     },
     {
       key: "dislikes",
       title: "👎",
       type: "short",
       align: "center",
-      render: (row: AdminComment) => row.dislike || 0,
+      render: (row: AdminFeedback) => row.dislike || 0,
     },
     {
       key: "createdAt",
       title: "Thời gian",
       type: "short",
       align: "center",
-      render: (row: AdminComment) => (
+      render: (row: AdminFeedback) => (
         <span className="text-xs text-muted-foreground">
           {new Date(row.createdAt).toLocaleString("vi-VN")}
         </span>
@@ -158,7 +157,7 @@ export default function Page() {
       title: "Hành động",
       type: "action",
       align: "center",
-      render: (row: AdminComment) => (
+      render: (row: AdminFeedback) => (
         <button
           type="button"
           className="h-8 px-3 inline-flex items-center justify-center rounded border text-xs hover:bg-accent cursor-pointer"
@@ -176,9 +175,9 @@ export default function Page() {
   return (
     <div className="relative p-4 md:p-6">
       <div className="mb-3">
-        <h1 className="text-lg font-semibold mb-2">Bình luận (Giao tiếp)</h1>
+        <h1 className="text-lg font-semibold mb-2">Quản lý Feedback</h1>
         <p className="text-sm text-muted-foreground">
-          Quản lý bình luận trong các bài học
+          Xem đánh giá từ học viên về các khóa học
         </p>
       </div>
 
@@ -212,7 +211,7 @@ export default function Page() {
 
       {isError ? (
         <AdminDataErrorState
-          title="Không thể tải danh sách bình luận"
+          title="Không thể tải danh sách feedback"
           onRetry={() => refetch()}
         />
       ) : (
@@ -240,7 +239,7 @@ export default function Page() {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Chi tiết bình luận</DialogTitle>
+            <DialogTitle>Chi tiết Feedback</DialogTitle>
           </DialogHeader>
           {detail ? (
             <div className="space-y-4 text-sm">
@@ -249,7 +248,7 @@ export default function Page() {
                 {renderStars(detail.rating)}
                 <span className="font-semibold">{detail.rating}/5</span>
               </div>
-
+              
               {/* User Info */}
               <div className="p-3 bg-muted/50 rounded-lg">
                 <span className="font-medium">Người dùng:</span>
