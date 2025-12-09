@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from 'lucide-react';
 import { getVideoSourceInfo } from '@/src/utils/videoUrlHelper';
-import type { VideoPlayerOptions } from '@/types/learning';
+import type { VideoPlayerOptions } from '@/src/types/learning';
 import { Button } from '@/components/ui/button';
 
 interface VideoPreviewDialogProps {
@@ -32,26 +32,34 @@ export function VideoPreviewDialog({
   const playerRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [videoError, setVideoError] = useState<string | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
+  const initializingRef = useRef(false);
 
+  // Cleanup player when dialog closes
   useEffect(() => {
-    if (open) {
-      setIsMounted(true);
-      setIsLoading(true);
-      setVideoError(null);
+    if (!open && playerRef.current) {
+      try {
+        if (!playerRef.current.isDisposed()) {
+          playerRef.current.dispose();
+        }
+      } catch (error) {
+        console.error('Error disposing player:', error);
+      } finally {
+        playerRef.current = null;
+        initializingRef.current = false;
+      }
     }
   }, [open]);
 
+  // Initialize player when dialog opens
   useEffect(() => {
-    if (!open || !isMounted || !videoRef.current) return;
-
-    if (!document.body.contains(videoRef.current)) {
+    if (!open || !videoRef.current || initializingRef.current || playerRef.current) {
       return;
     }
 
-    if (playerRef.current) {
-      return;
-    }
+    // Reset states
+    setIsLoading(true);
+    setVideoError(null);
+    initializingRef.current = true;
 
     const videoSource = getVideoSourceInfo(videoUrl);
     console.log('Video preview - Original URL:', videoUrl);
@@ -59,15 +67,19 @@ export function VideoPreviewDialog({
 
     // Safety timeout to prevent infinite loading
     const safetyTimeout = setTimeout(() => {
-      if (isLoading && !videoError) {
+      if (isLoading && !videoError && playerRef.current) {
         console.warn('Video loading timeout - taking too long');
         setIsLoading(false);
-        setVideoError('Video is taking too long to load. Please try again.');
+        setVideoError('Video đang tải quá lâu. Vui lòng thử lại.');
       }
-    }, 15000); // 15 seconds timeout
+    }, 20000); // 20 seconds timeout
 
+    // Small delay to ensure DOM is ready
     const initTimeout = setTimeout(() => {
-      if (!videoRef.current || !open) return;
+      if (!videoRef.current || !open) {
+        initializingRef.current = false;
+        return;
+      }
 
       const options: VideoPlayerOptions = {
         autoplay: false,
@@ -114,23 +126,23 @@ export function VideoPreviewDialog({
           setIsLoading(false);
           
           if (error) {
-            let errorMessage = 'Failed to load video';
+            let errorMessage = 'Không thể tải video';
             
             switch (error.code) {
               case 1:
-                errorMessage = 'Video loading aborted';
+                errorMessage = 'Tải video bị hủy';
                 break;
               case 2:
-                errorMessage = 'Network error - please check your connection';
+                errorMessage = 'Lỗi mạng - vui lòng kiểm tra kết nối';
                 break;
               case 3:
-                errorMessage = 'Video format not supported';
+                errorMessage = 'Định dạng video không được hỗ trợ';
                 break;
               case 4:
-                errorMessage = 'Video source not found or CORS blocked';
+                errorMessage = 'Không tìm thấy video hoặc bị chặn CORS';
                 break;
               default:
-                errorMessage = `Video error (code: ${error.code})`;
+                errorMessage = `Lỗi video (mã: ${error.code})`;
             }
             
             setVideoError(errorMessage);
@@ -157,27 +169,97 @@ export function VideoPreviewDialog({
       } catch (error) {
         console.error('Error initializing video player:', error);
         setIsLoading(false);
-        setVideoError('Failed to initialize video player');
+        setVideoError('Không thể khởi tạo trình phát video');
+        initializingRef.current = false;
       }
-    }, 150);
+    }, 100);
 
     return () => {
       clearTimeout(initTimeout);
       clearTimeout(safetyTimeout);
-      if (playerRef.current && !playerRef.current.isDisposed()) {
+    };
+  }, [open, videoUrl]);
+
+  const handleRetry = () => {
+    setVideoError(null);
+    setIsLoading(true);
+    initializingRef.current = false;
+    
+    // Dispose current player if exists
+    if (playerRef.current && !playerRef.current.isDisposed()) {
+      try {
+        playerRef.current.dispose();
+      } catch (error) {
+        console.error('Error disposing player on retry:', error);
+      }
+      playerRef.current = null;
+    }
+    
+    // Force re-render to trigger useEffect
+    setTimeout(() => {
+      if (videoRef.current) {
+        const videoSource = getVideoSourceInfo(videoUrl);
+        const options: VideoPlayerOptions = {
+          autoplay: false,
+          controls: true,
+          responsive: true,
+          fluid: true,
+          playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+          controlBar: {
+            volumePanel: { inline: false },
+            pictureInPictureToggle: true,
+          },
+          userActions: {
+            hotkeys: true,
+          },
+          html5: {
+            vhs: {
+              overrideNative: true,
+              enableLowInitialPlaylist: true,
+              smoothQualityChange: true,
+              fastQualityChange: true,
+            },
+            nativeAudioTracks: false,
+            nativeVideoTracks: false,
+          },
+        };
+
         try {
-          playerRef.current.dispose();
-          playerRef.current = null;
+          const player = videojs(videoRef.current, options);
+          playerRef.current = player;
+          initializingRef.current = true;
+
+          player.src({
+            src: videoSource.url,
+            type: videoSource.mimeType,
+          });
+
+          player.on('error', () => {
+            const error = player.error();
+            setIsLoading(false);
+            if (error) {
+              let errorMessage = 'Không thể tải video';
+              switch (error.code) {
+                case 1: errorMessage = 'Tải video bị hủy'; break;
+                case 2: errorMessage = 'Lỗi mạng - vui lòng kiểm tra kết nối'; break;
+                case 3: errorMessage = 'Định dạng video không được hỗ trợ'; break;
+                case 4: errorMessage = 'Không tìm thấy video hoặc bị chặn CORS'; break;
+                default: errorMessage = `Lỗi video (mã: ${error.code})`;
+              }
+              setVideoError(errorMessage);
+            }
+          });
+
+          player.one('loadedmetadata', () => setIsLoading(false));
+          player.one('canplay', () => setIsLoading(false));
         } catch (error) {
-          console.error('Error disposing player:', error);
+          console.error('Error on retry:', error);
+          setIsLoading(false);
+          setVideoError('Không thể khởi tạo trình phát video');
         }
       }
-    };
-  }, [open, videoUrl, isMounted]);
-
-  if (!isMounted) {
-    return null;
-  }
+    }, 100);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -206,7 +288,7 @@ export function VideoPreviewDialog({
                   <Loader2 className="w-12 h-12 text-white animate-spin" />
                   <div className="absolute inset-0 w-12 h-12 rounded-full bg-white/10 blur-xl animate-pulse" />
                 </div>
-                <p className="text-white/90 text-sm font-medium">Loading preview...</p>
+                <p className="text-white/90 text-sm font-medium">Đang tải video xem trước...</p>
               </div>
             </div>
           )}
@@ -220,35 +302,29 @@ export function VideoPreviewDialog({
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-white text-lg font-semibold mb-2">Video Error</h3>
+                  <h3 className="text-white text-lg font-semibold mb-2">Lỗi Video</h3>
                   <p className="text-white/80 text-sm mb-2">{videoError}</p>
                   {process.env.NODE_ENV === 'development' && (
                     <details className="text-left mt-2">
                       <summary className="text-white/60 text-xs cursor-pointer hover:text-white/80">
-                        Debug Info
+                        Thông tin debug
                       </summary>
                       <div className="mt-2 p-2 bg-black/40 rounded text-white/70 text-xs break-all">
-                        <div><strong>Original URL:</strong></div>
+                        <div><strong>URL gốc:</strong></div>
                         <div className="mb-2">{videoUrl}</div>
-                        <div><strong>Processed:</strong></div>
+                        <div><strong>URL đã xử lý:</strong></div>
                         <div>{getVideoSourceInfo(videoUrl).url}</div>
-                        <div className="mt-1"><strong>Type:</strong> {getVideoSourceInfo(videoUrl).type}</div>
+                        <div className="mt-1"><strong>Loại:</strong> {getVideoSourceInfo(videoUrl).type}</div>
                       </div>
                     </details>
                   )}
                 </div>
                 <Button
-                  onClick={() => {
-                    setVideoError(null);
-                    setIsLoading(true);
-                    if (playerRef.current && !playerRef.current.isDisposed()) {
-                      playerRef.current.load();
-                    }
-                  }}
+                  onClick={handleRetry}
                   variant="outline"
                   className="bg-white/10 hover:bg-white/20 text-white border-white/20"
                 >
-                  Try Again
+                  Thử lại
                 </Button>
               </div>
             </div>

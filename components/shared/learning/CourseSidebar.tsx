@@ -6,8 +6,8 @@ import { useParams } from 'next/navigation';
 import { ChevronDown, ChevronRight, Play, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { enrollmentService } from '@/services/enrollment';
-import type { Course } from '@/types/learning';
+import { enrollmentService } from '@/src/services/enrollment';
+import type { Course } from '@/src/types/learning';
 
 interface CourseSidebarProps {
   course: Course;

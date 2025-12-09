@@ -15,8 +15,8 @@ import {
   Star
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Lecture, Chapter } from '@/types/learning';
-import { lectureService } from '@/services/lecture';
+import type { Lecture, Chapter } from '@/src/types/learning';
+import { lectureService } from '@/src/services/lecture';
 import CourseComment from '@/components/shared/course/CourseComment';
 
 interface Instructor {

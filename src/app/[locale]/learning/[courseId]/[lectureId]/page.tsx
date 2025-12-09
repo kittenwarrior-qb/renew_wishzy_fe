@@ -10,7 +10,7 @@ import { useChapterList } from '@/components/shared/chapter/useChapter';
 import { useCourseDetail } from '@/components/shared/course/useCourse';
 import { enrollmentService } from '@/services/enrollment';
 import { usePrefetchLearning, usePrefetchAdjacentLectures } from '@/hooks/usePrefetchLearning';
-import type { Lecture, Chapter, LectureProgress, UpdateLectureProgressDto, Course } from '@/types/learning';
+import type { Lecture, Chapter, LectureProgress, UpdateLectureProgressDto, Course } from '@/src/types/learning';
 
 export default function LearningPage() {
   const params = useParams();
@@ -284,11 +284,20 @@ export default function LearningPage() {
                     </div>
                   </div>
                 ) : lecture ? (
-                  <VideoPlayer
-                    enrollmentId={enrollmentId}
-                    lectureId={lectureId}
-                    videoUrl={lecture.videoUrl || ''}
-                    title={lecture.title}
+                  <>
+                    {process.env.NODE_ENV === 'development' && (
+                      console.log('Lecture data:', {
+                        id: lecture.id,
+                        title: lecture.title,
+                        videoUrl: lecture.videoUrl,
+                        hasVideoUrl: !!lecture.videoUrl,
+                      })
+                    )}
+                    <VideoPlayer
+                      enrollmentId={enrollmentId}
+                      lectureId={lectureId}
+                      videoUrl={lecture.videoUrl || ''}
+                      title={lecture.title}
                     initialProgress={progress}
                     onProgressUpdate={handleProgressUpdate}
                     onComplete={handleComplete}
@@ -297,6 +306,7 @@ export default function LearningPage() {
                     hasNext={!!nextLecture}
                     hasPrevious={!!prevLecture}
                   />
+                  </>
                 ) : null}
               </div>
             </div>
