@@ -1,6 +1,6 @@
 import api from "./api";
 
-const BASE = "/comments";
+const BASE = "/feedbacks";
 
 export type Comment = {
   id: string;

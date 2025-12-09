@@ -119,3 +119,39 @@ export interface InstructorStatsResponse {
   recentComments: InstructorRecentComment[]
 }
 
+// Types for Admin Dashboard
+
+export interface TopStudent {
+  id: string
+  name: string
+  email: string
+  avatar?: string
+  coursesEnrolled: number
+  totalSpent: number
+  lastActive: string
+}
+
+export interface TopInstructor {
+  id: string
+  fullName: string
+  email: string
+  avatar: string
+  role: string
+  rating: number
+  courses: number
+  students: number
+  specialties: string[]
+}
+
+export interface TopStudentsResponse {
+  data: TopStudent[]
+  total: number
+}
+
+export interface TopInstructorsResponse {
+  data: TopInstructor[]
+  total: number
+}
+
+export type TopStudentsSortBy = 'totalSpent' | 'coursesEnrolled'
+export type TopInstructorsSortBy = 'rating' | 'students' | 'courses'
