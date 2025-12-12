@@ -127,7 +127,7 @@ export default function QuizResultPage() {
             <p className="text-muted-foreground mb-4">
               Không tìm thấy kết quả bài kiểm tra
             </p>
-            <Button onClick={() => router.push(`/${params.locale}/dashboard`)}>
+            <Button onClick={() => router.push(`/dashboard`)}>
               Về trang chủ
             </Button>
           </CardContent>
@@ -246,14 +246,14 @@ export default function QuizResultPage() {
             <Button
               variant="outline"
               className="flex-1"
-              onClick={() => router.push(`/${params.locale}/quiz`)}
+              onClick={() => router.push(`/quiz`)}
             >
               <Home className="w-4 h-4 mr-2" />
               Danh sách bài kiểm tra
             </Button>
             <Button
               className="flex-1"
-              onClick={() => router.push(`/${params.locale}/quiz/${quizId}`)}
+              onClick={() => router.push(`/quiz/${quizId}`)}
             >
               <RotateCcw className="w-4 h-4 mr-2" />
               Làm lại

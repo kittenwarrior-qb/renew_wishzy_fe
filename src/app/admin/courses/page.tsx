@@ -95,7 +95,7 @@ export default function Page() {
       qs.append("categoryId", categoryId);
     qs.append("page", String(page));
     qs.append("limit", String(limit));
-    const href = `/${locale}/admin/courses${
+    const href = `/admin/courses${
       qs.toString() ? `?${qs.toString()}` : ""
     }`;
     const prev = prevRef.current;
@@ -119,7 +119,7 @@ export default function Page() {
       level: normLevel,
       categoryId: normCategoryId,
     };
-  }, [page, limit, debouncedName, status, level, categoryId, locale, router]);
+  }, [page, limit, debouncedName, status, level, categoryId, router]);
 
   const filter = React.useMemo(
     () => ({
@@ -237,7 +237,7 @@ export default function Page() {
               </div>
             </div>
             <Button
-              onClick={() => router.push(`/${locale}/admin/courses/create`)}
+              onClick={() => router.push(`/admin/courses/create`)}
               className="h-9"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -312,7 +312,7 @@ export default function Page() {
                 type: "text",
                 render: (row: Course) => (
                   <Link
-                    href={`/${locale}/admin/courses/${row.id}`}
+                    href={`/admin/courses/${row.id}`}
                     className="hover:underline flex items-center gap-2 cursor-pointer"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -418,7 +418,7 @@ export default function Page() {
                 render: (row: Course) => (
                   <div className="flex items-center justify-center gap-3">
                     <Link
-                      href={`/${locale}/admin/courses/edit/${row.id}`}
+                      href={`/admin/courses/edit/${row.id}`}
                       className="inline-flex text-muted-foreground hover:text-foreground"
                     >
                       <Pencil className="h-5 w-5" />

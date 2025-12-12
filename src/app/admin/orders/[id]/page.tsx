@@ -8,8 +8,7 @@ import { BackButton } from "@/components/shared/common/BackButton"
 import type { OrderDetailResponse, OrderDetailItem } from "@/types/order-detail.types"
 
 export default function Page() {
-    const params = useParams<{ locale: string; id: string }>()
-    const locale = params?.locale || "vi"
+    const params = useParams<{ id: string }>()
     const id = params?.id as string
     const router = useRouter()
 
@@ -25,7 +24,7 @@ export default function Page() {
 
             <div className="mb-4 flex items-center gap-2">
                 <div className="inline-flex gap-2">
-                    <BackButton fallbackHref={`/${locale}/admin/orders`} />
+                    <BackButton fallbackHref={`/admin/orders`} />
                 </div>
                 <h1 className="text-lg font-semibold">Đơn hàng #{id}</h1>
             </div>
@@ -83,7 +82,7 @@ export default function Page() {
                                     <div key={d.id} className="p-4 flex items-center justify-between">
                                         <div>
                                             <button
-                                                onClick={() => router.push(`/${locale}/profile?tab=my-learning`)}
+                                                onClick={() => router.push(`/profile?tab=my-learning`)}
                                                 className="font-medium text-left hover:text-primary hover:underline transition-colors"
                                             >
                                                 {d.course?.name || d.courseId}

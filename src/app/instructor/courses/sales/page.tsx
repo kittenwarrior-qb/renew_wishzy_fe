@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useParams } from "next/navigation"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -16,8 +16,6 @@ import { useAppStore } from "@/src/stores/useAppStore"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 
 export default function SalesManagementPage() {
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
   const { user } = useAppStore()
 
   const [statusFilter, setStatusFilter] = useState<SaleStatus | "all">("all")
@@ -229,13 +227,13 @@ export default function SalesManagementPage() {
                       className="flex-1"
                       asChild
                     >
-                      <Link href={`/${locale}/instructor/courses/edit/${course.courseId}`}>
+                      <Link href={`/instructor/courses/edit/${course.courseId}`}>
                         <Pencil className="h-4 w-4 mr-2" />
                         Chỉnh sửa sale
                       </Link>
                     </Button>
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/${locale}/instructor/courses/${course.courseId}`}>
+                      <Link href={`/instructor/courses/${course.courseId}`}>
                         <ExternalLink className="h-4 w-4" />
                       </Link>
                     </Button>

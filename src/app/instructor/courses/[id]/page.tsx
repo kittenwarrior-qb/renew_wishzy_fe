@@ -20,8 +20,7 @@ import AdminCourseInstructor from "@/components/shared/admin/AdminCourseInstruct
 import AdminCourseFeedback from "@/components/shared/admin/AdminCourseFeedback"
 
 export default function CourseDetailPage() {
-    const params = useParams<{ locale: string; id: string }>()
-    const locale = params?.locale || "vi"
+    const params = useParams<{ id: string }>()
     const courseId = params?.id as string
 
     const { data: course, isPending: loadingCourse, isFetching: fetchingCourse } = useCourseDetail(courseId)
@@ -61,7 +60,7 @@ export default function CourseDetailPage() {
             <LoadingOverlay show={loadingCourse || loadingChapters || fetchingCourse || fetchingChapters} />
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <Link href={`/${locale}/instructor/courses`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-1 hover:bg-accent">
+                    <Link href={`/instructor/courses`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-md px-2 py-1 hover:bg-accent">
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
                     <h1 className="text-xl font-semibold">{course?.name ?? "Chi tiết khoá học"}</h1>
@@ -80,7 +79,7 @@ export default function CourseDetailPage() {
                 {loadingChapters ? (
                     <div className="text-sm text-muted-foreground">Đang tải chương...</div>
                 ) : (
-                    <AdminCourseChapters chapters={chapters as any} courseId={courseId} locale={locale} />
+                    <AdminCourseChapters chapters={chapters as any} courseId={courseId} />
                 )}
             </div>
 

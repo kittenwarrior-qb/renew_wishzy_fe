@@ -25,15 +25,12 @@ const PaymentCallbackContent = () => {
     // 00: Success
     // Other codes: Failed
     
-    const pathSegments = window.location.pathname.split('/')
-    const locale = pathSegments[1] || 'vi' 
-    
     if (responseCode === '00') {
       const queryString = searchParams.toString()
-      router.replace(`/${locale}/checkout/success?${queryString}`)
+      router.replace(`/checkout/success?${queryString}`)
     } else {
       toast.error('Thanh toán thất bại. Vui lòng thử lại.')
-      router.replace(`/${locale}/checkout`)
+      router.replace(`/checkout`)
     }
   }, [searchParams, router])
 

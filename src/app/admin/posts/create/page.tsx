@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,8 +19,6 @@ import UploadProgressOverlay from "@/components/shared/upload/UploadProgressOver
 import { notify } from "@/components/shared/admin/Notifications"
 
 export default function Page() {
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
   const router = useRouter()
   const { setPrimaryAction } = useAdminHeaderStore()
 
@@ -83,8 +81,8 @@ export default function Page() {
       metaTitle: metaTitle || undefined,
       metaDescription: metaDescription || undefined,
       metaKeywords: keywords.length ? keywords : undefined,
-    }, { onSuccess: () => router.replace(`/${locale}/admin/posts`) })
-  }, [canSave, creating, createPost, title, slug, status, content, excerpt, featuredImage, metaTitle, metaDescription, keywords, router, locale])
+    }, { onSuccess: () => router.replace(`/admin/posts`) })
+  }, [canSave, creating, createPost, title, slug, status, content, excerpt, featuredImage, metaTitle, metaDescription, keywords, router])
 
   React.useEffect(() => {
     setPrimaryAction({
@@ -100,7 +98,7 @@ export default function Page() {
   return (
     <div className="relative">
       <div className="mb-4 flex items-center gap-4">
-        <BackButton fallbackHref={`/${locale}/admin/posts`} disabled={creating} />
+        <BackButton fallbackHref={`/admin/posts`} disabled={creating} />
         <div className="flex flex-col">
           <h1 className="text-lg font-semibold">Viết bài</h1>
           <p className="text-xs text-muted-foreground">Soạn nội dung, tối ưu SEO và xem trước bài viết trước khi xuất bản.</p>

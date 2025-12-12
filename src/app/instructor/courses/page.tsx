@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
@@ -24,8 +24,6 @@ import { getSaleStatus, getDiscountPercentage } from "@/types/sale"
 type CourseFormValue = Partial<Pick<Course, "name" | "price" | "level" | "totalDuration" | "categoryId" | "description" | "notes" | "thumbnail">>
 
 export default function Page() {
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
   const router = useRouter()
   const searchParams = useSearchParams()
   const { theme, user } = useAppStore()
@@ -48,7 +46,7 @@ export default function Page() {
     if (categoryId && categoryId !== "__all") qs.append("categoryId", categoryId)
     qs.append("page", String(page))
     qs.append("limit", String(limit))
-    const href = `/${locale}/instructor/courses${qs.toString() ? `?${qs.toString()}` : ""}`
+    const href = `/instructor/courses${qs.toString() ? `?${qs.toString()}` : ""}`
     const prev = prevRef.current
     const normStatus = status === "__all" ? undefined : status
     const normLevel = level === "__all" ? undefined : level
@@ -56,7 +54,7 @@ export default function Page() {
     const onlyPaging = !!prev && prev.name === (name || undefined) && prev.status === normStatus && prev.level === normLevel && prev.categoryId === normCategoryId && (prev.page !== page || prev.limit !== limit)
     if (onlyPaging) router.push(href); else router.replace(href)
     prevRef.current = { page, limit, name: name || undefined, status: normStatus, level: normLevel, categoryId: normCategoryId }
-  }, [page, limit, name, status, level, categoryId, locale, router])
+  }, [page, limit, name, status, level, categoryId, router])
 
   const filter = React.useMemo(() => ({
     page,
@@ -87,11 +85,11 @@ export default function Page() {
     setPrimaryAction({
       label: "Thêm khoá học",
       variant: "default",
-      onClick: () => router.push(`/${locale}/instructor/courses/create`),
+      onClick: () => router.push(`/instructor/courses/create`),
     })
 
     return () => setPrimaryAction(null)
-  }, [setPrimaryAction, router, locale])
+  }, [setPrimaryAction, router])
 
   return (
     <div className="relative py-4 px-4 md:px-6">
@@ -192,7 +190,7 @@ export default function Page() {
                 type: 'text',
                 render: (row: Course) => (
                   <Link
-                    href={`/${locale}/instructor/courses/${row.id}`}
+                    href={`/instructor/courses/${row.id}`}
                     className="hover:underline flex items-center gap-2 cursor-pointer"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -320,7 +318,7 @@ export default function Page() {
                 render: (row: Course) => (
                   <div className="flex items-center justify-center gap-3">
                     <Link
-                      href={`/${locale}/instructor/courses/edit/${row.id}`}
+                      href={`/instructor/courses/edit/${row.id}`}
                       className="inline-flex text-muted-foreground hover:text-foreground"
                     >
                       <Pencil className="h-5 w-5" />

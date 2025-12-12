@@ -34,8 +34,7 @@ import AdminCourseInstructor from "@/components/shared/admin/AdminCourseInstruct
 import AdminCourseFeedback from "@/components/shared/admin/AdminCourseFeedback";
 
 export default function CourseDetailPage() {
-  const params = useParams<{ locale: string; id: string }>();
-  const locale = params?.locale || "vi";
+  const params = useParams<{ id: string }>();
   const courseId = params?.id as string;
 
   const {
@@ -105,7 +104,7 @@ export default function CourseDetailPage() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 min-w-0 flex-1">
               <Link
-                href={`/${locale}/admin/courses`}
+                href={`/admin/courses`}
                 className="inline-flex items-center justify-center w-9 h-9 text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-accent/80 transition-all duration-200 hover:shadow-sm shrink-0"
                 title="Quay lại"
               >

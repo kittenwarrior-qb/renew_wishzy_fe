@@ -11,7 +11,6 @@ export default function CourseRedirectPage() {
   const params = useParams();
   const router = useRouter();
   const courseId = params.courseId as string;
-  const locale = params.locale as string;
   const [hasNoContent, setHasNoContent] = useState(false);
 
   const { data: chaptersData, isLoading } = useChapterList(courseId);
@@ -28,13 +27,13 @@ export default function CourseRedirectPage() {
       if (firstChapterWithLectures && firstChapterWithLectures.lecture) {
         const firstLecture = firstChapterWithLectures.lecture[0];
         // Redirect to first lecture
-        router.replace(`/${locale}/learning/${courseId}/${firstLecture.id}`);
+        router.replace(`/learning/${courseId}/${firstLecture.id}`);
       } else {
         // No lectures found - show friendly message
         setHasNoContent(true);
       }
     }
-  }, [chaptersData, isLoading, courseId, locale, router]);
+  }, [chaptersData, isLoading, courseId, router]);
 
   // Show friendly message when course has no content yet
   if (hasNoContent) {
@@ -55,7 +54,7 @@ export default function CourseRedirectPage() {
             <div className="space-y-3">
               <Button 
                 className="w-full"
-                onClick={() => router.push(`/${locale}/course-detail/${courseId}`)}
+                onClick={() => router.push(`/course-detail/${courseId}`)}
               >
                 <BookOpen className="w-4 h-4 mr-2" />
                 Xem thông tin khóa học
@@ -63,7 +62,7 @@ export default function CourseRedirectPage() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => router.push(`/${locale}/dashboard`)}
+                onClick={() => router.push(`/dashboard`)}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Về trang học tập của tôi

@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -28,7 +28,6 @@ interface QuizItem {
 }
 
 export default function QuizListPage() {
-  const params = useParams();
   const router = useRouter();
   const [quizzes, setQuizzes] = useState<QuizItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,14 +116,14 @@ export default function QuizListPage() {
   };
 
   const handleStartQuiz = (quizId: string) => {
-    router.push(`/${params.locale}/quiz/${quizId}`);
+    router.push(`/quiz/${quizId}`);
   };
 
   const handleViewResult = (quiz: QuizItem) => {
     if (quiz.attemptId) {
-      router.push(`/${params.locale}/quiz/${quiz.id}/result?attemptId=${quiz.attemptId}`);
+      router.push(`/quiz/${quiz.id}/result?attemptId=${quiz.attemptId}`);
     } else {
-      router.push(`/${params.locale}/quiz/${quiz.id}/result`);
+      router.push(`/quiz/${quiz.id}/result`);
     }
   };
 

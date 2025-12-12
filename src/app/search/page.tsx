@@ -168,7 +168,7 @@ const SearchPage = () => {
       if (maxPriceInput) params.set("maxPrice", maxPriceInput);
     }
 
-    const url = `/${locale}/search?${params.toString()}`;
+    const url = `/search?${params.toString()}`;
     router.push(url);
   };
 
@@ -182,7 +182,7 @@ const SearchPage = () => {
     setMinPriceInput("");
     setMaxPriceInput("");
     
-    router.push(`/${locale}/search`);
+    router.push(`/search`);
     
     setTimeout(() => {
       window.location.reload();
@@ -204,7 +204,7 @@ const SearchPage = () => {
       if (maxPriceInput) params.set("maxPrice", maxPriceInput);
     }
     
-    const url = `/${locale}/search?${params.toString()}`;
+    const url = `/search?${params.toString()}`;
     router.push(url);
   };
   
@@ -223,7 +223,7 @@ const SearchPage = () => {
       if (maxPriceInput) params.set("maxPrice", maxPriceInput);
     }
     
-    const url = `/${locale}/search?${params.toString()}`;
+    const url = `/search?${params.toString()}`;
     router.push(url);
   };
   
@@ -242,7 +242,7 @@ const SearchPage = () => {
       if (maxPriceInput) params.set("maxPrice", maxPriceInput);
     }
     
-    const url = `/${locale}/search?${params.toString()}`;
+    const url = `/search?${params.toString()}`;
     router.push(url);
   };
   
@@ -261,7 +261,7 @@ const SearchPage = () => {
       if (maxPriceInput) params.set("maxPrice", maxPriceInput);
     }
     
-    const url = `/${locale}/search?${params.toString()}`;
+    const url = `/search?${params.toString()}`;
     router.push(url);
   };
 

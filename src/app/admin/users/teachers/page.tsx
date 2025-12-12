@@ -90,11 +90,11 @@ export default function Page() {
     qs.append("status", statusFilter);
     qs.append("page", String(page));
     qs.append("limit", String(limit));
-    const href = `/${locale}/admin/users/teachers${
+    const href = `/admin/users/teachers${
       qs.toString() ? `?${qs.toString()}` : ""
     }`;
     router.replace(href);
-  }, [page, limit, queryState, statusFilter, locale, router]);
+  }, [page, limit, queryState, statusFilter, router]);
 
   const {
     data: pendingData,

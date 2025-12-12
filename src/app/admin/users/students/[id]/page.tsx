@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button"
 import { useAppStore } from "@/stores/useAppStore"
 
 export default function Page() {
-    const params = useParams<{ locale: string; id: string }>()
-    const locale = params?.locale || "vi"
+    const params = useParams<{ id: string }>()
     const id = params?.id as string
     const router = useRouter()
     const { theme } = useAppStore()
@@ -19,9 +18,9 @@ export default function Page() {
     // Redirect if ID is invalid
     React.useEffect(() => {
         if (!id || id === 'undefined') {
-            router.replace(`/${locale}/admin/users/students`)
+            router.replace(`/admin/users/students`)
         }
-    }, [id, locale, router])
+    }, [id, router])
 
     const { data: user, isPending, isError } = useUserDetail(id)
 
@@ -34,7 +33,7 @@ export default function Page() {
         <div className="relative p-4 md:p-6">
             <div className="mb-4 flex items-center justify-between">
                 <h1 className="text-lg font-semibold">Chi tiết học sinh</h1>
-                <Link href={`/${locale}/admin/users/students`}>
+                <Link href={`/admin/users/students`}>
                     <Button variant="outline">Quay lại</Button>
                 </Link>
             </div>

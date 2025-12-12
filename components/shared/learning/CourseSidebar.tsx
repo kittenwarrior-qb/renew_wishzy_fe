@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { ChevronDown, ChevronRight, Play, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -24,8 +23,6 @@ export function CourseSidebar({
   completedLectureIds,
   onRefreshCompleted 
 }: CourseSidebarProps) {
-  const params = useParams();
-  const locale = params.locale as string;
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [finishedLectures, setFinishedLectures] = useState<string[]>([]);
   const [totalLectures, setTotalLectures] = useState(0);
@@ -144,7 +141,7 @@ export function CourseSidebar({
                   .map((lecture) => (
                   <Link
                     key={lecture.id}
-                    href={`/${locale}/learning/${courseId}/${lecture.id}`}
+                    href={`/learning/${courseId}/${lecture.id}`}
                     className={cn(
                       "block px-4 py-3 ml-6 mr-2 rounded-lg transition-colors",
                       currentLectureId === lecture.id

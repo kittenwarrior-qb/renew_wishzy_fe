@@ -7,16 +7,14 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Notifications } from "@/components/shared/admin/Notifications"
 import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
 import { useAppStore } from "@/stores/useAppStore"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useAdminGuard } from "@/hooks/useAdminGuard"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const leaveProceedRef = React.useRef<null | (() => void)>(null)
   const [openLeaveConfirm, setOpenLeaveConfirm] = React.useState(false)
   const router = useRouter()
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
-  const { ready } = useAdminGuard({ allowedRoles: ["admin"], redirectTo: `/${locale}` })
+  const { ready } = useAdminGuard({ allowedRoles: ["admin"], redirectTo: `/` })
   const theme = useAppStore((state) => state.theme)
   const hasHydrated = useAppStore((state) => state._hasHydrated)
   const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"

@@ -17,8 +17,7 @@ import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay";
 import { Button } from "@/components/ui/button";
 
 export default function EditExamPage() {
-  const params = useParams<{ locale: string; id: string }>();
-  const locale = params?.locale || "vi";
+  const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const router = useRouter();
   const { setPrimaryAction } = useAdminHeaderStore();
@@ -155,7 +154,7 @@ export default function EditExamPage() {
       {
         onSuccess: () => {
           notify({ title: "Đã cập nhật", variant: "success" });
-          router.push(`/${locale}/admin/exams`);
+          router.push(`/admin/exams`);
         },
         onError: (err: any) =>
           notify({
@@ -188,7 +187,7 @@ export default function EditExamPage() {
       <div className="p-4 md:p-6">
         <Button
           variant="ghost"
-          onClick={() => router.push(`/${locale}/admin/exams`)}
+          onClick={() => router.push(`/admin/exams`)}
           className="mb-4"
         >
           <svg
@@ -210,7 +209,7 @@ export default function EditExamPage() {
         <div className="mt-6 flex justify-end gap-3">
           <Button
             variant="outline"
-            onClick={() => router.push(`/${locale}/admin/exams`)}
+            onClick={() => router.push(`/admin/exams`)}
           >
             Hủy
           </Button>

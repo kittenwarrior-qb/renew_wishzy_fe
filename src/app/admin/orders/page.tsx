@@ -25,10 +25,10 @@ export default function Page() {
     if (orderId) qs.set("id", orderId)
     if (page !== 1) qs.set("page", String(page))
     if (limit !== 10) qs.set("limit", String(limit))
-    const href = `/${locale}/admin/orders${qs.toString() ? `?${qs.toString()}` : ""}`
+    const href = `/admin/orders${qs.toString() ? `?${qs.toString()}` : ""}`
     const current = `${window.location.pathname}${window.location.search}`
     if (current !== href) router.replace(href)
-  }, [orderId, page, limit, locale, router])
+  }, [orderId, page, limit, router])
 
   const { data, isPending, isFetching, isError } = useOrderList({ page, limit, id: orderId || undefined })
   const items = (data?.data ?? []) as OrderListRow[]
@@ -51,7 +51,7 @@ export default function Page() {
 
         {(() => {
           const columns: Column<OrderListRow>[] = [
-            { headerClassName: 'min-w-[200px]', key: 'id', title: 'Mã đơn', render: (row: OrderListRow) => (<Link href={`/${locale}/admin/orders/${row.id}`} className="hover:underline">{row.id}</Link>) },
+            { headerClassName: 'min-w-[200px]', key: 'id', title: 'Mã đơn', render: (row: OrderListRow) => (<Link href={`/admin/orders/${row.id}`} className="hover:underline">{row.id}</Link>) },
             { headerClassName: 'min-w-[160px]', key: 'user', title: 'Khách hàng', render: (row: OrderListRow) => row.user?.fullName || row.user?.email || row.userId || '' },
             { headerClassName: 'min-w-[120px]', key: 'totalPrice', title: 'Tổng tiền', align: 'right', render: (row: OrderListRow) => `${Number(row.totalPrice ?? 0).toLocaleString()} VNĐ` },
             {

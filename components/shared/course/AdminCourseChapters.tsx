@@ -62,11 +62,9 @@ function Trigger({
 export function AdminCourseChapters({
   chapters,
   courseId,
-  locale,
 }: {
   chapters: ChapterType[];
   courseId: string;
-  locale: string;
 }) {
   const { mutate: deleteChapter, isPending: deleting } = useDeleteChapter();
   const { mutate: updateChapter, isPending: updating } = useUpdateChapter();

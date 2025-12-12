@@ -186,7 +186,7 @@ export default function CategoryListPage() {
     }
 
     const query = qs.toString();
-    const href = `/${locale}/admin/categories${query ? `?${query}` : ""}`;
+    const href = `/admin/categories${query ? `?${query}` : ""}`;
 
     const current = `${window.location.pathname}${window.location.search}`;
     if (current !== href) {

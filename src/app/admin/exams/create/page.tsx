@@ -118,7 +118,7 @@ export default function CreateExamPage() {
       {
         onSuccess: () => {
           notify({ title: "Đã tạo", variant: "success" });
-          router.push(`/${locale}/admin/exams`);
+          router.push(`/admin/exams`);
         },
         onError: (err: any) =>
           notify({
@@ -128,7 +128,7 @@ export default function CreateExamPage() {
           }),
       }
     );
-  }, [creating, form, validateCreate, createQuiz, router, locale]);
+  }, [creating, form, validateCreate, createQuiz, router]);
 
   React.useEffect(() => {
     setPrimaryAction(null);
@@ -151,7 +151,7 @@ export default function CreateExamPage() {
           <Button
             variant={"ghost"}
             type="button"
-            onClick={() => router.push(`/${locale}/admin/exams`)}
+            onClick={() => router.push(`/admin/exams`)}
             className="px-4 py-2 border border-border rounded-md hover:bg-accent transition-colors"
           >
             Hủy

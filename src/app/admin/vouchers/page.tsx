@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
@@ -18,8 +18,6 @@ import { AdminDataErrorState } from "@/components/shared/admin/AdminDataErrorSta
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 
 export default function Page() {
-    const params = useParams<{ locale: string }>()
-    const locale = params?.locale || "vi"
     const router = useRouter()
     const searchParams = useSearchParams()
     const { setPrimaryAction } = useAdminHeaderStore()
@@ -156,10 +154,10 @@ export default function Page() {
         if (page !== 1) qs.set("page", String(page))
         if (limit !== 10) qs.set("limit", String(limit))
 
-        const href = `/${locale}/admin/vouchers${qs.toString() ? `?${qs.toString()}` : ""}`
+        const href = `/admin/vouchers${qs.toString() ? `?${qs.toString()}` : ""}`
         const current = `${window.location.pathname}${window.location.search}`
         if (current !== href) router.replace(href)
-    }, [filter, page, limit, locale, router])
+    }, [filter, page, limit, router])
 
     React.useEffect(() => {
         setPrimaryAction({

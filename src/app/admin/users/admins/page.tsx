@@ -82,11 +82,11 @@ export default function Page() {
     if (queryState.q) qs.append("q", queryState.q);
     qs.append("page", String(page));
     qs.append("limit", String(limit));
-    const href = `/${locale}/admin/users/admins${
+    const href = `/admin/users/admins${
       qs.toString() ? `?${qs.toString()}` : ""
     }`;
     router.replace(href);
-  }, [page, limit, queryState, locale, router]);
+  }, [page, limit, queryState, router]);
 
   const { data, isPending, isFetching, isError } = useUserList({
     page,

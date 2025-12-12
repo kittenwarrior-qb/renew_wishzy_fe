@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { notify } from "@/components/shared/admin/Notifications"
 import { VoucherForm, type VoucherFormValue } from "@/components/shared/voucher/VoucherForm"
@@ -26,8 +26,6 @@ const initialForm: VoucherFormValue = {
 
 export default function CreateVoucherPage() {
     const router = useRouter()
-    const params = useParams<{ locale: string }>()
-    const locale = params?.locale || "vi"
     const { mutate: createVoucher, isPending } = useCreateVoucher()
 
     const [form, setForm] = React.useState<VoucherFormValue>(initialForm)
@@ -76,7 +74,7 @@ export default function CreateVoucherPage() {
             {
                 onSuccess: () => {
                     notify({ title: "Đã tạo voucher", variant: "success" })
-                    router.push(`/${locale}/admin/vouchers`)
+                    router.push(`/admin/vouchers`)
                 },
                 onError: (err: any) => {
                     notify({
@@ -97,7 +95,7 @@ export default function CreateVoucherPage() {
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => router.push(`/${locale}/admin/vouchers`)}
+                        onClick={() => router.push(`/admin/vouchers`)}
                     >
                         Quay lại
                     </Button>

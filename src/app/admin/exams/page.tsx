@@ -51,11 +51,11 @@ export default function Page() {
       params.set("page", String(newPage));
       params.set("limit", String(newLimit));
       if (newSearch) params.set("search", newSearch);
-      router.replace(`/${locale}/admin/exams?${params.toString()}`, {
+      router.replace(`/admin/exams?${params.toString()}`, {
         scroll: false,
       });
     },
-    [router, locale]
+    [router]
   );
 
   const { data, isPending, isFetching, isError, refetch } = useAdminQuizList({
@@ -126,7 +126,7 @@ export default function Page() {
           />
         </div>
         <Button
-          onClick={() => router.push(`/${locale}/admin/exams/create`)}
+          onClick={() => router.push(`/admin/exams/create`)}
           className="shrink-0"
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -218,7 +218,7 @@ export default function Page() {
                     type="button"
                     className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer"
                     onClick={() =>
-                      router.push(`/${locale}/admin/exams/${row.id}`)
+                      router.push(`/admin/exams/${row.id}`)
                     }
                   >
                     <svg
@@ -246,7 +246,7 @@ export default function Page() {
                     type="button"
                     className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer"
                     onClick={() =>
-                      router.push(`/${locale}/admin/exams/edit/${row.id}`)
+                      router.push(`/admin/exams/edit/${row.id}`)
                     }
                   >
                     <Pencil className="h-4 w-4" />

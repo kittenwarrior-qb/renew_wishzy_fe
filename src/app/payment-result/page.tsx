@@ -3,7 +3,6 @@
 import { useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { useParams } from "next/navigation"
 
 // Loading component for Suspense fallback
 const LoadingState = () => (
@@ -20,36 +19,34 @@ const LoadingState = () => (
 const PaymentResultContent = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const params = useParams()
-  const locale = params.locale as string
 
   useEffect(() => {
     const status = searchParams.get('status')
     const orderId = searchParams.get('orderId')
     const code = searchParams.get('code')
     
-    console.log('🔔 Payment Result:', { status, orderId, code, locale })
+    console.log('🔔 Payment Result:', { status, orderId, code })
     
     if (status === 'success' && orderId) {
       toast.success('Thanh toán thành công!')
-      router.replace(`/${locale}/checkout/success?orderId=${orderId}`)
+      router.replace(`/checkout/success?orderId=${orderId}`)
     } else if (status === 'failed') {
       toast.error(`Thanh toán thất bại. Mã lỗi: ${code || 'Unknown'}`)
       setTimeout(() => {
-        router.replace(`/${locale}/checkout`)
+        router.replace(`/checkout`)
       }, 2000)
     } else if (status === 'invalid') {
       toast.error('Giao dịch không hợp lệ. Vui lòng liên hệ hỗ trợ.')
       setTimeout(() => {
-        router.replace(`/${locale}/checkout`)
+        router.replace(`/checkout`)
       }, 2000)
     } else {
       toast.error('Có lỗi xảy ra. Vui lòng thử lại.')
       setTimeout(() => {
-        router.replace(`/${locale}/checkout`)
+        router.replace(`/checkout`)
       }, 2000)
     }
-  }, [searchParams, router, locale])
+  }, [searchParams, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

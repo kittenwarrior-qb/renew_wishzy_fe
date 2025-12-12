@@ -7,15 +7,12 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
 import { Notifications } from "@/components/shared/admin/Notifications"
 import { useAppStore } from "@/stores/useAppStore"
-import { useParams } from "next/navigation"
 import { useInstructorGuard } from "@/hooks/useInstructorGuard"
 
 export default function InstructorLayout({ children }: { children: React.ReactNode }) {
   const leaveProceedRef = React.useRef<null | (() => void)>(null)
   const [openLeaveConfirm, setOpenLeaveConfirm] = React.useState(false)
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
-  const { ready } = useInstructorGuard({ allowedRoles: ["instructor", "admin"], redirectTo: `/${locale}` })
+  const { ready } = useInstructorGuard({ allowedRoles: ["instructor", "admin"], redirectTo: `/` })
   const { theme } = useAppStore()
   const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
 

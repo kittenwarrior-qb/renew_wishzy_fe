@@ -40,9 +40,9 @@ export default function Page() {
     if (queryState.verified && queryState.verified !== 'all') qs.append("verified", queryState.verified)
     qs.append("page", String(page))
     qs.append("limit", String(limit))
-    const href = `/${locale}/admin/users/students${qs.toString() ? `?${qs.toString()}` : ""}`
+    const href = `/admin/users/students${qs.toString() ? `?${qs.toString()}` : ""}`
     router.replace(href)
-  }, [page, limit, queryState, locale, router])
+  }, [page, limit, queryState, router])
 
   const { data, isPending, isFetching, isError } = useUserList({
     page,

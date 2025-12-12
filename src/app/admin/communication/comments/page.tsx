@@ -30,10 +30,10 @@ export default function Page() {
     if (page !== 1) qs.set("page", String(page))
     if (limit !== 10) qs.set("limit", String(limit))
 
-    const href = `/${locale}/admin/communication/comments${qs.toString() ? `?${qs.toString()}` : ""}`
+    const href = `/admin/communication/comments${qs.toString() ? `?${qs.toString()}` : ""}`
     const current = `${window.location.pathname}${window.location.search}`
     if (current !== href) router.replace(href)
-  }, [filter, page, limit, locale, router])
+  }, [filter, page, limit, router])
 
   const { data, isPending, isFetching, isError, refetch } = useAdminCommentList({
     page,
@@ -64,7 +64,7 @@ export default function Page() {
       title: "Khoá học",
       render: (row: AdminComment) => (
         <Link
-          href={`/${locale}/course-detail/${row.courseId}`}
+          href={`/course-detail/${row.courseId}`}
           className="text-xs text-primary hover:underline"
         >
           {row.courseId}
@@ -214,7 +214,7 @@ export default function Page() {
               <div>
                 <span className="font-medium">Khoá học:</span>{" "}
                 <Link
-                  href={`/${locale}/course-detail/${detail.courseId}`}
+                  href={`/course-detail/${detail.courseId}`}
                   className="text-primary hover:underline break-all"
                 >
                   {detail.courseId}

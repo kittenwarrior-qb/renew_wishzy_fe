@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useAllCategories } from "@/components/shared/category/useCategory"
 import { useCreateCourse } from "@/components/shared/course/useCourse"
 import { CourseForm, type CourseFormValue, useUnsavedChanges } from "@/components/shared/course/CourseForm"
@@ -9,8 +9,6 @@ import { notify } from "@/components/shared/admin/Notifications"
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 
 export default function CreateCoursePage() {
-    const params = useParams<{ locale: string }>()
-    const locale = params?.locale || "vi"
     const router = useRouter()
     const { setPrimaryAction } = useAdminHeaderStore()
 
@@ -41,10 +39,10 @@ export default function CreateCoursePage() {
         }
         const { status: _omitStatus, ...payload } = form
         createCourse(payload as any, {
-            onSuccess: () => { notify({ title: "Đã tạo", variant: "success" }); setDirty(false); router.push(`/${locale}/instructor/courses`) },
+            onSuccess: () => { notify({ title: "Đã tạo", variant: "success" }); setDirty(false); router.push(`/instructor/courses`) },
             onError: (e: any) => notify({ title: "Lỗi", description: String(e?.message || "Không thể tạo"), variant: "destructive" })
         })
-    }, [isPending, form, createCourse, router, locale])
+    }, [isPending, form, createCourse, router])
 
     React.useEffect(() => {
         setPrimaryAction({

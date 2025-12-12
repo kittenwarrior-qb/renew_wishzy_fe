@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useParams, useSearchParams, useRouter } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { usePostList, useDeletePost } from "@/components/shared/post/usePost"
 import type { PostStatus, Post } from "@/services/post"
@@ -17,8 +17,6 @@ import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 import { AdminDataErrorState } from "@/components/shared/admin/AdminDataErrorState"
 
 export default function Page() {
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
   const router = useRouter()
   const sp = useSearchParams()
   const { setPrimaryAction } = useAdminHeaderStore()
@@ -35,10 +33,10 @@ export default function Page() {
     if (status && status !== "__all") qs.set("status", status)
     if (page !== 1) qs.set("page", String(page))
     if (limit !== 10) qs.set("limit", String(limit))
-    const href = `/${locale}/admin/posts${qs.toString() ? `?${qs.toString()}` : ""}`
+    const href = `/admin/posts${qs.toString() ? `?${qs.toString()}` : ""}`
     const current = `${window.location.pathname}${window.location.search}`
     if (current !== href) router.replace(href)
-  }, [q, status, page, limit, locale, router])
+  }, [q, status, page, limit, router])
 
   const { data, isPending, isFetching, isError, refetch } = usePostList({ page, limit, q, status })
   const { mutate: deletePost, isPending: deleting } = useDeletePost()
@@ -56,11 +54,11 @@ export default function Page() {
     setPrimaryAction({
       label: "Viết bài",
       variant: "default",
-      onClick: () => router.push(`/${locale}/admin/posts/create`),
+      onClick: () => router.push(`/admin/posts/create`),
     })
 
     return () => setPrimaryAction(null)
-  }, [setPrimaryAction, router, locale])
+  }, [setPrimaryAction, router])
 
   if (isError) {
     return (
@@ -131,7 +129,7 @@ export default function Page() {
                 render: (row: PostRow) => (
                   <div className="inline-flex items-center gap-1">
                     <Link
-                      href={`/${locale}/admin/posts/${row.id}`}
+                      href={`/admin/posts/${row.id}`}
                       className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent cursor-pointer"
                     >
                       <Pencil className="h-4 w-4" />

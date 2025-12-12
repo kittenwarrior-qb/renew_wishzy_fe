@@ -59,7 +59,7 @@ export default function CreateCoursePage() {
       onSuccess: () => {
         notify({ title: "Đã tạo", variant: "success" });
         setDirty(false);
-        router.push(`/${locale}/admin/courses`);
+        router.push(`/admin/courses`);
       },
       onError: (e: any) =>
         notify({
@@ -68,7 +68,7 @@ export default function CreateCoursePage() {
           variant: "destructive",
         }),
     });
-  }, [isPending, form, createCourse, router, locale]);
+  }, [isPending, form, createCourse, router]);
 
   React.useEffect(() => {
     setPrimaryAction(null);
@@ -78,7 +78,7 @@ export default function CreateCoursePage() {
   return (
     <div className="relative py-4 px-4 md:px-6 max-w-7xl mx-auto">
       <button
-        onClick={() => router.push(`/${locale}/admin/courses`)}
+        onClick={() => router.push(`/admin/courses`)}
         className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <svg

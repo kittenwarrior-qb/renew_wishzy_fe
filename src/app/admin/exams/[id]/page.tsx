@@ -7,8 +7,7 @@ import { ArrowLeft, Clock, FileText, CheckCircle2 } from "lucide-react";
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay";
 
 export default function ExamDetailPage() {
-  const params = useParams<{ locale: string; id: string }>();
-  const locale = params?.locale || "vi";
+  const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const router = useRouter();
 
@@ -31,7 +30,7 @@ export default function ExamDetailPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b px-4 md:px-6 py-4">
         <button
-          onClick={() => router.push(`/${locale}/admin/exams`)}
+          onClick={() => router.push(`/admin/exams`)}
           className="mb-3 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

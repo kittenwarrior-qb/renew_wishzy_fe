@@ -11,8 +11,7 @@ import { SaleManagementSection } from "../../components"
 import type { SaleInfo } from "@/types/sale"
 
 export default function EditCoursePage() {
-  const params = useParams<{ locale: string; id: string }>()
-  const locale = params?.locale || "vi"
+  const params = useParams<{ id: string }>()
   const id = params?.id as string
   const router = useRouter()
   const { setPrimaryAction } = useAdminHeaderStore()
@@ -95,12 +94,12 @@ export default function EditCoursePage() {
       onSuccess: () => {
         notify({ title: "Đã cập nhật", variant: "success" })
         setDirty(false)
-        router.push(`/${locale}/instructor/courses`)
+        router.push(`/instructor/courses`)
       },
       onError: (e: any) =>
         notify({ title: "Lỗi", description: String(e?.message || "Không thể cập nhật"), variant: "destructive" }),
     })
-  }, [isPending, updating, updateCourse, form, id, router, locale])
+  }, [isPending, updating, updateCourse, form, id, router])
 
   React.useEffect(() => {
     setPrimaryAction({
