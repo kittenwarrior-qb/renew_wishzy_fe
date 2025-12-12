@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { QuizCard } from "@/components/quiz/quiz-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getQuizzes } from "@/services/quiz";
+import { getQuizzes, getMyQuizAttempts, type QuizAttempt } from "@/services/quiz";
 
 interface QuizItem {
   id: string;
@@ -11,6 +11,9 @@ interface QuizItem {
   description: string;
   questionCount: number;
   timeLimit: number;
+  status: "not-started" | "in-progress" | "completed";
+  score?: number;
+  attemptId?: string;
 }
 
 export const QuizSection: React.FC = () => {
@@ -26,6 +29,26 @@ export const QuizSection: React.FC = () => {
       setLoading(true);
       const response = await getQuizzes(1, 6); // Lấy 6 quiz cho trang chủ
       
+      // Lấy attempts (có thể fail nếu chưa đăng nhập)
+      let attemptsData: QuizAttempt[] = [];
+      try {
+        attemptsData = await getMyQuizAttempts();
+      } catch (error) {
+        console.log("User not logged in or no attempts found");
+      }
+
+      // Tạo map attempts theo quizId
+      const attemptsMap = new Map<string, QuizAttempt>();
+      if (Array.isArray(attemptsData)) {
+        attemptsData.forEach((attempt) => {
+          const existing = attemptsMap.get(attempt.quizId);
+          // Giữ attempt mới nhất
+          if (!existing || new Date(attempt.startedAt) > new Date(existing.startedAt)) {
+            attemptsMap.set(attempt.quizId, attempt);
+          }
+        });
+      }
+      
       // Handle nested response structure
       const responseData = response as any;
       const quizList = responseData?.data?.items 
@@ -34,13 +57,34 @@ export const QuizSection: React.FC = () => {
         ?? responseData?.items
         ?? [];
 
-      const mappedQuizzes: QuizItem[] = (Array.isArray(quizList) ? quizList : []).map((quiz: any) => ({
-        id: quiz.id,
-        title: quiz.title,
-        description: quiz.description || "",
-        questionCount: quiz.questions?.length || 0,
-        timeLimit: quiz.timeLimit || 0,
-      }));
+      const mappedQuizzes: QuizItem[] = (Array.isArray(quizList) ? quizList : []).map((quiz: any) => {
+        const attempt = attemptsMap.get(quiz.id);
+        
+        let status: "not-started" | "in-progress" | "completed" = "not-started";
+        let score: number | undefined;
+        let attemptId: string | undefined;
+
+        if (attempt) {
+          attemptId = attempt.id;
+          if (attempt.status === "completed") {
+            status = "completed";
+            score = Math.round(attempt.percentage);
+          } else if (attempt.status === "in-progress") {
+            status = "in-progress";
+          }
+        }
+
+        return {
+          id: quiz.id,
+          title: quiz.title,
+          description: quiz.description || "",
+          questionCount: quiz.questions?.length || 0,
+          timeLimit: quiz.timeLimit || 0,
+          status,
+          score,
+          attemptId,
+        };
+      });
 
       setQuizzes(mappedQuizzes);
     } catch (error) {
@@ -76,6 +120,9 @@ export const QuizSection: React.FC = () => {
                 description={quiz.description}
                 questionCount={quiz.questionCount}
                 timeLimit={quiz.timeLimit}
+                status={quiz.status}
+                score={quiz.score}
+                attemptId={quiz.attemptId}
               />
             ))}
           </div>

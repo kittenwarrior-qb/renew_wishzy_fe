@@ -45,6 +45,19 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
         }
     );
 
+    const categoryId = course?.categoryId || '';
+    const { data: relatedCoursesData } = useQueryHook<{ data: CourseItemType[] }>(
+        ['related-courses', categoryId],
+        () => courseService.list({ categoryId, limit: 4 }),
+        {
+            enabled: !!categoryId,
+        }
+    );
+
+    const relatedCourses = Array.isArray(relatedCoursesData?.data) 
+        ? relatedCoursesData.data.filter((c: CourseItemType) => c.id !== id).slice(0, 3) 
+        : [];
+
     const currentEnrollment = enrollments?.find(
         (enrollment: any) => enrollment.courseId === id
     );
@@ -177,14 +190,16 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                         </div>
 
                         {/* Course related */}
-                        <div>
-                            <h1 className="py-0 text-lg font-semibold mb-4">Khoá học liên quan</h1>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <CourseCard course={course} />
-                                <CourseCard course={course} />
-                                <CourseCard course={course} />
+                        {relatedCourses.length > 0 && (
+                            <div>
+                                <h1 className="py-0 text-lg font-semibold mb-4">Khoá học liên quan</h1>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {relatedCourses.map((relatedCourse: CourseItemType) => (
+                                        <CourseCard key={relatedCourse.id} course={relatedCourse} />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* Right - Pricing Card */}
