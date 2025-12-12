@@ -26,7 +26,7 @@ export const ForgotPasswordForm = () => {
       setError('Vui lòng nhập email');
       return false;
     }
-    if (!/\S+@\S+\.\S+/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError('Email không hợp lệ');
       return false;
     }
@@ -68,9 +68,8 @@ export const ForgotPasswordForm = () => {
                   placeholder="email@example.com"
                   value={email}
                   onChange={(e) => handleInputChange(e.target.value)}
-                  className="border-input"
+                  className={`border-input ${error ? 'border-destructive' : ''}`}
                   autoComplete="off"
-                  required
                 />
                 {error && (
                   <FieldDescription className="text-destructive">

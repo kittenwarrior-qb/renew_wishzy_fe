@@ -37,8 +37,16 @@ export const ResetPasswordForm = () => {
 
     if (!formData.password) {
       newErrors.password = 'Vui lòng nhập mật khẩu';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự';
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 1 chữ hoa';
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 1 chữ thường';
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 1 chữ số';
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt';
     }
 
     if (!formData.confirmPassword) {
@@ -126,7 +134,6 @@ export const ResetPasswordForm = () => {
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     className={cn('pr-10', errors.password && 'border-destructive')}
-                    required
                   />
                   <Button
                     type="button"
@@ -159,7 +166,6 @@ export const ResetPasswordForm = () => {
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                     className={cn('pr-10', errors.confirmPassword && 'border-destructive')}
-                    required
                   />
                   <Button
                     type="button"

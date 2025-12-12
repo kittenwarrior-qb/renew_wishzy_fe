@@ -33,12 +33,22 @@ export const LoginForm = () => {
 
     if (!formData.email) {
       newErrors.email = "Vui lòng nhập email";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Email không hợp lệ";
     }
 
     if (!formData.password) {
       newErrors.password = "Vui lòng nhập mật khẩu";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Mật khẩu phải có ít nhất 8 ký tự";
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ hoa";
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ thường";
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ số";
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 ký tự đặc biệt";
     }
 
     setErrors(newErrors);
@@ -80,14 +90,16 @@ export const LoginForm = () => {
                   placeholder="email@example.com"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="border-input"
+                  className={`border-input ${errors.email ? 'border-destructive' : ''}`}
                   autoComplete="off"
-                  required
                 />
                 {errors.email && (
-                  <FieldDescription className="text-destructive">
+                  <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
                     {errors.email}
-                  </FieldDescription>
+                  </p>
                 )}
               </Field>
 
@@ -104,9 +116,8 @@ export const LoginForm = () => {
                     onChange={(e) =>
                       handleInputChange("password", e.target.value)
                     }
-                    className="pr-10 border-input"
+                    className={`pr-10 border-input ${errors.password ? 'border-destructive' : ''}`}
                     autoComplete="off"
-                    required
                   />
                   <Button
                     type="button"
@@ -122,17 +133,20 @@ export const LoginForm = () => {
                     )}
                   </Button>
                 </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                    {errors.password}
+                  </p>
+                )}
                 <Link
                   href="/auth/forgot-password"
                   className="ml-auto text-sm underline"
                 >
                   Quên mật khẩu?
                 </Link>
-                {errors.password && (
-                  <FieldDescription className="text-destructive">
-                    {errors.password}
-                  </FieldDescription>
-                )}
               </Field>
 
               <Field>
