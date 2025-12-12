@@ -16,14 +16,27 @@ import CourseComment from "@/components/shared/course/CourseComment";
 import CourseCard from "@/components/shared/course/CourseCard";
 import { useAppStore } from "@/src/stores/useAppStore";
 import { enrollmentService } from "@/src/services/enrollment";
+import { wishlistService } from "@/src/services/wishlist";
 import { toast } from "sonner";
+import { Heart } from "lucide-react";
 
 const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     const { id } = use(params);
-    const { addToCart, cart, addToOrderList, clearOrderList, user } = useAppStore();
+    const { 
+        addToCart, 
+        cart, 
+        addToOrderList, 
+        clearOrderList, 
+        user,
+        wishlist,
+        addToWishlist,
+        removeFromWishlist,
+        isAuthenticated
+    } = useAppStore();
     const searchParams = useSearchParams();
     const router = useRouter();
     const [isEnrolling, setIsEnrolling] = useState(false);
+    const [isWishlistLoading, setIsWishlistLoading] = useState(false);
 
     const { data: course } = useQueryHook<CourseItemType>(
         ['course', id],
@@ -37,26 +50,34 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
 
     const { data: enrollments } = useQueryHook(
         ['my-enrollments'],
-        () => enrollmentService.getMyLearning(true), // Skip cache for fresh data
+        () => enrollmentService.getMyLearning(true),
         {
-            enabled: !!user, // Only fetch enrollments if user is logged in
-            staleTime: 0, // Always fetch fresh
-            cacheTime: 0, // Don't cache
+            enabled: !!user,
+            staleTime: 0,
+            cacheTime: 0,
         }
     );
 
-    const categoryId = course?.categoryId || '';
-    const { data: relatedCoursesData } = useQueryHook<{ data: CourseItemType[] }>(
-        ['related-courses', categoryId],
-        () => courseService.list({ categoryId, limit: 4 }),
+    // Fetch related courses by category
+    const { data: relatedCoursesData } = useQueryHook<{ data: { items: CourseItemType[] } }>(
+        ['related-courses', course?.categoryId ?? ''],
+        () => courseService.list({ 
+            categoryId: course?.categoryId, 
+            limit: 7, // Get 7 to exclude current course and have 6 remaining
+            status: true
+        }),
         {
-            enabled: !!categoryId,
+            enabled: !!course?.categoryId,
         }
     );
 
-    const relatedCourses = Array.isArray(relatedCoursesData?.data) 
-        ? relatedCoursesData.data.filter((c: CourseItemType) => c.id !== id).slice(0, 3) 
-        : [];
+    // Filter out current course from related courses
+    const relatedCourses = (relatedCoursesData?.data?.items || [])
+        .filter((c: CourseItemType) => c.id !== id)
+        .slice(0, 6);
+
+    // Check wishlist from Zustand store (same as CourseCard)
+    const isInWishlist = wishlist.some((c) => c.id === id);
 
     const currentEnrollment = enrollments?.find(
         (enrollment: any) => enrollment.courseId === id
@@ -64,6 +85,34 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     
     const isEnrolled = !!currentEnrollment;
     const progress = currentEnrollment ? Number(currentEnrollment.progress) || 0 : 0;
+
+    const handleToggleWishlist = async () => {
+        if (!isAuthenticated || !user) {
+            toast.error('Vui lòng đăng nhập để thêm vào yêu thích');
+            router.push('/auth/login');
+            return;
+        }
+
+        if (!course) return;
+
+        setIsWishlistLoading(true);
+        try {
+            if (isInWishlist) {
+                await wishlistService.removeFromWishlist(id);
+                removeFromWishlist(course);
+                toast.success('Đã xóa khỏi danh sách yêu thích');
+            } else {
+                await wishlistService.addToWishlist(id);
+                addToWishlist(course);
+                toast.success('Đã thêm vào danh sách yêu thích ❤️');
+            }
+        } catch (error: any) {
+            console.error('Failed to toggle wishlist:', error);
+            toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+        } finally {
+            setIsWishlistLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (searchParams.get('scrollTo') === 'feedback') {
@@ -311,19 +360,15 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                             {/* Enroll Button */}
                             {!isEnrolled && !isFree && (
                                 <div className="flex gap-2 mb-3">
-                                    <div className="w-1/2">
-                                        <Button variant="outline" className="w-full">Thêm vào yêu thích</Button>
-                                    </div>
-                                    <div className="w-1/2">
-                                        <Button
-                                            variant={isInCart ? 'secondary' : 'outline'}
-                                            className="w-full"
-                                            onClick={() => addToCart(course)}
-                                            disabled={isInCart}
-                                        >
-                                            {isInCart ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
-                                        </Button>
-                                    </div>
+                                    {/* TODO: Wishlist button - will fix later */}
+                                    <Button
+                                        variant={isInCart ? 'secondary' : 'outline'}
+                                        className="w-full"
+                                        onClick={() => addToCart(course)}
+                                        disabled={isInCart}
+                                    >
+                                        {isInCart ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
+                                    </Button>
                                 </div>
                             )}
                             <Button 
