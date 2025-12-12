@@ -12,7 +12,7 @@ import { FullScreenModal } from "@/components/ui/fullscreen-modal"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
 import QueryController from "@/components/shared/common/QueryController"
-import { StudentDetails } from "@/app/instructor/components/StudentDetails"
+import { StudentDetails } from "@/src/app/instructor/components/StudentDetails"
 import { useStudentCourses } from "@/hooks/useStudentCourses"
 import type { Student } from "@/types/user"
 
