@@ -5,16 +5,20 @@ import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useUserList, useUserDetail } from "@/components/shared/user/useUser"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Eye, Search, RotateCcw } from "lucide-react"
+import { Eye, Search, BookOpen } from "lucide-react"
 import { useAppStore } from "@/stores/useAppStore"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
-import { FullScreenModal } from "@/components/ui/fullscreen-modal"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
 import QueryController from "@/components/shared/common/QueryController"
-import { StudentDetails } from "@/src/app/instructor/components/StudentDetails"
 import { useStudentCourses } from "@/hooks/useStudentCourses"
-import type { Student } from "@/types/user"
+import { formatPrice } from "@/lib/utils"
 
 export default function Page() {
   const params = useParams<{ locale: string }>()
@@ -22,7 +26,6 @@ export default function Page() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { theme } = useAppStore()
-  const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
 
   const [page, setPage] = React.useState<number>(Number(searchParams.get("page") || 1))
   const [limit, setLimit] = React.useState<number>(Number(searchParams.get("limit") || 10))
@@ -48,7 +51,7 @@ export default function Page() {
     router.replace(href)
   }, [page, limit, queryState, router])
 
-  const { data, isPending, isFetching, isError } = useUserList({
+  const { data, isPending, isFetching } = useUserList({
     page,
     limit,
     fullName: queryState.type === 'name' && queryState.q ? queryState.q : undefined,
@@ -60,22 +63,10 @@ export default function Page() {
   const total = data?.total ?? 0
   const baseIndex = (page - 1) * limit
 
-  // Debug logs
-  React.useEffect(() => {
-    console.log('📋 User list data:', data)
-    console.log('📋 Items:', items)
-  }, [data, items])
-
-  React.useEffect(() => {
-    console.log('👤 Selected student ID:', selectedStudentId)
-    console.log('👤 Student detail data:', studentDetail)
-    console.log('👤 Is loading detail:', isLoadingDetail)
-  }, [selectedStudentId, studentDetail, isLoadingDetail])
-
   return (
     <div className="relative p-4 md:p-6">
       <QueryController initial={{ type: queryState.type, q: queryState.q, verified: queryState.verified }} debounceMs={300} onChange={(q: any) => { setQueryState(q); setPage(1) }}>
-        {({ query, setQuery, reset }) => (
+        {({ query, setQuery }) => (
           <form className="mb-4 space-y-3" onSubmit={(e) => e.preventDefault()}>
             <div className="flex gap-3">
               <div className="space-y-2 flex-1 md:max-w-md">
@@ -116,7 +107,7 @@ export default function Page() {
           if (queryState.verified === 'all') return true
           const ok = !!u.verified
           return queryState.verified === 'verified' ? ok : !ok
-        }).filter((u: any) => u.id) // Filter out items without valid ID
+        }).filter((u: any) => u.id)
         const columns: Column<StudentRow>[] = [
           {
             key: 'stt',
@@ -134,7 +125,9 @@ export default function Page() {
               row.avatar ? (
                 <img src={row.avatar} alt={row.fullName} className="h-9 w-9 rounded-full object-cover" />
               ) : (
-                <div className="h-9 w-9 rounded-full bg-muted" />
+                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                  {row.fullName?.charAt(0)?.toUpperCase() || "U"}
+                </div>
               ),
           },
           {
@@ -198,34 +191,100 @@ export default function Page() {
         )
       })()}
 
-      {/* Student Detail Modal */}
-      <FullScreenModal
-        open={openDetailModal}
-        onOpenChange={setOpenDetailModal}
-        showCloseButton={true}
-      >
-        <div className="h-full overflow-y-auto p-6">
-          {studentDetail && (
-            <StudentDetails
-              student={{
-                id: studentDetail.id,
-                name: studentDetail.fullName,
-                fullName: studentDetail.fullName,
-                email: studentDetail.email,
-                phone: studentDetail.phone || '',
-                avatar: studentDetail.avatar || '',
-                courses: [],
-                joinDate: studentDetail.createdAt,
-                role: studentDetail.role || 'user',
-                verified: studentDetail.verified || false,
-              } as Student}
-              enrollments={enrollments || []}
-              isLoadingCourses={isLoadingCourses}
-              onBack={() => setOpenDetailModal(false)}
-            />
+      {/* Student Detail Modal - Simple & Compact */}
+      <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
+        <DialogContent className="w-[600px] max-h-[80vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Thông tin học viên</DialogTitle>
+          </DialogHeader>
+          
+          {isLoadingDetail ? (
+            <div className="flex items-center justify-center py-6">
+              <div className="text-muted-foreground text-sm">Đang tải...</div>
+            </div>
+          ) : studentDetail ? (
+            <div className="space-y-5">
+              {/* Thông tin cơ bản */}
+              <div className="flex items-center gap-3">
+                {studentDetail.avatar ? (
+                  <img
+                    src={studentDetail.avatar}
+                    alt={studentDetail.fullName}
+                    className="h-14 w-14 rounded-full object-cover border-2 border-border flex-shrink-0"
+                  />
+                ) : (
+                  <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-lg font-semibold text-primary flex-shrink-0">
+                    {studentDetail.fullName?.charAt(0)?.toUpperCase() || "U"}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <h3 className="font-semibold truncate">{studentDetail.fullName}</h3>
+                  <p className="text-sm text-muted-foreground truncate">{studentDetail.email}</p>
+                  {studentDetail.phone && (
+                    <p className="text-sm text-muted-foreground">{studentDetail.phone}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Danh sách khóa học đã mua */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <h4 className="text-sm font-medium">Khóa học đã mua ({enrollments?.length || 0})</h4>
+                </div>
+                
+                {isLoadingCourses ? (
+                  <div className="text-sm text-muted-foreground py-3 text-center">Đang tải...</div>
+                ) : enrollments && enrollments.length > 0 ? (
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto overflow-x-hidden scrollbar-thin pr-1">
+                    {enrollments.map((enrollment: any) => {
+                      const course = enrollment.course || {}
+                      return (
+                        <div
+                          key={enrollment.id}
+                          onClick={() => router.push(`/course-detail/${course.id}`)}
+                          className="flex items-center gap-3 p-2 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                        >
+                          {course.thumbnail ? (
+                            <img
+                              src={course.thumbnail}
+                              alt={course.name}
+                              className="h-12 w-16 rounded object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="h-12 w-16 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                              <BookOpen className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <p className="text-sm font-medium truncate">{course.name || 'Khóa học'}</p>
+                            <div className="flex items-center justify-between gap-2 mt-0.5">
+                              <span className="text-xs text-muted-foreground truncate">
+                                {course.creator?.fullName || 'Giảng viên'}
+                              </span>
+                              <span className="text-xs font-medium text-primary whitespace-nowrap flex-shrink-0">
+                                {course.price ? formatPrice(course.price) : 'Miễn phí'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground py-4 text-center border rounded-lg bg-muted/30">
+                    Chưa mua khóa học nào
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-6">
+              <div className="text-muted-foreground text-sm">Không tìm thấy thông tin</div>
+            </div>
           )}
-        </div>
-      </FullScreenModal>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

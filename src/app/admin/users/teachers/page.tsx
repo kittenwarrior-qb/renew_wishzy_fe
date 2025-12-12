@@ -12,8 +12,11 @@ import {
 } from "@/components/shared/user/useUser";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, Search, Check, X } from "lucide-react";
+import { Eye, Search, Check, X, BookOpen } from "lucide-react";
 import { useAppStore } from "@/stores/useAppStore";
+import { courseService } from "@/src/services/course";
+import { useQuery } from "@tanstack/react-query";
+import { formatPrice } from "@/lib/utils";
 import {
   Select,
   SelectTrigger,
@@ -77,6 +80,18 @@ export default function Page() {
   const { data: teacherDetail, isLoading: isLoadingDetail } = useUserDetail(
     selectedTeacherId || undefined
   );
+
+  // Lấy danh sách khóa học của instructor
+  const { data: instructorCourses, isLoading: isLoadingCourses } = useQuery({
+    queryKey: ["instructor-courses", selectedTeacherId],
+    queryFn: async () => {
+      const res = await courseService.list({ userId: selectedTeacherId });
+      const data = res?.data ?? res;
+      return data?.items ?? [];
+    },
+    enabled: !!selectedTeacherId && openDetailModal,
+  });
+
   const { mutate: approve, isPending: approving } = useApproveInstructor();
   const { mutate: reject, isPending: rejecting } = useRejectInstructor();
   const { data: pendingCountData, refetch: refetchPendingCount } =
@@ -385,106 +400,109 @@ export default function Page() {
 
       {/* Teacher Detail Modal */}
       <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-[600px] max-h-[80vh] overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Thông tin chi tiết giảng viên</DialogTitle>
+            <DialogTitle>Thông tin giảng viên</DialogTitle>
           </DialogHeader>
           {isLoadingDetail ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Đang tải...</div>
+            <div className="flex items-center justify-center py-6">
+              <div className="text-muted-foreground text-sm">Đang tải...</div>
             </div>
           ) : teacherDetail ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
+            <div className="space-y-5">
+              {/* Thông tin cơ bản */}
+              <div className="flex items-center gap-3">
                 {teacherDetail.avatar ? (
                   <img
                     src={teacherDetail.avatar}
                     alt={teacherDetail.fullName}
-                    className="h-20 w-20 rounded-full object-cover"
+                    className="h-14 w-14 rounded-full object-cover border-2 border-border flex-shrink-0"
                   />
                 ) : (
-                  <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center text-2xl font-semibold">
+                  <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-lg font-semibold text-primary flex-shrink-0">
                     {teacherDetail.fullName?.charAt(0)?.toUpperCase() || "T"}
                   </div>
                 )}
-                <div>
-                  <h3 className="text-lg font-semibold">
-                    {teacherDetail.fullName}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {teacherDetail.email}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Trạng thái giảng viên
-                  </label>
-                  <p>
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <h3 className="font-semibold truncate">{teacherDetail.fullName}</h3>
+                  <p className="text-sm text-muted-foreground truncate">{teacherDetail.email}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {teacherDetail.phone && (
+                      <span className="text-sm text-muted-foreground">{teacherDetail.phone}</span>
+                    )}
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs flex-shrink-0 ${
                         teacherDetail.isInstructorActive
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-amber-100 text-amber-700"
                       }`}
                     >
-                      {teacherDetail.isInstructorActive
-                        ? "Đã duyệt"
-                        : "Chờ duyệt"}
+                      {teacherDetail.isInstructorActive ? "Đã duyệt" : "Chờ duyệt"}
                     </span>
-                  </p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Số điện thoại
-                  </label>
-                  <p className="text-sm">
-                    {teacherDetail.phone || "Chưa cập nhật"}
-                  </p>
+              </div>
+
+              {/* Danh sách khóa học */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <h4 className="text-sm font-medium">Khóa học ({instructorCourses?.length || 0})</h4>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Ngày sinh
-                  </label>
-                  <p className="text-sm">
-                    {teacherDetail.dob
-                      ? new Date(teacherDetail.dob).toLocaleDateString("vi-VN")
-                      : "Chưa cập nhật"}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Ngày tạo
-                  </label>
-                  <p className="text-sm">
-                    {teacherDetail.createdAt
-                      ? new Date(teacherDetail.createdAt).toLocaleDateString(
-                          "vi-VN"
-                        )
-                      : "N/A"}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Cập nhật lần cuối
-                  </label>
-                  <p className="text-sm">
-                    {teacherDetail.updatedAt
-                      ? new Date(teacherDetail.updatedAt).toLocaleDateString(
-                          "vi-VN"
-                        )
-                      : "N/A"}
-                  </p>
-                </div>
+                
+                {isLoadingCourses ? (
+                  <div className="text-sm text-muted-foreground py-3 text-center">Đang tải...</div>
+                ) : instructorCourses && instructorCourses.length > 0 ? (
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto overflow-x-hidden scrollbar-thin pr-1">
+                    {instructorCourses.map((course: any) => (
+                      <div
+                        key={course.id}
+                        onClick={() => router.push(`/course-detail/${course.id}`)}
+                        className="flex items-center gap-3 p-2 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                      >
+                        {course.thumbnail ? (
+                          <img
+                            src={course.thumbnail}
+                            alt={course.name}
+                            className="h-12 w-16 rounded object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="h-12 w-16 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                            <BookOpen className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <p className="text-sm font-medium truncate">{course.name}</p>
+                          <div className="flex items-center justify-between gap-2 mt-0.5">
+                            <span
+                              className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs flex-shrink-0 ${
+                                course.status === "approved"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : course.status === "pending"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {course.status === "approved" ? "Đã duyệt" : course.status === "pending" ? "Chờ duyệt" : course.status || "Nháp"}
+                            </span>
+                            <span className="text-xs font-medium text-primary whitespace-nowrap flex-shrink-0">
+                              {course.price ? formatPrice(course.price) : 'Miễn phí'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground py-4 text-center border rounded-lg bg-muted/30">
+                    Chưa có khóa học nào
+                  </div>
+                )}
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">
-                Không tìm thấy thông tin
-              </div>
+            <div className="flex items-center justify-center py-6">
+              <div className="text-muted-foreground text-sm">Không tìm thấy thông tin</div>
             </div>
           )}
         </DialogContent>
