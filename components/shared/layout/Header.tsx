@@ -127,28 +127,27 @@ const Header = () => {
             </div>
 
             <div className="hidden md:flex items-center gap-6">
-              <a 
-                href="#features" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                }}
+              <Link 
+                href="/quiz"
                 className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
               >
-                Tính năng
-                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </a>
-              <a 
-                href="#faq" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
-                }}
+                Bài kiểm tra
+                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+              <Link 
+                href="/about"
+                className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
+              >
+                Về chúng tôi
+                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+              <Link 
+                href="/#faq"
                 className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
               >
                 FAQ
-                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </a>
+                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </Link>
             </div>
           </div>
 
@@ -249,34 +248,38 @@ const Header = () => {
                 
                 <div className="flex flex-col p-4 space-y-6">
                   <div className="flex flex-col space-y-4">
-                    <a 
-                      href="#features" 
+                    <Link 
+                      href="/quiz" 
                       className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsOpen(false);
-                        setTimeout(() => {
-                          document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                        }, 300);
-                      }}
+                      onClick={() => setIsOpen(false)}
                     >
-                      Tính năng
-                      <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
-                    </a>
-                    <a 
-                      href="#faq" 
+                      Bài kiểm tra
+                      <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                    <Link 
+                      href="/about" 
                       className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsOpen(false);
-                        setTimeout(() => {
-                          document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
-                        }, 300);
-                      }}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Về chúng tôi
+                      <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                    <Link 
+                      href="/#faq" 
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
+                      onClick={() => setIsOpen(false)}
                     >
                       FAQ
-                      <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
-                    </a>
+                      <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                    <Link 
+                      href="/contact" 
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Liên hệ
+                      <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
                   </div>
                   
                   <div className="border-t pt-4">

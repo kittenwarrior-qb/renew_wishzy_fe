@@ -228,7 +228,7 @@ export default function QuizResultPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tỷ lệ đúng:</span>
                   <span className="font-semibold">
-                    {result.attempt.percentage.toFixed(1)}%
+                    {Number(result.attempt.percentage).toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">

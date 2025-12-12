@@ -50,31 +50,35 @@ export const FilterPopovers = ({
             <h4 className="font-medium">Đánh giá</h4>
             <RadioGroup value={selectedRating} onValueChange={onRatingChange}>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="4.5" id="r1" />
-                <Label htmlFor="r1" className="flex items-center">
-                  <span className="flex text-yellow-400">★★★★★</span>
-                  <span className="ml-1">4.5 & up</span>
-                </Label>
+                <RadioGroupItem value="" id="r0" />
+                <Label htmlFor="r0">Tất cả</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="4.0" id="r2" />
-                <Label htmlFor="r2" className="flex items-center">
+                <RadioGroupItem value="4" id="r1" />
+                <Label htmlFor="r1" className="flex items-center">
                   <span className="flex text-yellow-400">★★★★<span className="text-gray-400">★</span></span>
                   <span className="ml-1">4.0 & up</span>
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="3.5" id="r3" />
-                <Label htmlFor="r3" className="flex items-center">
-                  <span className="flex text-yellow-400">★★★★<span className="text-gray-400">★</span></span>
-                  <span className="ml-1">3.5 & up</span>
+                <RadioGroupItem value="3" id="r2" />
+                <Label htmlFor="r2" className="flex items-center">
+                  <span className="flex text-yellow-400">★★★<span className="text-gray-400">★★</span></span>
+                  <span className="ml-1">3.0 & up</span>
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="3.0" id="r4" />
+                <RadioGroupItem value="2" id="r3" />
+                <Label htmlFor="r3" className="flex items-center">
+                  <span className="flex text-yellow-400">★★<span className="text-gray-400">★★★</span></span>
+                  <span className="ml-1">2.0 & up</span>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="1" id="r4" />
                 <Label htmlFor="r4" className="flex items-center">
-                  <span className="flex text-yellow-400">★★★<span className="text-gray-400">★★</span></span>
-                  <span className="ml-1">3.0 & up</span>
+                  <span className="flex text-yellow-400">★<span className="text-gray-400">★★★★</span></span>
+                  <span className="ml-1">1.0 & up</span>
                 </Label>
               </div>
             </RadioGroup>

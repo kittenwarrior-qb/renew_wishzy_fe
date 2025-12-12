@@ -5,11 +5,10 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useCourseList } from "@/components/shared/course/useCourse";
 import { useAllCategories } from "@/components/shared/category/useCategory";
 import { Button } from "@/components/ui/button";
-import { X, ChevronDown, Filter, Loader2 } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import ListCourse from "@/components/shared/course/ListCourse";
 import { Course } from "@/components/shared/course/useCourse";
 import { FilterPopovers } from "@/components/shared/search/FilterPopovers";
-import { FilterDrawer } from "@/components/shared/search/FilterDrawer";
 import { CategoryDropdown } from "@/components/shared/search/CategoryDropdown";
 import { SearchPagination } from "@/components/shared/search/SearchPagination";
 import { SearchBreadcrumb } from "@/components/shared/search/SearchBreadcrumb";
@@ -32,22 +31,9 @@ const SearchPage = () => {
   const [selectedLevel, setSelectedLevel] = useState(initialLevel);
   const [selectedPrice, setSelectedPrice] = useState(initialPrice);
   const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategoryId);
-  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [minPriceInput, setMinPriceInput] = useState(searchParams.get("minPrice") || "");
   const [maxPriceInput, setMaxPriceInput] = useState(searchParams.get("maxPrice") || "");
 
-  const [locale, setLocale] = useState('vi');
-  
-  // Effect to detect locale from URL path
-  React.useEffect(() => {
-    const path = window.location.pathname;
-    if (path.startsWith('/en/')) {
-      setLocale('en');
-    } else if (path.startsWith('/vi/')) {
-      setLocale('vi');
-    }
-  }, []);
-  
   React.useEffect(() => {
     const search = searchParams.get("search");
     const page = searchParams.get("page");
@@ -55,13 +41,18 @@ const SearchPage = () => {
     const level = searchParams.get("level");
     const price = searchParams.get("price");
     const categoryId = searchParams.get("categoryId");
+    const minPrice = searchParams.get("minPrice");
+    const maxPrice = searchParams.get("maxPrice");
     
-    if (search !== null) setSearchQuery(search);
-    if (page !== null) setCurrentPage(Number(page));
-    if (rating !== null) setSelectedRating(rating);
-    if (level !== null) setSelectedLevel(level);
-    if (price !== null) setSelectedPrice(price);
-    if (categoryId !== null) setSelectedCategoryId(categoryId);
+    // Always sync state with URL params (use empty string as default for cleared filters)
+    setSearchQuery(search || "");
+    setCurrentPage(page ? Number(page) : 1);
+    setSelectedRating(rating || "");
+    setSelectedLevel(level || "");
+    setSelectedPrice(price || "");
+    setSelectedCategoryId(categoryId || "");
+    setMinPriceInput(minPrice || "");
+    setMaxPriceInput(maxPrice || "");
   }, [searchParams]);
 
   let minPrice = undefined;
@@ -173,6 +164,7 @@ const SearchPage = () => {
   };
 
   const resetFilters = () => {
+    // Reset all state immediately
     setSearchQuery("");
     setCurrentPage(1);
     setSelectedRating("");
@@ -182,11 +174,8 @@ const SearchPage = () => {
     setMinPriceInput("");
     setMaxPriceInput("");
     
+    // Navigate to clean search URL - state will sync via useEffect
     router.push(`/search`);
-    
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
   };
 
   const handleLevelChange = (level: string) => {
@@ -284,7 +273,7 @@ const SearchPage = () => {
 
   return (
     <div className="max-w-[1300px] mx-auto py-8 px-4">
-      <SearchBreadcrumb locale={locale} selectedCategory={selectedCategory} />
+      <SearchBreadcrumb selectedCategory={selectedCategory} />
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold">
@@ -296,6 +285,7 @@ const SearchPage = () => {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-8 overflow-x-auto pb-2">
+        {/* Tạm ẩn FilterDrawer - bộ lọc tất cả đang có lỗi
         <FilterDrawer
           isOpen={isFilterDrawerOpen}
           onClose={() => setIsFilterDrawerOpen(false)}
@@ -334,6 +324,7 @@ const SearchPage = () => {
           Tất cả bộ lọc
           <ChevronDown className="h-4 w-4" />
         </Button>
+        */}
 
         <FilterPopovers
           selectedRating={selectedRating}

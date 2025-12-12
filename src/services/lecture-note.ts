@@ -33,7 +33,46 @@ export type LectureNoteListResponse = {
   };
 };
 
+export type LectureNoteWithDetails = LectureNote & {
+  lecture?: {
+    id: string;
+    name: string;
+    chapter?: {
+      id: string;
+      name: string;
+      course?: {
+        id: string;
+        name: string;
+      };
+    };
+  };
+};
+
+export type AllNotesResponse = {
+  items: LectureNoteWithDetails[];
+  pagination: {
+    totalItems: number;
+    currentPage: number;
+    itemsPerPage: number;
+    totalPage: number;
+  };
+};
+
 export const lectureNoteService = {
+  async getMyNotes(page: number = 1, limit: number = 50): Promise<AllNotesResponse> {
+    const res = await api.get<any>(BASE, {
+      params: { page, limit }
+    });
+    
+    // Handle wrapped response: { success, data: { items, pagination }, message }
+    const responseData = res.data?.data || res.data;
+    
+    if (responseData?.items) {
+      return responseData;
+    }
+    return { items: [], pagination: { totalItems: 0, currentPage: 1, itemsPerPage: 50, totalPage: 0 } };
+  },
+
   async listByLecture(lectureId: string, page: number = 1, limit: number = 50): Promise<LectureNoteListResponse> {
     const res = await api.get<any>(`${BASE}/lecture/${lectureId}`, {
       params: { page, limit }

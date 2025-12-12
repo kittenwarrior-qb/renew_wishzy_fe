@@ -12,17 +12,16 @@ import {
 } from "@/components/ui/breadcrumb";
 
 interface SearchBreadcrumbProps {
-  locale: string;
   selectedCategory: any;
 }
 
-export const SearchBreadcrumb = ({ locale, selectedCategory }: SearchBreadcrumbProps) => {
+export const SearchBreadcrumb = ({ selectedCategory }: SearchBreadcrumbProps) => {
   return (
     <Breadcrumb className="mb-4">
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href={`/${locale}`} className="inline-flex items-center">
+            <Link href="/" className="inline-flex items-center">
               <Home className="w-4 h-4 mr-2" />
               Trang chủ
             </Link>
@@ -32,7 +31,7 @@ export const SearchBreadcrumb = ({ locale, selectedCategory }: SearchBreadcrumbP
         <BreadcrumbItem>
           {selectedCategory ? (
             <BreadcrumbLink asChild>
-              <Link href={`/${locale}/search`}>Khóa học</Link>
+              <Link href="/search">Khóa học</Link>
             </BreadcrumbLink>
           ) : (
             <BreadcrumbPage>Khóa học</BreadcrumbPage>

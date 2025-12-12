@@ -62,7 +62,8 @@ export const getQuizzes = async (page: number = 1, limit: number = 100): Promise
 // Lấy danh sách quiz attempts của user
 export const getMyQuizAttempts = async (): Promise<QuizAttempt[]> => {
   const response = await api.get("/quiz-attempts/my-attempts");
-  return response.data;
+  // Response được wrap: { success, data: [...], message }
+  return response.data?.data || response.data || [];
 };
 
 // Lấy chi tiết bài kiểm tra
@@ -82,7 +83,13 @@ export const submitQuiz = async (
 ): Promise<{ attemptId: string }> => {
   // 1. Start attempt
   const attemptResponse = await api.post(`/quiz-attempts/start/${submission.quizId}`);
-  const attemptId = attemptResponse.data.id;
+  // Response được wrap: { success, data: { id, ... }, message }
+  const attemptId = attemptResponse.data?.data?.id || attemptResponse.data?.id;
+  
+  if (!attemptId) {
+    console.error("Failed to get attemptId from response:", attemptResponse.data);
+    throw new Error("Failed to start quiz attempt");
+  }
 
   // 2. Submit all answers
   for (const [questionId, selectedOptionIds] of Object.entries(submission.answers)) {
@@ -117,7 +124,8 @@ export const startQuiz = async (
 // Lấy kết quả attempt
 export const getAttemptResults = async (attemptId: string): Promise<any> => {
   const response = await api.get(`/quiz-attempts/${attemptId}/results`);
-  return response.data;
+  // Response được wrap: { success, data: {...}, message }
+  return response.data?.data || response.data;
 };
 
 // Lấy danh sách quiz phục vụ cho admin (có phân trang)

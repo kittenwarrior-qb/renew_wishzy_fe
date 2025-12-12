@@ -72,7 +72,7 @@ export default function LearningPage() {
     lecture: Lecture | null;
     chapter: Chapter | null;
     course: Course | null;
-    allLectures: Array<{ lecture: Lecture; chapter: Chapter }>;
+    allLectures: Array<{ lecture: Lecture; chapter: Chapter; chapterIndex: number }>;
   } => {
     if (!chaptersData?.items || !courseData) {
       return { lecture: null, chapter: null, course: null, allLectures: [] };
@@ -81,7 +81,7 @@ export default function LearningPage() {
     const chaptersRaw = chaptersData.items;
     let foundLecture: Lecture | null = null;
     let foundChapter: Chapter | null = null;
-    const lectures: Array<{ lecture: Lecture; chapter: Chapter }> = [];
+    const lectures: Array<{ lecture: Lecture; chapter: Chapter; chapterIndex: number }> = [];
 
     // Transform chapters data to match expected format
     const transformedChapters: Chapter[] = chaptersRaw.map((ch) => {
@@ -112,9 +112,9 @@ export default function LearningPage() {
     });
 
     // Build flat list of all lectures with their chapters
-    transformedChapters.forEach((ch) => {
+    transformedChapters.forEach((ch, chapterIndex) => {
       ch.lectures.forEach((lec) => {
-        lectures.push({ lecture: lec, chapter: ch });
+        lectures.push({ lecture: lec, chapter: ch, chapterIndex });
         if (lec.id === lectureId) {
           foundLecture = lec;
           foundChapter = ch;
@@ -122,8 +122,13 @@ export default function LearningPage() {
       });
     });
 
-    // Sort lectures by order index
-    lectures.sort((a, b) => a.lecture.order - b.lecture.order);
+    // Sort lectures by chapter order first, then by lecture order within chapter
+    lectures.sort((a, b) => {
+      if (a.chapterIndex !== b.chapterIndex) {
+        return a.chapterIndex - b.chapterIndex;
+      }
+      return a.lecture.order - b.lecture.order;
+    });
 
     // Build course object
     const totalLessons = lectures.length;

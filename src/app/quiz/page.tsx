@@ -42,6 +42,7 @@ export default function QuizListPage() {
       
       // Lấy danh sách quiz
       const quizzesResponse = await getQuizzes(1, 100);
+      console.log("quizzesResponse:", quizzesResponse);
       
       // Lấy attempts (có thể fail nếu chưa đăng nhập)
       let attemptsData: QuizAttempt[] = [];
@@ -53,16 +54,28 @@ export default function QuizListPage() {
 
       // Tạo map attempts theo quizId
       const attemptsMap = new Map<string, QuizAttempt>();
-      attemptsData.forEach((attempt) => {
-        const existing = attemptsMap.get(attempt.quizId);
-        // Giữ attempt mới nhất
-        if (!existing || new Date(attempt.startedAt) > new Date(existing.startedAt)) {
-          attemptsMap.set(attempt.quizId, attempt);
-        }
-      });
+      if (Array.isArray(attemptsData)) {
+        attemptsData.forEach((attempt) => {
+          const existing = attemptsMap.get(attempt.quizId);
+          // Giữ attempt mới nhất
+          if (!existing || new Date(attempt.startedAt) > new Date(existing.startedAt)) {
+            attemptsMap.set(attempt.quizId, attempt);
+          }
+        });
+      }
 
       // Kết hợp dữ liệu quiz với attempts
-      const combinedQuizzes: QuizItem[] = quizzesResponse.data.map((quiz: any) => {
+      // Handle nested response structure - API trả về { success, message, data }
+      const responseData = quizzesResponse as any;
+      const quizList = responseData?.data?.items 
+        ?? responseData?.data?.data 
+        ?? responseData?.data 
+        ?? responseData?.items
+        ?? [];
+      
+      console.log("quizList:", quizList);
+      
+      const combinedQuizzes: QuizItem[] = (Array.isArray(quizList) ? quizList : []).map((quiz: any) => {
         const attempt = attemptsMap.get(quiz.id);
         
         let status: "not-started" | "in-progress" | "completed" = "not-started";
