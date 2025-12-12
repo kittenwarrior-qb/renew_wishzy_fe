@@ -170,7 +170,6 @@ export default function CourseDetailPage() {
               <AdminCourseChapters
                 chapters={chapters as any}
                 courseId={courseId}
-                locale={locale}
               />
             ) : (
               <div className="py-16 text-center">

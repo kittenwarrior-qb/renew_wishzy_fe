@@ -166,7 +166,7 @@ export default function EditExamPage() {
           }),
       }
     );
-  }, [updating, form, validateUpdate, updateQuiz, id, router, locale]);
+  }, [updating, form, validateUpdate, updateQuiz, id, router]);
 
   React.useEffect(() => {
     setPrimaryAction(null);

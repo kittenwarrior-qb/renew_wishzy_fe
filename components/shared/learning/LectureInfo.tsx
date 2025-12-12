@@ -59,12 +59,17 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
   const MAX_DESCRIPTION_LENGTH = 200;
 
   const fetchNotes = async () => {
-    if (!lecture.id || !isEnrolled) return;
+    console.log('fetchNotes called:', { lectureId: lecture.id, isEnrolled });
+    if (!lecture.id || !isEnrolled) {
+      console.log('fetchNotes skipped - missing lectureId or not enrolled');
+      return;
+    }
     
     setIsLoadingNotes(true);
     try {
       const response = await lectureNoteService.listByLecture(lecture.id);
-      setNotes(response.items);
+      console.log('fetchNotes response:', response);
+      setNotes(response.items || []);
     } catch (error) {
       console.error('Failed to fetch notes:', error);
     } finally {
@@ -140,7 +145,15 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
       });
       setNoteContent('');
       setShowAddNote(false);
-      fetchNotes();
+      // Fetch notes directly without isEnrolled check since user just created a note
+      setIsLoadingNotes(true);
+      try {
+        const response = await lectureNoteService.listByLecture(lecture.id);
+        console.log('Notes after save:', response);
+        setNotes(response.items || []);
+      } finally {
+        setIsLoadingNotes(false);
+      }
     } catch (error) {
       console.error('Failed to save note:', error);
     }
@@ -154,7 +167,9 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
   const handleDeleteNote = async (noteId: string) => {
     try {
       await lectureNoteService.delete(noteId);
-      fetchNotes();
+      // Refresh notes list
+      const response = await lectureNoteService.listByLecture(lecture.id);
+      setNotes(response.items || []);
     } catch (error) {
       console.error('Failed to delete note:', error);
     }
@@ -172,7 +187,9 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
       await lectureNoteService.update(noteId, { content: editingContent.trim() });
       setEditingNoteId(null);
       setEditingContent('');
-      fetchNotes();
+      // Refresh notes list
+      const response = await lectureNoteService.listByLecture(lecture.id);
+      setNotes(response.items || []);
     } catch (error) {
       console.error('Failed to update note:', error);
     }

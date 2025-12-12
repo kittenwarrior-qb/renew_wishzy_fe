@@ -96,7 +96,7 @@ export default function EditCoursePage() {
           }),
       }
     );
-  }, [isPending, updating, updateCourse, form, id, router, locale]);
+  }, [isPending, updating, updateCourse, form, id, router]);
 
   React.useEffect(() => {
     setPrimaryAction(null);
