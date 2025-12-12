@@ -120,7 +120,13 @@ export function getVideoSourceInfo(url: string): VideoSourceInfo {
   }
 
   // First, try to extract actual video URL if it's embedded
-  const extractedUrl = extractVideoUrl(url);
+  let extractedUrl = extractVideoUrl(url);
+  
+  // Convert HTTP to HTTPS to avoid mixed content issues
+  if (extractedUrl.startsWith('http://')) {
+    extractedUrl = extractedUrl.replace('http://', 'https://');
+  }
+  
   const type = detectVideoType(extractedUrl);
   const mimeType = getMimeType(type);
   
