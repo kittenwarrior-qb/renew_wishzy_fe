@@ -9,10 +9,8 @@ type Options = {
 }
 
 export function useAdminGuard(options: Options = {}) {
-  const { allowedRoles = ["admin", "instructor", "owner"], redirectTo } = options
+  const { allowedRoles = ["admin"], redirectTo } = options
   const router = useRouter()
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
   const { user, isAuthenticated } = useAppStore()
 
   const [storeHydrated, setStoreHydrated] = React.useState(false)
@@ -31,13 +29,26 @@ export function useAdminGuard(options: Options = {}) {
 
   React.useEffect(() => {
     if (!storeHydrated) return
+    
     if (!isAuthenticated || !isAllowed) {
-      router.replace(redirectTo ?? `/${locale}`)
+      // Role-based redirect instead of just blocking
+      if (redirectTo) {
+        router.replace(redirectTo)
+      } else {
+        // Redirect based on user role
+        if (role === "instructor") {
+          router.replace("/instructor")
+        } else if (role === "admin") {
+          router.replace("/admin")
+        } else {
+          router.replace("/")
+        }
+      }
       setReady(false)
       return
     }
     setReady(true)
-  }, [storeHydrated, isAuthenticated, isAllowed, router, redirectTo, locale])
+  }, [storeHydrated, isAuthenticated, isAllowed, router, redirectTo, role])
 
   return {
     ready,

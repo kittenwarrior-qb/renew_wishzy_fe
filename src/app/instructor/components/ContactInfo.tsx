@@ -8,6 +8,8 @@ interface ContactInfoProps {
 }
 
 export const ContactInfo = ({ student }: ContactInfoProps) => {
+  const joinDateValue = student.joinDate || (student as any).createdAt
+  
   return (
     <div className="space-y-3">
       <h4 className="font-semibold text-lg flex items-center gap-2">
@@ -31,7 +33,7 @@ export const ContactInfo = ({ student }: ContactInfoProps) => {
             <p className="text-xs text-muted-foreground mb-0.5">
               Phone
             </p>
-            <p className="text-sm font-medium">{student.phone}</p>
+            <p className="text-sm font-medium">{student.phone || 'Not provided'}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
@@ -41,11 +43,11 @@ export const ContactInfo = ({ student }: ContactInfoProps) => {
               Join Date
             </p>
             <p className="text-sm font-medium">
-              {new Date(student.joinDate).toLocaleDateString("vi-VN", {
+              {joinDateValue ? new Date(joinDateValue).toLocaleDateString("vi-VN", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
-              })}
+              }) : 'N/A'}
             </p>
           </div>
         </div>

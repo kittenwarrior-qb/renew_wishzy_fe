@@ -17,6 +17,8 @@ import {
   Menu, 
   Sun,
   Moon,
+  LayoutDashboard,
+  GraduationCap,
 } from "lucide-react"
 import {
   Sheet,
@@ -204,6 +206,23 @@ const Header = () => {
                           <span>Hồ sơ</span>
                         </Link>
                       </DropdownMenuItem>
+                      {/* Role-based dashboard links */}
+                      {user.role === 'admin' && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin" className="cursor-pointer flex items-center">
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            <span>Quản trị viên</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      {user.role === 'instructor' && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/instructor" className="cursor-pointer flex items-center">
+                            <GraduationCap className="mr-2 h-4 w-4" />
+                            <span>Giảng viên</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <ThemeSwitcherDropdownItem />
                       <DropdownMenuSeparator />
@@ -314,6 +333,20 @@ const Header = () => {
                           <UserCircle className="mr-2 h-4 w-4" />
                           <span>Hồ sơ</span>
                         </Link>
+                        
+                        {/* Role-based dashboard links - Mobile */}
+                        {user.role === 'admin' && (
+                          <Link href="/admin" className="flex items-center py-2 hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            <span>Quản trị viên</span>
+                          </Link>
+                        )}
+                        {user.role === 'instructor' && (
+                          <Link href="/instructor" className="flex items-center py-2 hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
+                            <GraduationCap className="mr-2 h-4 w-4" />
+                            <span>Giảng viên</span>
+                          </Link>
+                        )}
                         
                         <button
                           onClick={() => {

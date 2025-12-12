@@ -40,14 +40,22 @@ export const RegisterForm = () => {
 
     if (!formData.email) {
       newErrors.email = "Vui lòng nhập email";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Email không hợp lệ";
     }
 
     if (!formData.password) {
       newErrors.password = "Vui lòng nhập mật khẩu";
-    } else if (formData.password.length < 1) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Mật khẩu phải có ít nhất 8 ký tự";
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ hoa";
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ thường";
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ số";
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 ký tự đặc biệt";
     }
 
     if (!formData.confirmPassword) {
@@ -119,9 +127,8 @@ export const RegisterForm = () => {
                   onChange={(e) =>
                     handleInputChange("fullName", e.target.value)
                   }
-                  className="border-input"
+                  className={`border-input ${errors.fullName ? 'border-destructive' : ''}`}
                   autoComplete="off"
-                  required
                 />
                 {errors.fullName && (
                   <FieldDescription className="text-destructive">
@@ -138,9 +145,8 @@ export const RegisterForm = () => {
                   placeholder="email@example.com"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="border-input"
+                  className={`border-input ${errors.email ? 'border-destructive' : ''}`}
                   autoComplete="off"
-                  required
                 />
                 {errors.email && (
                   <FieldDescription className="text-destructive">
@@ -160,9 +166,8 @@ export const RegisterForm = () => {
                     onChange={(e) =>
                       handleInputChange("password", e.target.value)
                     }
-                    className="pr-10 border-input"
+                    className={`pr-10 border-input ${errors.password ? 'border-destructive' : ''}`}
                     autoComplete="off"
-                    required
                   />
                   <Button
                     type="button"
@@ -198,9 +203,8 @@ export const RegisterForm = () => {
                     onChange={(e) =>
                       handleInputChange("confirmPassword", e.target.value)
                     }
-                    className="pr-10 border-input"
+                    className={`pr-10 border-input ${errors.confirmPassword ? 'border-destructive' : ''}`}
                     autoComplete="off"
-                    required
                   />
                   <Button
                     type="button"

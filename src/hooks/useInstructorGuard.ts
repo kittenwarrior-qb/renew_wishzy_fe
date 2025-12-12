@@ -11,8 +11,6 @@ type Options = {
 export function useInstructorGuard(options: Options = {}) {
   const { allowedRoles = ["instructor"], redirectTo } = options
   const router = useRouter()
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
   const { user, isAuthenticated } = useAppStore()
 
   const [storeHydrated, setStoreHydrated] = React.useState(false)
@@ -35,10 +33,22 @@ export function useInstructorGuard(options: Options = {}) {
       return
     }
     
-    // Chờ một chút để đảm bảo store đã hydrate hoàn toàn
+    // Wait a bit to ensure store has fully hydrated
     const timer = setTimeout(() => {
       if (!isAuthenticated || !isAllowed) {
-        router.replace(redirectTo ?? `/${locale}`)
+        // Role-based redirect
+        if (redirectTo) {
+          router.replace(redirectTo)
+        } else {
+          // Redirect based on user role
+          if (role === "admin") {
+            router.replace("/admin")
+          } else if (role === "instructor") {
+            router.replace("/instructor")
+          } else {
+            router.replace("/")
+          }
+        }
         setReady(false)
         return
       }
@@ -46,7 +56,7 @@ export function useInstructorGuard(options: Options = {}) {
     }, 100)
     
     return () => clearTimeout(timer)
-  }, [storeHydrated, isAuthenticated, isAllowed, router, redirectTo, locale])
+  }, [storeHydrated, isAuthenticated, isAllowed, router, redirectTo, role])
 
   return {
     ready,

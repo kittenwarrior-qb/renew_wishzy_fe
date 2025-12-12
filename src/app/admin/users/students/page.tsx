@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Eye, Search, RotateCcw } from "lucide-react"
 import { useAppStore } from "@/stores/useAppStore"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { FullScreenModal } from "@/components/ui/fullscreen-modal"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
 import QueryController from "@/components/shared/common/QueryController"
+import { StudentDetails } from "@/app/instructor/components/StudentDetails"
+import { useStudentCourses } from "@/hooks/useStudentCourses"
+import type { Student } from "@/types/user"
 
 export default function Page() {
   const params = useParams<{ locale: string }>()
@@ -32,6 +35,7 @@ export default function Page() {
   const [selectedStudentId, setSelectedStudentId] = React.useState<string | null>(null)
   const [openDetailModal, setOpenDetailModal] = React.useState(false)
   const { data: studentDetail, isLoading: isLoadingDetail } = useUserDetail(selectedStudentId || undefined)
+  const { data: enrollments, isLoading: isLoadingCourses } = useStudentCourses(selectedStudentId)
 
   React.useEffect(() => {
     const qs = new URLSearchParams()
@@ -195,81 +199,33 @@ export default function Page() {
       })()}
 
       {/* Student Detail Modal */}
-      <Dialog open={openDetailModal} onOpenChange={setOpenDetailModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Thông tin chi tiết học viên</DialogTitle>
-          </DialogHeader>
-          {isLoadingDetail ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Đang tải...</div>
-            </div>
-          ) : studentDetail ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                {studentDetail.avatar ? (
-                  <img
-                    src={studentDetail.avatar}
-                    alt={studentDetail.fullName}
-                    className="h-20 w-20 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center text-2xl font-semibold">
-                    {studentDetail.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
-                )}
-                <div>
-                  <h3 className="text-lg font-semibold">{studentDetail.fullName}</h3>
-                  <p className="text-sm text-muted-foreground">{studentDetail.email}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Trạng thái xác minh</label>
-                  <p>
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${studentDetail.verified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {studentDetail.verified ? 'Đã xác minh' : 'Chưa xác minh'}
-                    </span>
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Số điện thoại</label>
-                  <p className="text-sm">{studentDetail.phone || 'Chưa cập nhật'}</p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Ngày sinh</label>
-                  <p className="text-sm">
-                    {studentDetail.dob
-                      ? new Date(studentDetail.dob).toLocaleDateString('vi-VN')
-                      : 'Chưa cập nhật'}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Ngày tạo</label>
-                  <p className="text-sm">
-                    {studentDetail.createdAt
-                      ? new Date(studentDetail.createdAt).toLocaleDateString('vi-VN')
-                      : 'N/A'}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">Cập nhật lần cuối</label>
-                  <p className="text-sm">
-                    {studentDetail.updatedAt
-                      ? new Date(studentDetail.updatedAt).toLocaleDateString('vi-VN')
-                      : 'N/A'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-muted-foreground">Không tìm thấy thông tin</div>
-            </div>
+      <FullScreenModal
+        open={openDetailModal}
+        onOpenChange={setOpenDetailModal}
+        showCloseButton={true}
+      >
+        <div className="h-full overflow-y-auto p-6">
+          {studentDetail && (
+            <StudentDetails
+              student={{
+                id: studentDetail.id,
+                name: studentDetail.fullName,
+                fullName: studentDetail.fullName,
+                email: studentDetail.email,
+                phone: studentDetail.phone || '',
+                avatar: studentDetail.avatar || '',
+                courses: [],
+                joinDate: studentDetail.createdAt,
+                role: studentDetail.role || 'user',
+                verified: studentDetail.verified || false,
+              } as Student}
+              enrollments={enrollments || []}
+              isLoadingCourses={isLoadingCourses}
+              onBack={() => setOpenDetailModal(false)}
+            />
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </FullScreenModal>
     </div>
   )
 }
