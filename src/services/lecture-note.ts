@@ -39,8 +39,11 @@ export const lectureNoteService = {
       params: { page, limit }
     });
     
-    if (res.data?.items) {
-      return res.data;
+    // Handle wrapped response: { success, data: { items, pagination }, message }
+    const responseData = res.data?.data || res.data;
+    
+    if (responseData?.items) {
+      return responseData;
     }
     return { items: [], pagination: { totalItems: 0, currentPage: 1, itemsPerPage: 50, totalPage: 0 } };
   },

@@ -60,8 +60,8 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
 
   const fetchNotes = async () => {
     console.log('fetchNotes called:', { lectureId: lecture.id, isEnrolled });
-    if (!lecture.id || !isEnrolled) {
-      console.log('fetchNotes skipped - missing lectureId or not enrolled');
+    if (!lecture.id) {
+      console.log('fetchNotes skipped - missing lectureId');
       return;
     }
     
@@ -72,6 +72,8 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
       setNotes(response.items || []);
     } catch (error) {
       console.error('Failed to fetch notes:', error);
+      // If not enrolled, API will return 401/403, just set empty notes
+      setNotes([]);
     } finally {
       setIsLoadingNotes(false);
     }
@@ -96,7 +98,7 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
 
     fetchLectureDetails();
     fetchNotes();
-  }, [lecture.id, isEnrolled]);
+  }, [lecture.id]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
