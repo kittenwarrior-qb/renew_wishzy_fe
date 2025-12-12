@@ -54,9 +54,7 @@ export default function AdminAppSidebar() {
   const pathname = usePathname();
   const { state, toggleSidebar } = useSidebar();
   const [open, setOpen] = useState<{ [k: string]: boolean }>({});
-  const parts = (pathname || "").split("/").filter(Boolean);
-  const locale = parts[0] || "vi";
-  const base = `/${locale}/admin`;
+  const base = `/admin`;
   const isActive = (sub: string) => {
     if (sub === ".") return (pathname || "").replace(/\/$/, "") === base;
     return (pathname || "").startsWith(`${base}/${sub}`);
