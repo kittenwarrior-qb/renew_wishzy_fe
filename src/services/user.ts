@@ -26,11 +26,19 @@ export const userService = {
       }
     });
 
-    const response = await api.get<UserListResponse>(
+    const response = await api.get<{ message: string; data: { items: User[]; pagination: any } }>(
       USER_ENDPOINTS.base,
       { params: apiParams }
     );
-    return response.data;
+    // BE trả về { message: "...", data: { items: [...], pagination: {...} } }
+    // Normalize thành structure: { data: { data: { items, pagination } } }
+    return {
+      success: true,
+      data: {
+        data: response.data.data,
+      },
+      message: response.data.message || 'Users retrieved successfully',
+    };
   },
 
   async getUsersByRole(
@@ -55,7 +63,7 @@ export const userService = {
     return this.getUsersByRole('instructor', params);
   },
 
-  async getInstructorStudents(params?: Omit<UserListParams, 'role' | 'fullName' | 'email'>): Promise<UserListResponse> {
+  async getInstructorStudents(params?: Omit<UserListParams, 'role'>): Promise<UserListResponse> {
     const apiParams: Record<string, unknown> = { ...params };
     delete apiParams.size;
     delete apiParams.instructorId;
@@ -66,11 +74,26 @@ export const userService = {
       }
     });
 
-    const response = await api.get<UserListResponse>(
+    const response = await api.get<{
+      success?: boolean;
+      message: string;
+      data: {
+        data: {
+          items: User[];
+          pagination: any;
+        };
+      };
+    }>(
       USER_ENDPOINTS.instructorStudents,
       { params: apiParams }
     );
-    return response.data;
+    // BE trả về { success: true, message: "...", data: { data: { items: [...], pagination: {...} } } }
+    // Normalize thành structure: { success, data: { data: { items, pagination } }, message }
+    return {
+      success: response.data.success ?? true,
+      data: response.data.data,
+      message: response.data.message || 'Students retrieved successfully',
+    };
   },
 };
 
