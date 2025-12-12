@@ -4,6 +4,9 @@ import { Star, Users, Clock } from "lucide-react";
 import { CourseItemType } from "@/src/types/course/course-item.types";
 import { useRouter } from "next/navigation";
 import { formatDuration } from "@/lib/format-duration";
+import { useAppStore } from "@/src/stores/useAppStore";
+import { enrollmentService } from "@/src/services/enrollment";
+import { useQueryHook } from "@/src/hooks/useQueryHook";
 
 interface FreeCourseCardProps {
   course: CourseItemType;
@@ -11,6 +14,21 @@ interface FreeCourseCardProps {
 
 const FreeCourseCard = ({ course }: FreeCourseCardProps) => {
   const router = useRouter();
+  const { user } = useAppStore();
+
+  // Check if user is enrolled in this course
+  const { data: enrollments } = useQueryHook(
+    ['my-enrollments'],
+    () => enrollmentService.getMyLearning(),
+    {
+      enabled: !!user,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    }
+  );
+
+  const isEnrolled = enrollments?.some(
+    (enrollment: any) => enrollment.courseId === course.id
+  );
 
   return (
     <Card 
@@ -56,9 +74,15 @@ const FreeCourseCard = ({ course }: FreeCourseCardProps) => {
         </div>
 
         <div className="pt-2 border-t">
-          <p className="text-[18px] font-medium text-primary">
-            Miễn phí
-          </p>
+          {isEnrolled ? (
+            <p className="text-[18px] font-medium text-green-600 dark:text-green-500">
+              ✓ Đã đăng ký
+            </p>
+          ) : (
+            <p className="text-[18px] font-medium text-primary">
+              Miễn phí
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

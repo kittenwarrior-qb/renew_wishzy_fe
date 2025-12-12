@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, Users, Clock, Heart, ShoppingCart, Check } from "lucide-react";
+import { Star, Users, Clock, Heart, ShoppingCart, Check, Play } from "lucide-react";
 import { CourseItemType } from "@/src/types/course/course-item.types";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { formatDuration } from "@/lib/format-duration";
 import { wishlistService } from "@/src/services/wishlist";
+import { enrollmentService } from "@/src/services/enrollment";
+import { useQueryHook } from "@/src/hooks/useQueryHook";
 import { toast } from "sonner";
 
 interface CourseCardProps {
@@ -25,6 +27,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
     addToOrderList,
     clearOrderList,
     isAuthenticated,
+    user,
   } = useAppStore();
   const [isHovered, setIsHovered] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -32,6 +35,22 @@ const CourseCard = ({ course }: CourseCardProps) => {
   const [popupPosition, setPopupPosition] = useState<"left" | "right">("right");
   const cardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Check if user is enrolled in this course
+  const { data: enrollments } = useQueryHook(
+    ['my-enrollments'],
+    () => enrollmentService.getMyLearning(),
+    {
+      enabled: !!user,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    }
+  );
+
+  const currentEnrollment = enrollments?.find(
+    (enrollment: any) => enrollment.courseId === course.id
+  );
+  const isEnrolled = !!currentEnrollment;
+  const progress = currentEnrollment ? Number(currentEnrollment.progress) || 0 : 0;
 
   const isInCart = cart.some((c) => c.id === course.id);
 
@@ -92,6 +111,12 @@ const CourseCard = ({ course }: CourseCardProps) => {
   const handleBuyNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
+    // Nếu đã enrolled thì chuyển đến trang học
+    if (isEnrolled) {
+      router.push(`/learning/${course.id}`);
+      return;
+    }
+    
     const isFree = displayPrice === 0;
     
     if (isFree) {
@@ -103,7 +128,6 @@ const CourseCard = ({ course }: CourseCardProps) => {
       }
       
       try {
-        const { enrollmentService } = await import("@/src/services/enrollment");
         await enrollmentService.enrollFreeCourse(course.id);
         toast.success("Đăng ký khóa học thành công!");
         router.push(`/learning/${course.id}`);
@@ -274,19 +298,27 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
           <div className="pt-2 border-t">
             <div className="flex items-center gap-2">
-              <p
-                className={` ${
-                  displayPrice === 0
-                    ? "text-[18px] font-medium"
-                    : "text-xl font-bold"
-                } text-primary`}
-              >
-                {formatPrice(displayPrice)}
-              </p>
-              {hasSale && (
-                <p className="text-sm text-muted-foreground line-through">
-                  {formatPrice(originalPrice)}
+              {isEnrolled ? (
+                <p className="text-[18px] font-medium text-green-600 dark:text-green-500">
+                  ✓ Đã đăng ký
                 </p>
+              ) : (
+                <>
+                  <p
+                    className={` ${
+                      displayPrice === 0
+                        ? "text-[18px] font-medium"
+                        : "text-xl font-bold"
+                    } text-primary`}
+                  >
+                    {formatPrice(displayPrice)}
+                  </p>
+                  {hasSale && (
+                    <p className="text-sm text-muted-foreground line-through">
+                      {formatPrice(originalPrice)}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -353,25 +385,43 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
             {/* Price */}
             <div className="flex items-center gap-2">
-              <p
-                className={`${
-                  displayPrice === 0
-                    ? "font-medium text-[18px] "
-                    : "font-bold text-xl "
-                } text-primary`}
-              >
-                {formatPrice(displayPrice)}
-              </p>
-              {hasSale && (
-                <p className="text-xs text-muted-foreground line-through">
-                  {formatPrice(originalPrice)}
+              {isEnrolled ? (
+                <p className="font-medium text-[18px] text-green-600 dark:text-green-500">
+                  ✓ Đã đăng ký
                 </p>
+              ) : (
+                <>
+                  <p
+                    className={`${
+                      displayPrice === 0
+                        ? "font-medium text-[18px] "
+                        : "font-bold text-xl "
+                    } text-primary`}
+                  >
+                    {formatPrice(displayPrice)}
+                  </p>
+                  {hasSale && (
+                    <p className="text-xs text-muted-foreground line-through">
+                      {formatPrice(originalPrice)}
+                    </p>
+                  )}
+                </>
               )}
             </div>
 
             {/* Action Buttons */}
             <div className="space-y-2">
-              {displayPrice === 0 ? (
+              {isEnrolled ? (
+                // Đã đăng ký - hiển thị nút học ngay
+                <Button
+                  onClick={handleBuyNow}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  size="sm"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  {progress > 0 ? `Tiếp tục học (${progress.toFixed(0)}%)` : 'Học ngay'}
+                </Button>
+              ) : displayPrice === 0 ? (
                 // Khóa học miễn phí - chỉ hiển thị nút đăng ký
                 <Button
                   onClick={handleBuyNow}
