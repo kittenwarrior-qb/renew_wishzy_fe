@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -13,12 +12,10 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Loader2, ArrowLeft, Mail } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useForgotPassword } from './useAuth';
-import { useTranslations } from '@/providers/TranslationProvider';
 
 export const ForgotPasswordForm = () => {
-  const t = useTranslations();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
 
@@ -26,11 +23,11 @@ export const ForgotPasswordForm = () => {
 
   const validateForm = (): boolean => {
     if (!email) {
-      setError(t('auth.emailRequired'));
+      setError('Vui lòng nhập email');
       return false;
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError(t('auth.emailInvalid'));
+      setError('Email không hợp lệ');
       return false;
     }
     return true;
@@ -57,18 +54,18 @@ export const ForgotPasswordForm = () => {
           <form onSubmit={handleSubmit} className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">{t('auth.forgotPasswordTitle')}</h1>
+                <h1 className="text-2xl font-bold">Quên mật khẩu</h1>
                 <p className="text-muted-foreground text-balance">
-                  {t('auth.forgotPasswordSubtitle')}
+                  Nhập email để nhận link đặt lại mật khẩu
                 </p>
               </div>
               
               <Field>
-                <FieldLabel htmlFor="email">{t('auth.email')}</FieldLabel>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
                   type="email"
-                  placeholder={t('auth.emailPlaceholder')}
+                  placeholder="email@example.com"
                   value={email}
                   onChange={(e) => handleInputChange(e.target.value)}
                   className="border-input"
@@ -91,16 +88,16 @@ export const ForgotPasswordForm = () => {
                   {forgotPasswordMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('auth.sendingEmail')}
+                      Đang gửi...
                     </>
                   ) : (
-                    t('auth.sendResetLink')
+                    'Gửi link đặt lại mật khẩu'
                   )}
                 </Button>
               </Field>
 
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                {t('auth.orContinueWith')}
+                Hoặc tiếp tục với
               </FieldSeparator>
               
               <Field className="grid grid-cols-3 gap-4">
@@ -111,7 +108,7 @@ export const ForgotPasswordForm = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="sr-only">{t('auth.loginWithApple')}</span>
+                  <span className="sr-only">Đăng nhập với Apple</span>
                 </Button>
                 <Button variant="outline" type="button">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4">
@@ -120,7 +117,7 @@ export const ForgotPasswordForm = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="sr-only">{t('auth.loginWithGoogle')}</span>
+                  <span className="sr-only">Đăng nhập với Google</span>
                 </Button>
                 <Button variant="outline" type="button">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4">
@@ -129,13 +126,13 @@ export const ForgotPasswordForm = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="sr-only">{t('auth.loginWithMeta')}</span>
+                  <span className="sr-only">Đăng nhập với Meta</span>
                 </Button>
               </Field>
               
               <FieldDescription className="text-center">
                 <Link href="/auth/login" className="inline-flex items-center gap-2 underline">
-                  {t('auth.backToLogin')}
+                  Quay lại đăng nhập
                 </Link>
               </FieldDescription>
             </FieldGroup>
@@ -143,13 +140,13 @@ export const ForgotPasswordForm = () => {
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        {t('auth.byContinuing')}{' '}
+        Bằng việc tiếp tục, bạn đồng ý với{' '}
         <Link href="/terms" className="underline">
-          {t('auth.termsOfService')}
+          Điều khoản dịch vụ
         </Link>{' '}
-        {t('auth.and')}{' '}
+        và{' '}
         <Link href="/privacy" className="underline">
-          {t('auth.privacyPolicy')}
+          Chính sách bảo mật
         </Link>.
       </FieldDescription>
     </div>

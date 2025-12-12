@@ -75,11 +75,11 @@ const FreeCourseCard = ({ course }: FreeCourseCardProps) => {
 
         <div className="pt-2 border-t">
           {isEnrolled ? (
-            <p className="text-[18px] font-medium text-green-600 dark:text-green-500">
-              ✓ Đã đăng ký
+            <p className="text-[18px] font-medium text-primary-dark">
+              Đã đăng ký
             </p>
           ) : (
-            <p className="text-[18px] font-medium text-primary">
+            <p className="text-[18px] font-medium text-primary-dark">
               Miễn phí
             </p>
           )}

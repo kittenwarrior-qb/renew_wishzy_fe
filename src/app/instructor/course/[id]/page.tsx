@@ -12,13 +12,10 @@ import { CourseChapter } from "@/components/shared/course/CourseChapter";
 import { ChapterType } from "@/src/types/chapter/chapter.types";
 import CourseCreator from "@/components/shared/course/CourseCreator";
 import { ArrowLeft } from "lucide-react";
-import { useTranslations } from "@/providers/TranslationProvider";
 
 const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     const { id } = use(params);
     const router = useRouter();
-    const t = useTranslations();
-    const translate = (key: string) => t(`courses.${key}`);
 
     const { data: course, isLoading: isLoadingCourse, isError: isErrorCourse } = useQueryHook<CourseItemType>(
         ['course', id],
@@ -39,12 +36,12 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                     className="mb-6 gap-2 -ml-2"
                 >
                     <ArrowLeft className="h-4 w-4" />
-                    {translate("back")}
+                    Quay lại
                 </Button>
                 <div className="flex justify-center items-center min-h-[60vh]">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                        <p className="text-muted-foreground">{translate("loadingCourse")}</p>
+                        <p className="text-muted-foreground">Đang tải khoá học...</p>
                     </div>
                 </div>
             </div>
@@ -60,19 +57,19 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                     className="mb-6 gap-2 -ml-2"
                 >
                     <ArrowLeft className="h-4 w-4" />
-                    {translate("back")}
+                    Quay lại
                 </Button>
                 <div className="flex justify-center items-center min-h-[60vh]">
                     <div className="text-center">
-                        <p className="text-lg font-semibold mb-2">{translate("courseNotFound")}</p>
-                        <p className="text-muted-foreground mb-4">{translate("courseNotFoundDesc")}</p>
+                        <p className="text-lg font-semibold mb-2">Không tìm thấy khoá học</p>
+                        <p className="text-muted-foreground mb-4">Khoá học không tồn tại hoặc đã bị xoá</p>
                         <Button
                             variant="outline"
                             onClick={() => router.back()}
                             className="gap-2"
                         >
                             <ArrowLeft className="h-4 w-4" />
-                            {translate("back")}
+                            Quay lại
                         </Button>
                     </div>
                 </div>
@@ -95,10 +92,10 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
         
         if (hours > 0) {
             return minutes > 0 
-                ? `${hours} ${translate("hours")} ${minutes} ${translate("minutes")}` 
-                : `${hours} ${translate("hours")}`;
+                ? `${hours} giờ ${minutes} phút` 
+                : `${hours} giờ`;
         }
-        return `${minutes} ${translate("minutes")}`;
+        return `${minutes} phút`;
     };
     
     const durationText = formatDurationText(totalDurationSeconds);
@@ -113,7 +110,7 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                 className="mb-4 gap-2 -ml-2"
             >
                 <ArrowLeft className="h-4 w-4" />
-                {translate("back")}
+                Quay lại
             </Button>
 
             <div className="pb-4 mb-6">
@@ -122,7 +119,7 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                         {course.name}
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                        {translate("courseDetails")}
+                        Chi tiết khoá học
                     </p>
                 </div>
             </div>
@@ -138,7 +135,7 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-muted-foreground text-lg">{translate("noThumbnail")}</span>
+                                <span className="text-muted-foreground text-lg">Chưa có ảnh bìa</span>
                             </div>
                         )}
                     </div>
@@ -149,16 +146,16 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                                 <div className="flex items-center gap-1">
                                     <span className="text-yellow-500">★</span>
                                     <span className="font-medium">{averageRating.toFixed(1)}</span>
-                                    <span>({course.numberOfStudents} {translate("reviewsCount")})</span>
+                                    <span>({course.numberOfStudents} đánh giá)</span>
                                 </div>
                             )}
                             <div className="flex items-center gap-1">
                                 <span>👥</span>
-                                <span>{course.numberOfStudents} {translate("studentsCount")}</span>
+                                <span>{course.numberOfStudents} học viên</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <span>📚</span>
-                                <span>{totalLessons} {translate("lessonsCount")}</span>
+                                <span>{totalLessons} bài học</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <span>⏱️</span>
@@ -169,7 +166,7 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
 
                     {course.description && (
                         <div className="border-b pb-6">
-                            <h2 className="py-0 text-lg mb-2 font-semibold">{translate("courseDescription")}</h2>
+                            <h2 className="py-0 text-lg mb-2 font-semibold">Mô tả khoá học</h2>
                             <p className="leading-relaxed text-muted-foreground whitespace-pre-line">
                                 {course.description}
                             </p>
@@ -178,7 +175,7 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
 
                     {course.notes && (
                         <div className="border-b pb-6">
-                            <h2 className="py-0 text-lg mb-2 font-semibold">{translate("notes")}</h2>
+                            <h2 className="py-0 text-lg mb-2 font-semibold">Ghi chú</h2>
                             <p className="leading-relaxed text-muted-foreground whitespace-pre-line">
                                 {course.notes}
                             </p>
@@ -186,13 +183,13 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                     )}
 
                     <div>
-                        <h1 className="py-0 text-lg font-semibold">{translate("courseContent")}</h1>
+                        <h1 className="py-0 text-lg font-semibold">Nội dung khoá học</h1>
                         <CourseChapter chapters={chapters?.items ?? []} />
                     </div>
 
                     {course.creator && (
                         <div className="border-b pb-6">
-                            <h2 className="py-0 text-lg font-semibold">{translate("instructorInfo")}</h2>
+                            <h2 className="py-0 text-lg font-semibold">Thông tin giảng viên</h2>
                             <CourseCreator creator={course.creator} />
                         </div>
                     )}
@@ -201,14 +198,14 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                 <div className="lg:col-span-1">
                     <div className="border rounded-lg p-6 sticky top-8 space-y-6">
                         <div className="flex items-center justify-between border-b pb-4">
-                            <span className="text-lg font-semibold">{translate("discountPrice")}</span>
+                            <span className="text-lg font-semibold">Giá khoá học</span>
                             <span className="text-3xl font-bold">
                                 {formatPrice(course.price)}
                             </span>
                         </div>
 
                         <div className="space-y-4">
-                            <h3 className="font-semibold text-lg">{translate("whatYouWillGet")}</h3>
+                            <h3 className="font-semibold text-lg">Bạn sẽ nhận được</h3>
                             <div className="space-y-3">
                                 <div className="flex items-start gap-3">
                                     <div className="w-6 h-6 rounded-full border flex items-center justify-center shrink-0 mt-0.5">
@@ -217,7 +214,7 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="font-medium">{translate("courseDuration")}</p>
+                                        <p className="font-medium">Thời lượng khoá học</p>
                                         <p className="text-sm text-muted-foreground">{durationText}</p>
                                     </div>
                                 </div>
@@ -229,8 +226,8 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="font-medium">{translate("difficulty")}</p>
-                                        <p className="text-sm text-muted-foreground capitalize">{course.level || translate("notDetermined")}</p>
+                                        <p className="font-medium">Độ khó</p>
+                                        <p className="text-sm text-muted-foreground capitalize">{course.level || "Chưa xác định"}</p>
                                     </div>
                                 </div>
 
@@ -242,7 +239,7 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                                             </svg>
                                         </div>
                                         <div>
-                                            <p className="font-medium">{translate("courseCategory")}</p>
+                                            <p className="font-medium">Danh mục</p>
                                             <p className="text-sm text-muted-foreground">{course.category.name}</p>
                                         </div>
                                     </div>
@@ -255,8 +252,8 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                                         </svg>
                                     </div>
                                     <div>
-                                        <p className="font-medium">{translate("totalLessons")}</p>
-                                        <p className="text-sm text-muted-foreground">{totalLessons} {translate("lessonsCount")}</p>
+                                        <p className="font-medium">Tổng số bài học</p>
+                                        <p className="text-sm text-muted-foreground">{totalLessons} bài học</p>
                                     </div>
                                 </div>
 
@@ -268,8 +265,8 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                                             </svg>
                                         </div>
                                         <div>
-                                            <p className="font-medium">{translate("rating")}</p>
-                                            <p className="text-sm text-muted-foreground">{averageRating.toFixed(1)}{translate("ratingOutOf")} ({course.numberOfStudents} {translate("reviewsCount")})</p>
+                                            <p className="font-medium">Đánh giá</p>
+                                            <p className="text-sm text-muted-foreground">{averageRating.toFixed(1)}/5 ({course.numberOfStudents} đánh giá)</p>
                                         </div>
                                     </div>
                                 )}
@@ -277,25 +274,25 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
                         </div>
 
                         <div className="space-y-3 pt-4 border-t">
-                            <h3 className="font-semibold">{translate("courseIncludes")}</h3>
+                            <h3 className="font-semibold">Khoá học bao gồm</h3>
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span className="text-sm">{translate("lifetimeAccess")}</span>
+                                    <span className="text-sm">Truy cập trọn đời</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span className="text-sm">{translate("allDevices")}</span>
+                                    <span className="text-sm">Học trên mọi thiết bị</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span className="text-sm">{translate("certificate")}</span>
+                                    <span className="text-sm">Chứng chỉ hoàn thành</span>
                                 </div>
                             </div>
                         </div>
@@ -307,4 +304,3 @@ const InstructorCourseDetail = ({ params }: { params: Promise<{ id: string }> })
 }
 
 export default InstructorCourseDetail
-

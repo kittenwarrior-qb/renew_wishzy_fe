@@ -8,7 +8,6 @@ import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import { ChevronDownIcon, Play, Eye } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ChapterType } from "@/src/types/chapter/chapter.types";
-import { useTranslations } from "@/providers/TranslationProvider";
 import { formatDuration } from "@/lib/format-duration";
 import { VideoPreviewDialog } from "./VideoPreviewDialog";
 import { Button } from "@/components/ui/button";
@@ -35,8 +34,6 @@ function CustomAccordionTrigger({
 }
 
 export function CourseChapter({ chapters }: { chapters: ChapterType[] }) {
-    const t = useTranslations();
-    const translate = (key: string) => t(`courses.${key}`);
     const [previewVideo, setPreviewVideo] = React.useState<{ url: string; title: string } | null>(null);
     
     return (
@@ -57,7 +54,7 @@ export function CourseChapter({ chapters }: { chapters: ChapterType[] }) {
                             <div className="flex items-center justify-between w-full">
                                 <span className="font-medium">{chapter.name}</span>
                                 <span className="flex gap-2 text-muted-foreground text-sm">
-                                    <span>{lectureCount} {translate("lectureCount")}</span>
+                                    <span>{lectureCount} bài giảng</span>
                                     {chapterDuration > 0 && (
                                         <>
                                             <span>•</span>
@@ -96,7 +93,7 @@ export function CourseChapter({ chapters }: { chapters: ChapterType[] }) {
                                                             }}
                                                         >
                                                             <Eye className="w-3 h-3" />
-                                                            {translate("preview")}
+                                                            Xem trước
                                                         </Button>
                                                     )}
                                                 </div>
@@ -108,7 +105,7 @@ export function CourseChapter({ chapters }: { chapters: ChapterType[] }) {
                                     ))
                             ) : (
                                 <div className="py-4 text-center text-sm text-muted-foreground">
-                                    {translate("noLectures")}
+                                    Chưa có bài giảng
                                 </div>
                             )}
                         </AccordionContent>

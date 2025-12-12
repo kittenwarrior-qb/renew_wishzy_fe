@@ -17,7 +17,6 @@ import {
   Menu, 
   Sun,
   Moon,
-  Globe
 } from "lucide-react"
 import {
   Sheet,
@@ -27,11 +26,9 @@ import {
 } from "@/components/ui/sheet"
 import React from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { ThemeSwitcherDropdownItem } from "../common/ThemeSwitcherDropdownItem"
-import { LocaleSwitcherDropdownItem } from "../common/LocaleSwitcherDropdownItem"
 import { useLogout, useAuthStatus } from "@/components/shared/auth/useAuth"
-import { useTranslations } from "@/providers/TranslationProvider"
 import { useAppStore } from "@/stores/useAppStore"
 import CartPopover from "../cart/CartPopover"
 import SearchHeader from "./header/SearchHeader"
@@ -39,8 +36,6 @@ import DiscoverDropdown from "./header/DiscoverDropdown"
 
 const Header = () => {
   const pathname = usePathname();
-  const router = useRouter();
-  const t = useTranslations();
   const { user, isAuthenticated } = useAuthStatus();
   const logoutMutation = useLogout();
   const theme = useAppStore((state) => state.theme);
@@ -171,7 +166,7 @@ const Header = () => {
                         {user.avatar ? (
                           <img
                             src={user.avatar}
-                            alt={t('common.avatar')}
+                            alt="Avatar"
                             className="w-8 h-8 rounded-full object-cover transition-colors"
                           />
                         ) : (
@@ -211,7 +206,6 @@ const Header = () => {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <ThemeSwitcherDropdownItem />
-                      <LocaleSwitcherDropdownItem />
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={handleLogout}
@@ -219,7 +213,7 @@ const Header = () => {
                         className="cursor-pointer text-destructive focus:text-destructive"
                       >
                         <LogOut className="mr-2 h-4 w-4" />
-                        <span>{t('auth.logout')}</span>
+                        <span>Đăng xuất</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -228,12 +222,12 @@ const Header = () => {
                 <div className="flex items-center space-x-2">
                   <Link href="/auth/login">
                     <Button variant="ghost" className="font-medium">
-                      {t('auth.login')}
+                      Đăng nhập
                     </Button>
                   </Link>
                   <Link href="/auth/register">
                     <Button className="font-medium bg-primary hover:bg-primary/90">
-                      {t('auth.register')}
+                      Đăng ký
                     </Button>
                   </Link>
                 </div>
@@ -292,7 +286,7 @@ const Header = () => {
                           {user.avatar ? (
                             <img
                               src={user.avatar}
-                              alt={t('common.avatar')}
+                              alt="Avatar"
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
@@ -330,19 +324,19 @@ const Header = () => {
                           className="flex items-center py-2 text-destructive hover:text-destructive/80 transition-colors"
                         >
                           <LogOut className="mr-2 h-4 w-4" />
-                          <span>{t('auth.logout')}</span>
+                          <span>Đăng xuất</span>
                         </button>
                       </div>
                     ) : (
                       <div className="flex flex-col space-y-3">
                         <Link href="/auth/login" className="w-full" onClick={() => setIsOpen(false)}>
                           <Button variant="outline" className="w-full font-medium">
-                            {t('auth.login')}
+                            Đăng nhập
                           </Button>
                         </Link>
                         <Link href="/auth/register" className="w-full" onClick={() => setIsOpen(false)}>
                           <Button className="w-full font-medium bg-primary hover:bg-primary/90">
-                            {t('auth.register')}
+                            Đăng ký
                           </Button>
                         </Link>
                       </div>
@@ -357,26 +351,11 @@ const Header = () => {
                       }}
                       className="flex items-center justify-between py-2 hover:text-primary transition-colors"
                     >
-                      <span className="text-sm">{t('settings.theme')}</span>
+                      <span className="text-sm">Giao diện</span>
                       {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                     </button>
-                    <button
-                      onClick={() => {
-                        const pathname = usePathname();
-                        const segments = pathname.split('/');
-                        const currentLocale = segments[1] === 'en' ? 'en' : 'vi';
-                        const newLocale = currentLocale === 'vi' ? 'en' : 'vi';
-                        const newPath = '/' + newLocale + pathname.substring(3);
-                        router.push(newPath);
-                        setIsOpen(false);
-                      }}
-                      className="flex items-center justify-between py-2 hover:text-primary transition-colors"
-                    >
-                      <span className="text-sm">{t('settings.language')}</span>
-                      <Globe className="h-5 w-5" />
-                    </button>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">{t('settings.cart')}</span>
+                      <span className="text-sm">Giỏ hàng</span>
                       <CartPopover />
                     </div>
                   </div>
@@ -390,4 +369,4 @@ const Header = () => {
   );
 };
 
-export default Header;  
+export default Header;

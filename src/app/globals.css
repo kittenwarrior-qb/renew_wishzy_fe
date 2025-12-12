@@ -32,6 +32,7 @@ button {
   --popover: oklch(1.0000 0 0);
   --popover-foreground: oklch(0.2686 0 0);
   --primary: #F6C89F;
+  --primary-dark: #D4A574;
   --primary-foreground: oklch(0 0 0);
   --secondary: oklch(0.9665 0.0045 258.3247);
   --secondary-foreground: oklch(0.4419 0.0375 257.2811);
@@ -87,6 +88,7 @@ button {
   --popover: oklch(0.2686 0 0);
   --popover-foreground: oklch(0.9219 0 0);
   --primary: #F6C89F;
+  --primary-dark: #F6C89F;
   --primary-foreground: oklch(0 0 0);
   --secondary: oklch(0.2686 0 0);
   --secondary-foreground: oklch(0.9219 0 0);
@@ -140,6 +142,7 @@ button {
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);

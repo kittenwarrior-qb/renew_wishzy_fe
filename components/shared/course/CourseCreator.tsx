@@ -2,9 +2,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Mail, User } from "lucide-react"
+import { Mail } from "lucide-react"
 import { useState } from "react"
-import { useTranslations } from "@/providers/TranslationProvider"
 
 interface Creator {
   passwordModified?: boolean
@@ -17,14 +16,12 @@ interface Creator {
 
 const CourseCreator = ({ creator }: { creator: Creator }) => {
   const [isExpanded, setIsExpanded] = useState(false)
-  const t = useTranslations();
-  const translate = (key: string) => t(`courses.${key}`);
 
   if (!creator) {
     return (
       <Card className="mt-4">
         <CardContent className="p-6">
-          <p className="text-muted-foreground text-center">{translate("instructorNotAvailable")}</p>
+          <p className="text-muted-foreground text-center">Thông tin giảng viên không khả dụng</p>
         </CardContent>
       </Card>
     )
@@ -60,7 +57,7 @@ const CourseCreator = ({ creator }: { creator: Creator }) => {
                 {creator.fullName}
               </h3>
               <Badge variant="destructive" className="mt-1">
-                {translate("instructor")}
+                Giảng viên
               </Badge>
             </div>
 
@@ -83,7 +80,7 @@ const CourseCreator = ({ creator }: { creator: Creator }) => {
                     onClick={() => setIsExpanded(!isExpanded)}
                     className="mt-2 px-0 h-auto text-blue-600 hover:text-blue-800 hover:bg-transparent"
                   >
-                    {isExpanded ? translate("collapse") : translate("expand")}
+                    {isExpanded ? "Thu gọn" : "Xem thêm"}
                   </Button>
                 )}
               </div>

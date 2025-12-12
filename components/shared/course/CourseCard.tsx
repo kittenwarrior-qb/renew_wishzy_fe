@@ -299,8 +299,8 @@ const CourseCard = ({ course }: CourseCardProps) => {
           <div className="pt-2 border-t">
             <div className="flex items-center gap-2">
               {isEnrolled ? (
-                <p className="text-[18px] font-medium text-green-600 dark:text-green-500">
-                  ✓ Đã đăng ký
+                <p className="text-[18px] font-medium text-primary-dark">
+                  Đã đăng ký
                 </p>
               ) : (
                 <>
@@ -309,7 +309,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
                       displayPrice === 0
                         ? "text-[18px] font-medium"
                         : "text-xl font-bold"
-                    } text-primary`}
+                    } text-primary-dark`}
                   >
                     {formatPrice(displayPrice)}
                   </p>
@@ -386,8 +386,8 @@ const CourseCard = ({ course }: CourseCardProps) => {
             {/* Price */}
             <div className="flex items-center gap-2">
               {isEnrolled ? (
-                <p className="font-medium text-[18px] text-green-600 dark:text-green-500">
-                  ✓ Đã đăng ký
+                <p className="font-medium text-[18px] text-primary-dark">
+                  Đã đăng ký
                 </p>
               ) : (
                 <>
@@ -396,7 +396,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
                       displayPrice === 0
                         ? "font-medium text-[18px] "
                         : "font-bold text-xl "
-                    } text-primary`}
+                    } text-primary-dark`}
                   >
                     {formatPrice(displayPrice)}
                   </p>
@@ -415,7 +415,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
                 // Đã đăng ký - hiển thị nút học ngay
                 <Button
                   onClick={handleBuyNow}
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="w-full bg-primary hover:bg-primary/90"
                   size="sm"
                 >
                   <Play className="w-4 h-4 mr-2" />

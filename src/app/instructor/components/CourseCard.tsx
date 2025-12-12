@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Clock, Star, Users } from "lucide-react";
 import Link from "next/link";
 import type { Enrollment } from "@/types/enrollment";
-import { useTranslations } from "@/providers/TranslationProvider";
 import { formatDuration as formatDurationUtil } from "@/lib/format-duration";
 
 interface CourseCardProps {
@@ -13,13 +12,10 @@ interface CourseCardProps {
 }
 
 export const CourseCard = ({ enrollment }: CourseCardProps) => {
-  const t = useTranslations();
-  const translate = (key: string) => t(`students.${key}`);
   const { course, progress, status } = enrollment;
   const progressValue = progress || 0;
   
   const formatDuration = (seconds: number) => {
-    // Use the utility function which handles seconds correctly
     return formatDurationUtil(seconds, 'short');
   };
 
@@ -50,7 +46,7 @@ export const CourseCard = ({ enrollment }: CourseCardProps) => {
             {progressValue > 0 && (
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-background/90">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium">{translate("progress")}</span>
+                  <span className="text-xs font-medium">Tiến độ</span>
                   <span className="text-xs font-semibold">{progressValue.toFixed(0)}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
@@ -81,17 +77,17 @@ export const CourseCard = ({ enrollment }: CourseCardProps) => {
               </Badge>
               {status === "ongoing" && (
                 <Badge variant="secondary" className="text-xs bg-primary/10 text-primary">
-                  {translate("inProgress")}
+                  Đang học
                 </Badge>
               )}
               {status === "completed" && (
                 <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600">
-                  {translate("completed")}
+                  Hoàn thành
                 </Badge>
               )}
               {status === "not_started" && (
                 <Badge variant="secondary" className="text-xs bg-gray-500/10 text-gray-600">
-                  {translate("notStarted")}
+                  Chưa bắt đầu
                 </Badge>
               )}
             </div>
@@ -107,7 +103,7 @@ export const CourseCard = ({ enrollment }: CourseCardProps) => {
               </div>
               <div className="flex items-center gap-1">
                 <Users className="h-3 w-3 flex-shrink-0" />
-                <span>{course.numberOfStudents} {translate("students")}</span>
+                <span>{course.numberOfStudents} học viên</span>
               </div>
               <div className="flex items-center gap-1 font-semibold text-primary">
                 <span className="truncate">{formatPrice(course.price)}</span>
@@ -116,7 +112,7 @@ export const CourseCard = ({ enrollment }: CourseCardProps) => {
 
             <div className="text-xs text-muted-foreground border-t pt-2 space-y-1 mt-auto">
               <div>
-                <span className="font-medium">{translate("enrollmentDate")}: </span>
+                <span className="font-medium">Ngày đăng ký: </span>
                 {new Date(enrollment.enrollmentDate).toLocaleDateString('vi-VN', {
                   year: 'numeric',
                   month: '2-digit',
@@ -124,7 +120,7 @@ export const CourseCard = ({ enrollment }: CourseCardProps) => {
                 })}
               </div>
               <div>
-                <span className="font-medium">{translate("lastAccess")}: </span>
+                <span className="font-medium">Truy cập gần nhất: </span>
                 {new Date(enrollment.lastAccess).toLocaleDateString('vi-VN', {
                   year: 'numeric',
                   month: '2-digit',
@@ -138,4 +134,3 @@ export const CourseCard = ({ enrollment }: CourseCardProps) => {
     </Link>
   );
 };
-
