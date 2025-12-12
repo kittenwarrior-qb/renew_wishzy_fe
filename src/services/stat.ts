@@ -12,8 +12,10 @@ import type {
 
 export const statService = {
   async getInstructorStats(): Promise<InstructorStatsResponse> {
-    const response = await api.get("/stat/instructor")
-    return response.data?.data ?? response.data
+    const response = await api.get<{ success: boolean; data: InstructorStatsResponse; message: string }>("/stat/instructor")
+    // BE có TransformInterceptor wrap response: { success, data: InstructorStatsResponse, message, url }
+    // Vậy response.data.data sẽ là InstructorStatsResponse
+    return response.data.data
   },
   async getRevenue(params: { mode: RevenueMode; startDate?: string; endDate?: string }): Promise<RevenueApiResponse> {
     const response = await api.get("/stat/revenue", {

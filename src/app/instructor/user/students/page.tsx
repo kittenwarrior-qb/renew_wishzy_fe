@@ -26,6 +26,7 @@ const StudentsPage = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const limit = 10;
 
+
   const isInstructor = role === "instructor";
 
   // Debounce search query
@@ -48,8 +49,11 @@ const StudentsPage = () => {
     ...(debouncedSearch && !isInstructor && { search: debouncedSearch }),
   });
 
-  const students = data?.data.data.items || [];
-  const pagination = data?.data.data.pagination;
+console.log('data', data);
+
+  const students = data?.data.items || [];
+  const pagination = data?.data.pagination;
+  // console.log('students', students);
 
   const { data: enrollments, isLoading: isLoadingCourses } = useStudentCourses(
     selectedStudent?.id || null
