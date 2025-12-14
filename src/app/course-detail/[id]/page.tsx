@@ -19,6 +19,7 @@ import { enrollmentService } from "@/src/services/enrollment";
 import { wishlistService } from "@/src/services/wishlist";
 import { toast } from "sonner";
 import { Heart } from "lucide-react";
+import { CourseDetailBreadcrumb } from "@/components/shared/course/CourseDetailBreadcrumb";
 
 const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     const { id } = use(params);
@@ -178,9 +179,9 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
             try {
                 await enrollmentService.enrollFreeCourse(id);
                 toast.success('Đăng ký khóa học thành công! Chúc bạn học tập vui vẻ 🎉');
-                // Refresh enrollments
+                // Redirect to profile page
                 setTimeout(() => {
-                    window.location.reload();
+                    router.push('/profile');
                 }, 1000);
             } catch (error: any) {
                 console.error('Failed to enroll:', error);
@@ -198,6 +199,10 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
     return (
         <div className="min-h-screen">
             <div className="max-w-[1300px] mx-auto px-4 py-8">
+                <CourseDetailBreadcrumb 
+                    category={course.category}
+                    courseName={course.name}
+                />
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-6">
                         <div className="w-full aspect-video rounded-lg overflow-hidden">
@@ -233,9 +238,9 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                             <CourseCreator creator={course.creator} />
                         </div>
 
-                        {/* Course Comment */}
+                        {/* Course Feedback */}
                         <div id="feedback" className="border-b pb-6">
-                            <CourseComment courseId={id} isEnrolled={isEnrolled} />
+                            <CourseComment courseId={id} isEnrolled={isEnrolled} progress={progress} />
                         </div>
 
                         {/* Course related */}
@@ -357,17 +362,25 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                                 </div>
                             </div>
 
-                            {/* Enroll Button */}
+                            {/* Action Buttons */}
                             {!isEnrolled && !isFree && (
                                 <div className="flex gap-2 mb-3">
-                                    {/* TODO: Wishlist button - will fix later */}
                                     <Button
                                         variant={isInCart ? 'secondary' : 'outline'}
-                                        className="w-full"
+                                        className="flex-1"
                                         onClick={() => addToCart(course)}
                                         disabled={isInCart}
                                     >
                                         {isInCart ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={handleToggleWishlist}
+                                        disabled={isWishlistLoading}
+                                        className={isInWishlist ? 'text-red-500 border-red-500' : ''}
+                                    >
+                                        <Heart className={`h-5 w-5 ${isInWishlist ? 'fill-current' : ''}`} />
                                     </Button>
                                 </div>
                             )}

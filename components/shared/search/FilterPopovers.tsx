@@ -121,7 +121,7 @@ export const FilterPopovers = ({
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="rounded-full">
-            Giá
+            {selectedPrice === 'free' ? 'Miễn phí' : selectedPrice === 'paid' ? 'Trả phí' : selectedPrice === 'custom' ? 'Tùy chỉnh' : 'Giá'}
             <ChevronDown className="ml-1 h-4 w-4" />
           </Button>
         </PopoverTrigger>

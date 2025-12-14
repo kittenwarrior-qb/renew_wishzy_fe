@@ -59,16 +59,13 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
   const MAX_DESCRIPTION_LENGTH = 200;
 
   const fetchNotes = async () => {
-    console.log('fetchNotes called:', { lectureId: lecture.id, isEnrolled });
     if (!lecture.id) {
-      console.log('fetchNotes skipped - missing lectureId');
       return;
     }
     
     setIsLoadingNotes(true);
     try {
       const response = await lectureNoteService.listByLecture(lecture.id);
-      console.log('fetchNotes response:', response);
       setNotes(response.items || []);
     } catch (error) {
       console.error('Failed to fetch notes:', error);
@@ -151,7 +148,6 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
       setIsLoadingNotes(true);
       try {
         const response = await lectureNoteService.listByLecture(lecture.id);
-        console.log('Notes after save:', response);
         setNotes(response.items || []);
       } finally {
         setIsLoadingNotes(false);

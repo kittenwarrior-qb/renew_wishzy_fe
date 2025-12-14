@@ -138,17 +138,53 @@ export function CourseSidebar({
                     const orderB = b.orderIndex ?? b.order ?? 0;
                     return orderA - orderB;
                   })
-                  .map((lecture) => (
-                  <Link
-                    key={lecture.id}
-                    href={`/learning/${courseId}/${lecture.id}`}
-                    className={cn(
-                      "block px-4 py-3 ml-6 mr-2 rounded-lg transition-colors",
-                      currentLectureId === lecture.id
-                        ? "bg-primary/10 border border-primary/20"
-                        : "hover:bg-muted/50"
-                    )}
-                  >
+                  .map((lecture, index, sortedLectures) => {
+                    // Check if previous lecture is completed (for sequential learning)
+                    const previousLecture = index > 0 ? sortedLectures[index - 1] : null;
+                    const isPreviousCompleted = !previousLecture || finishedLectures.includes(previousLecture.id);
+                    const isLocked = !isPreviousCompleted && !finishedLectures.includes(lecture.id);
+                    
+                    return isLocked ? (
+                      <div
+                        key={lecture.id}
+                        className={cn(
+                          "block px-4 py-3 ml-6 mr-2 rounded-lg transition-colors cursor-not-allowed",
+                          "bg-muted/30 border border-dashed border-muted-foreground/20"
+                        )}
+                        title="Hoàn thành bài học trước để mở khóa"
+                      >
+                        <div className="flex items-center gap-3 opacity-60">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-muted">
+                            <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0 flex items-start gap-2">
+                            <span className="text-sm shrink-0 w-6 text-left tabular-nums font-medium text-muted-foreground">
+                              {lecture.order}.
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm truncate font-medium text-muted-foreground">
+                                {lecture.title}
+                              </div>
+                              <div className="text-xs text-muted-foreground/70 mt-0.5">
+                                🔒 Khóa
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <Link
+                        key={lecture.id}
+                        href={`/learning/${courseId}/${lecture.id}`}
+                        className={cn(
+                          "block px-4 py-3 ml-6 mr-2 rounded-lg transition-colors",
+                          currentLectureId === lecture.id
+                            ? "bg-primary/10 border border-primary/20"
+                            : "hover:bg-muted/50"
+                        )}
+                      >
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
                         {finishedLectures.includes(lecture.id) ? (
@@ -175,7 +211,8 @@ export function CourseSidebar({
                       </div>
                     </div>
                   </Link>
-                  ))}
+                    );
+                  })}
               </div>
             )}
           </div>

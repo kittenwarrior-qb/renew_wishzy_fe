@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, FileText, PlayCircle, CheckCircle } from "lucide-react";
 import { getQuizzes, getMyQuizAttempts, type QuizAttempt } from "@/services/quiz";
 import { toast } from "sonner";
+import { useAppStore } from "@/src/stores/useAppStore";
 
 interface QuizItem {
   id: string;
@@ -29,6 +30,7 @@ interface QuizItem {
 
 export default function QuizListPage() {
   const router = useRouter();
+  const { user } = useAppStore();
   const [quizzes, setQuizzes] = useState<QuizItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -129,6 +131,11 @@ export default function QuizListPage() {
   };
 
   const handleStartQuiz = (quizId: string) => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để làm bài kiểm tra");
+      router.push("/auth/login");
+      return;
+    }
     router.push(`/quiz/${quizId}`);
   };
 

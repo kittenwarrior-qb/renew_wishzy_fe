@@ -55,37 +55,42 @@ const SearchPage = () => {
     setMaxPriceInput(maxPrice || "");
   }, [searchParams]);
 
-  let minPrice = undefined;
-  let maxPrice = undefined;
+  let minPrice: number | undefined = undefined;
+  let maxPrice: number | undefined = undefined;
   
   if (selectedPrice === "free") {
+    // Use 0 for both min and max to filter free courses
+    // Backend should handle minPrice=0 AND maxPrice=0 to return only free courses
     minPrice = 0;
     maxPrice = 0;
   } else if (selectedPrice === "paid") {
+    // Paid courses have price > 0
     minPrice = 0.01;
+    maxPrice = undefined; // No upper limit
   } else if (selectedPrice === "custom") {
     minPrice = minPriceInput ? Number(minPriceInput) : undefined;
     maxPrice = maxPriceInput ? Number(maxPriceInput) : undefined;
   } else {
+    // Show all courses
     minPrice = undefined;
     maxPrice = undefined;
   }
   
-  const filter = Object.fromEntries(
-    Object.entries({
-      name: searchQuery || undefined,
-      courseLevel: selectedLevel
-        ? (selectedLevel as "beginner" | "intermediate" | "advanced")
-        : undefined,
-      rating: selectedRating ? Number(selectedRating) : undefined,
-      minPrice,
-      maxPrice,
-      categoryId: selectedCategoryId || undefined,
-      page: currentPage,
-      limit: 12,
-      status: true, 
-    }).filter(([_, value]) => value !== undefined)
-  );
+  // Build filter object manually to ensure 0 values are included
+  const filter: any = {
+    page: currentPage,
+    limit: 12,
+    status: true,
+  };
+  
+  if (searchQuery) filter.name = searchQuery;
+  if (selectedLevel) filter.courseLevel = selectedLevel as "beginner" | "intermediate" | "advanced";
+  if (selectedRating) filter.rating = Number(selectedRating);
+  if (selectedCategoryId) filter.categoryId = selectedCategoryId;
+  
+  // Handle price filters - explicitly include 0 values
+  if (minPrice !== undefined) filter.minPrice = minPrice;
+  if (maxPrice !== undefined) filter.maxPrice = maxPrice;
   
   const { data: coursesData, isLoading, isError } = useCourseList(filter);
   const { data: categoriesData, isLoading: isCategoriesLoading } = useAllCategories();
@@ -258,12 +263,28 @@ const SearchPage = () => {
     setCurrentPage(page);
     updateUrlAndNavigate();
   };
-  const courses: Course[] = coursesData?.data || [];
+  
+  // Get courses from API
+  let courses: Course[] = coursesData?.data || [];
+  
+  // Client-side filtering as workaround if backend doesn't handle minPrice=0 correctly
+  if (selectedPrice === "free") {
+    courses = courses.filter((course: any) => {
+      const price = Number(course.price) || 0;
+      return price === 0;
+    });
+  } else if (selectedPrice === "paid") {
+    courses = courses.filter((course: any) => {
+      const price = Number(course.price) || 0;
+      return price > 0;
+    });
+  }
+  
   const pagination = coursesData
     ? {
         currentPage: coursesData.page || 1,
         totalPage: coursesData.totalPages || 1,
-        totalItems: coursesData.total || 0,
+        totalItems: courses.length, // Update to filtered count
         itemsPerPage: coursesData.limit || 10,
       }
     : undefined;

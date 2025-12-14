@@ -7,6 +7,7 @@ import 'video.js/dist/video-js.css';
 import '@/styles/video-player.css';
 import { Button } from '@/components/ui/button';
 import { SkipBack, SkipForward, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { 
   LectureProgress, 
   UpdateLectureProgressDto,
@@ -16,6 +17,7 @@ import { enrollmentsApi } from '@/src/services/enrollments';
 import { getVideoSourceInfo } from '@/src/utils/videoUrlHelper';
 
 const SAVE_INTERVAL = 15000;
+const ALLOW_SEEKING = process.env.NEXT_PUBLIC_ALLOW_VIDEO_SEEKING === 'true';
 
 interface VideoPlayerProps {
   enrollmentId: string;
@@ -53,6 +55,9 @@ export function VideoPlayer({
   const [isCompleted, setIsCompleted] = useState(false);
   const isSavingRef = useRef(false);
   const hasTriggeredCompletionRef = useRef(false);
+  const maxWatchedTimeRef = useRef<number>(0); // Track furthest point watched
+  const lastKnownTimeRef = useRef<number>(0); // Track last known position before seeking
+  const isSeekingRef = useRef(false); // Track if currently seeking
 
   const saveProgressToAPI = async (progress: UpdateLectureProgressDto) => {
     try {
@@ -127,7 +132,7 @@ export function VideoPlayer({
   useEffect(() => {
     setIsMounted(true);
 
-    // Check if lecture is already completed
+    // Check if lecture is already completed and load max watched time
     const checkCompletion = async () => {
       try {
         const enrollment = await enrollmentsApi.getEnrollment(enrollmentId);
@@ -135,6 +140,12 @@ export function VideoPlayer({
         if (finishedLectures.includes(lectureId)) {
           setIsCompleted(true);
           hasTriggeredCompletionRef.current = true;
+        }
+        
+        // Load max watched time from saved progress
+        const lectureOnlearning = enrollment.attributes?.lectureOnlearning;
+        if (lectureOnlearning && String(lectureOnlearning.lectureId) === String(lectureId)) {
+          maxWatchedTimeRef.current = lectureOnlearning.currentTime ?? 0;
         }
       } catch (error) {
         // Ignore error
@@ -155,36 +166,25 @@ export function VideoPlayer({
 
     const handleSeekToTime = (event: CustomEvent) => {
       const { seconds } = event.detail;
-      console.log('VideoPlayer received seekToTime event:', seconds);
-      console.log('Player ref exists:', !!playerRef.current);
-      console.log('Player disposed:', playerRef.current?.isDisposed());
       
       if (playerRef.current && !playerRef.current.isDisposed()) {
         try {
           playerRef.current.currentTime(seconds);
           playerRef.current.play();
-          console.log('Video seeked to:', seconds, 'and playing');
         } catch (error) {
           console.error('Error seeking video:', error);
         }
-      } else {
-        console.warn('Player not ready for seeking');
       }
     };
 
     const handleRequestCurrentTime = () => {
-      console.log('VideoPlayer received requestCurrentTime event');
-      console.log('Player ref exists:', !!playerRef.current);
-      
       if (playerRef.current && !playerRef.current.isDisposed()) {
         const currentTime = playerRef.current.currentTime() || 0;
-        console.log('Sending current time:', currentTime);
         const event = new CustomEvent('currentTimeResponse', { 
           detail: { currentTime } 
         });
         window.dispatchEvent(event);
       } else {
-        console.warn('Player not ready, sending default time');
         const event = new CustomEvent('currentTimeResponse', { 
           detail: { currentTime: 0 } 
         });
@@ -231,8 +231,6 @@ export function VideoPlayer({
 
     // Get video source information
     const videoSource = getVideoSourceInfo(videoUrl);
-    console.log('Video source info:', videoSource);
-    console.log('Original video URL:', videoUrl);
 
     // Validate video source
     if (!videoSource.url || videoSource.type === 'unknown') {
@@ -276,11 +274,6 @@ export function VideoPlayer({
         player = videojs(videoRef.current, options);
         playerRef.current = player;
 
-        console.log('Setting video source:', {
-          src: videoSource.url,
-          type: videoSource.mimeType,
-        });
-
         // Set source with proper type
         player.src({
           src: videoSource.url,
@@ -319,7 +312,6 @@ export function VideoPlayer({
           
           // Try to reload for network errors
           if (error.code === 2) {
-            console.log('Network error detected, attempting to reload in 3 seconds...');
             setTimeout(() => {
               if (playerRef.current && !playerRef.current.isDisposed()) {
                 setVideoError(null);
@@ -351,6 +343,7 @@ export function VideoPlayer({
           const lectureOnlearning = enrollment.attributes?.lectureOnlearning;
           if (lectureOnlearning && String(lectureOnlearning.lectureId) === String(lectureId)) {
             savedTimeToSeek = lectureOnlearning.currentTime ?? 0;
+            maxWatchedTimeRef.current = savedTimeToSeek; // Set initial max watched time
             const volume = (lectureOnlearning.volume ?? 100) / 100;
             
             player.volume(volume);
@@ -403,14 +396,53 @@ export function VideoPlayer({
         }, 300);
       });
 
+      const handleSeeking = () => {
+        // Skip seeking control if:
+        // 1. ALLOW_SEEKING is true (env variable)
+        // 2. Lecture is already completed
+        if (ALLOW_SEEKING || isCompleted) {
+          return;
+        }
+
+        const targetTime = player.currentTime() || 0;
+        const maxWatched = maxWatchedTimeRef.current;
+
+        // Check if user is trying to seek forward beyond watched content
+        if (targetTime > maxWatched + 2) {
+          isSeekingRef.current = true; // Prevent maxWatched update during forced seek
+          player.currentTime(maxWatched);
+          player.pause(); // Pause video when blocking seek
+          toast.warning('Bạn cần xem hết video mới có thể tua tới', {
+            duration: 2000,
+          });
+        }
+      };
+
+      const handleSeeked = () => {
+        // Reset seeking flag after a short delay to allow position to settle
+        setTimeout(() => {
+          isSeekingRef.current = false;
+        }, 100);
+      };
+
       const handleTimeUpdate = () => {
         const currentTime = player.currentTime() || 0;
         const duration = player.duration() || 0;
         
+        // Only update max watched time if:
+        // 1. Not currently seeking (to prevent updates during forced seek back)
+        // 2. Current time is greater than max watched
+        // 3. Video is playing (not paused)
+        if (!isSeekingRef.current && currentTime > maxWatchedTimeRef.current && !player.paused()) {
+          maxWatchedTimeRef.current = currentTime;
+        }
+        
+        // Check completion based on MAX WATCHED time, not current time
+        // This prevents completion when user seeks to 90%+ but hasn't actually watched it
         if (duration > 0 && !isNaN(duration)) {
-          const watchedPercentage = (currentTime / duration) * 100;
+          const maxWatchedPercentage = (maxWatchedTimeRef.current / duration) * 100;
           
-          if (watchedPercentage >= 90 && !hasTriggeredCompletionRef.current) {
+          if (maxWatchedPercentage >= 90 && !hasTriggeredCompletionRef.current) {
             hasTriggeredCompletionRef.current = true;
             setIsCompleted(true);
             saveProgress(true).then(() => {
@@ -430,6 +462,8 @@ export function VideoPlayer({
         saveProgress();
       });
       player.on('ended', handleEnded);
+      player.on('seeking', handleSeeking);
+      player.on('seeked', handleSeeked);
       player.on('timeupdate', handleTimeUpdate);
 
       saveIntervalRef.current = setInterval(() => {

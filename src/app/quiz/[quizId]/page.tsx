@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QuizExam } from "@/components/quiz";
 import { Quiz, QuizSubmission } from "@/src/types/quiz";
 import { getQuiz, submitQuiz } from "@/src/services/quiz";
@@ -10,13 +10,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAppStore } from "@/src/stores/useAppStore";
+import { toast } from "sonner";
 
 export default function QuizPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAppStore();
   const quizId = params.quizId as string;
 
   const [error, setError] = useState<string | null>(null);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (user === null) {
+      toast.error("Vui lòng đăng nhập để làm bài kiểm tra");
+      router.push("/auth/login");
+    }
+  }, [user, router]);
 
   const {
     data: quizData,

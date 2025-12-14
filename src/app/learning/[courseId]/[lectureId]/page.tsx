@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { CourseSidebar } from '@/components/shared/learning/CourseSidebar';
 import { VideoPlayer } from '@/components/shared/learning/VideoPlayer';
 import { LectureInfo } from '@/components/shared/learning/LectureInfo';
+import { LearningComment } from '@/components/shared/learning/LearningComment';
+import CourseComment from '@/components/shared/course/CourseComment';
 import { useChapterList } from '@/components/shared/chapter/useChapter';
 import { useCourseDetail } from '@/components/shared/course/useCourse';
 import { enrollmentService } from '@/services/enrollment';
@@ -31,7 +33,6 @@ export default function LearningPage() {
       try {
         // Skip cache to ensure fresh data
         const enrollment = await enrollmentService.getEnrollmentByCourseId(courseId, true);
-        console.log('Fetched enrollment:', enrollment);
         if (enrollment) {
           setEnrollmentId(enrollment.id);
           // Set initial completed lectures
@@ -39,12 +40,10 @@ export default function LearningPage() {
             setCompletedLectureIds(enrollment.attributes.finishedLectures);
           }
         } else {
-          console.warn('No enrollment found for course:', courseId);
           // Retry once after a short delay (in case enrollment was just created)
           setTimeout(async () => {
             const retryEnrollment = await enrollmentService.getEnrollmentByCourseId(courseId, true);
             if (retryEnrollment) {
-              console.log('Retry successful - found enrollment:', retryEnrollment);
               setEnrollmentId(retryEnrollment.id);
               if (retryEnrollment.attributes?.finishedLectures) {
                 setCompletedLectureIds(retryEnrollment.attributes.finishedLectures);
@@ -207,7 +206,7 @@ export default function LearningPage() {
       // Show toast notification for lecture completion
       toast.success('Bài học hoàn thành! 🎉', {
         description: lecture?.title || 'Tuyệt vời!',
-        duration: 3000,
+        duration: 2000,
       });
 
       // Check if all lectures are completed
@@ -218,6 +217,16 @@ export default function LearningPage() {
           description: 'Chứng chỉ của bạn đã được tạo. Kiểm tra email hoặc xem trong trang học của tôi.',
           duration: 5000,
         });
+      } else {
+        // Auto navigate to next lecture after a short delay
+        setTimeout(() => {
+          if (nextLecture) {
+            toast.info('Đang chuyển sang bài tiếp theo...', {
+              duration: 1500,
+            });
+            router.push(`/learning/${courseId}/${nextLecture.lecture.id}`);
+          }
+        }, 2000); // Wait 2 seconds before auto-navigate
       }
     }
     
@@ -290,14 +299,6 @@ export default function LearningPage() {
                   </div>
                 ) : lecture ? (
                   <>
-                    {process.env.NODE_ENV === 'development' && (
-                      console.log('Lecture data:', {
-                        id: lecture.id,
-                        title: lecture.title,
-                        videoUrl: lecture.videoUrl,
-                        hasVideoUrl: !!lecture.videoUrl,
-                      })
-                    )}
                     <VideoPlayer
                       enrollmentId={enrollmentId}
                       lectureId={lectureId}
@@ -316,7 +317,7 @@ export default function LearningPage() {
               </div>
             </div>
 
-            <div className="px-4 py-6">
+            <div className="px-4 py-6 space-y-6">
               {lecture && chapter && (
                 <LectureInfo
                   lecture={lecture}
@@ -329,6 +330,33 @@ export default function LearningPage() {
                   isEnrolled={!!enrollmentId}
                 />
               )}
+
+              {/* Learning Comments (Q&A) */}
+              <div className="border-t pt-6">
+                <LearningComment 
+                  courseId={courseId} 
+                  isEnrolled={!!enrollmentId}
+                />
+              </div>
+
+              {/* Course Feedback - Only show on last lecture when course is completed */}
+              {(() => {
+                const isLastLecture = allLectures.length > 0 && 
+                  allLectures[allLectures.length - 1].lecture.id === lectureId;
+                const totalLectures = allLectures.length;
+                const completedCount = completedLectureIds.length;
+                const progress = totalLectures > 0 ? (completedCount / totalLectures) * 100 : 0;
+                
+                return isLastLecture && (
+                  <div className="border-t pt-6">
+                    <CourseComment 
+                      courseId={courseId} 
+                      isEnrolled={!!enrollmentId}
+                      progress={progress}
+                    />
+                  </div>
+                );
+              })()}
             </div>
           </main>
         </div>

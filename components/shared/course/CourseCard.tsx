@@ -129,8 +129,8 @@ const CourseCard = ({ course }: CourseCardProps) => {
       
       try {
         await enrollmentService.enrollFreeCourse(course.id);
-        toast.success("Đăng ký khóa học thành công!");
-        router.push(`/learning/${course.id}`);
+        toast.success("Đăng ký khóa học thành công! Chúc bạn học tập vui vẻ 🎉");
+        router.push('/profile');
       } catch (error: any) {
         console.error('Failed to enroll:', error);
         toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi đăng ký khóa học');
