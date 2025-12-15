@@ -1,154 +1,351 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { CommentStats, CommentList, CommentFilter, CommentReplyModal } from "./components"
-import type { Comment, CommentFilter as CommentFilterType, CommentStats as CommentStatsType } from "@/types/comment"
-import { mockCommentListResponse, mockCommentStats } from "@/src/mocks/comments"
-import { notify } from "@/components/shared/admin/Notifications"
-import { useCourseList } from "@/components/shared/course/useCourse"
-import { useAppStore } from "@/src/stores/useAppStore"
+import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay";
+import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ReplyDialog } from "../components/ReplyDialog";
+import { 
+  MoreHorizontal, 
+  MessageSquare, 
+  MessageCircle, 
+  Eye,
+  ThumbsUp,
+  Clock,
+  Inbox
+} from "lucide-react";
+import { 
+  useInstructorComments, 
+  useReplyToComment, 
+  useUpdateCommentStatus,
+  useDeleteComment 
+} from "@/hooks/useInstructorApi";
+import type { Comment, CommentListQuery } from "@/types/instructor";
 
 export default function CommentsPage() {
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
+  const [page, setPage] = React.useState<number>(1);
+  const [limit, setLimit] = React.useState<number>(10);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<"all" | "pending" | "replied" | "resolved">("all");
+  const [courseFilter, setCourseFilter] = React.useState("");
+  const [selectedComment, setSelectedComment] = React.useState<Comment | null>(null);
 
-  // Mock data - sẽ thay bằng API call sau
-  const [commentsData] = useState(mockCommentListResponse)
-  const [statsData] = useState(mockCommentStats)
-  const [filter, setFilter] = useState<CommentFilterType>({
-    page: 1,
-    limit: 10,
-  })
-  const [selectedComment, setSelectedComment] = useState<Comment | null>(null)
-  const [replyModalOpen, setReplyModalOpen] = useState(false)
-  const [loading] = useState(false)
+  // Build query parameters
+  const queryParams: CommentListQuery = React.useMemo(() => ({
+    page,
+    limit,
+    search: searchTerm || undefined,
+    status: statusFilter === "all" ? undefined : statusFilter,
+    courseId: courseFilter || undefined,
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  }), [page, limit, searchTerm, statusFilter, courseFilter]);
 
-  // Lấy danh sách courses để filter
-  const { user } = useAppStore()
-  const { data: coursesData } = useCourseList({
-    page: 1,
-    limit: 100,
-    createdBy: user?.id,
-  })
-  const courses = (coursesData?.data || []).map((c: any) => ({
-    id: c.id,
-    name: c.name,
-  }))
+  // API Hooks
+  const { data: commentsData, isPending, isFetching, isError } = useInstructorComments(queryParams);
+  const { mutate: replyToComment, isPending: isReplying } = useReplyToComment();
+  const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateCommentStatus();
+  const { mutate: deleteComment, isPending: isDeleting } = useDeleteComment();
 
-  // Filter comments theo filter state (mock)
-  const filteredComments = commentsData.items.filter((comment) => {
-    if (filter.courseId && comment.courseId !== filter.courseId) return false
-    if (filter.rating && comment.rating !== filter.rating) return false
-    if (filter.hasReply !== undefined) {
-      const hasReply = !!comment.reply
-      if (filter.hasReply !== hasReply) return false
-    }
-    return true
-  })
+  // Extract data from API response
+  const comments = commentsData?.data?.items || [];
+  const pagination = commentsData?.data?.pagination;
+  const statistics = commentsData?.data?.statistics;
 
-  // Sort comments
-  const sortedComments = [...filteredComments].sort((a, b) => {
-    switch (filter.sort) {
-      case "oldest":
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      case "rating_high":
-        return b.rating - a.rating
-      case "rating_low":
-        return a.rating - b.rating
-      case "likes":
-        return b.like - a.like
+  const totalComments = statistics?.totalComments || 0;
+  const pendingComments = statistics?.pendingComments || 0;
+  const repliedComments = statistics?.repliedComments || 0;
+  const resolvedComments = statistics?.resolvedComments || 0;
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "replied":
+        return <Badge className="bg-green-100 text-green-800">Đã phản hồi</Badge>;
+      case "pending":
+        return <Badge variant="secondary">Chờ phản hồi</Badge>;
+      case "resolved":
+        return <Badge className="bg-blue-100 text-blue-800">Đã giải quyết</Badge>;
       default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        return <Badge variant="outline">Không xác định</Badge>;
     }
-  })
+  };
 
   const handleReply = (comment: Comment) => {
-    setSelectedComment(comment)
-    setReplyModalOpen(true)
-  }
+    setSelectedComment(comment);
+  };
 
-  const handleSubmitReply = (commentId: string, content: string) => {
-    // TODO: Gọi API POST /comments/:commentId/reply khi backend sẵn sàng
-    notify({
-      title: "Đã gửi phản hồi",
-      description: "Phản hồi đã được gửi (mock data)",
-      variant: "success",
-    })
-    setReplyModalOpen(false)
-    setSelectedComment(null)
-  }
+  const submitReply = (content: string) => {
+    if (!selectedComment || !content.trim()) return;
+    
+    replyToComment(
+      { commentId: selectedComment.id, data: { content: content.trim() } },
+      {
+        onSuccess: () => {
+          setSelectedComment(null);
+        }
+      }
+    );
+  };
+
+  const handleUpdateStatus = (commentId: string, status: "pending" | "replied" | "resolved") => {
+    updateStatus({ commentId, data: { status } });
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (confirm("Bạn có chắc chắn muốn xóa bình luận này?")) {
+      deleteComment(commentId);
+    }
+  };
+
+  const columns: Column<any>[] = [
+    {
+      key: 'content',
+      label: 'Bình luận',
+      type: 'text',
+      render: (row: Comment) => (
+        <div className="max-w-[300px]">
+          <p className="text-sm line-clamp-2">{row.content}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {row.lectureTitle || row.courseName}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: 'student',
+      label: 'Học viên',
+      type: 'text',
+      render: (row: Comment) => (
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+            <span className="text-sm font-medium text-primary">
+              {row.studentName.charAt(0)}
+            </span>
+          </div>
+          <span className="text-sm">{row.studentName}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'courseName',
+      label: 'Khóa học',
+      type: 'short',
+      render: (row: Comment) => (
+        <span className="text-sm">{row.courseName}</span>
+      ),
+    },
+    {
+      key: 'createdAt',
+      label: 'Thời gian',
+      type: 'short',
+      render: (row: Comment) => (
+        <span className="text-sm text-muted-foreground">{formatDate(row.createdAt)}</span>
+      ),
+    },
+    {
+      key: 'interactions',
+      label: 'Phản hồi',
+      type: 'short',
+      render: (row: Comment) => (
+        <div className="flex items-center space-x-3 text-sm">
+          <span className="flex items-center">
+            <MessageCircle className="h-3 w-3 mr-1" />
+            {row.repliesCount}
+          </span>
+          {row.lastReplyAt && (
+            <span className="text-xs text-muted-foreground">
+              {formatDate(row.lastReplyAt)}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Trạng thái',
+      type: 'short',
+      render: (row: Comment) => getStatusBadge(row.status),
+    },
+    {
+      key: 'actions',
+      label: 'Hành động',
+      type: 'action',
+      render: (row: Comment) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" disabled={isReplying || isUpdatingStatus || isDeleting}>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleReply(row)}>
+              Phản hồi
+            </DropdownMenuItem>
+            {row.status === "pending" && (
+              <DropdownMenuItem onClick={() => handleUpdateStatus(row.id, "replied")}>
+                Đánh dấu đã phản hồi
+              </DropdownMenuItem>
+            )}
+            {row.status !== "resolved" && (
+              <DropdownMenuItem onClick={() => handleUpdateStatus(row.id, "resolved")}>
+                Đánh dấu đã giải quyết
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem 
+              className="text-destructive"
+              onClick={() => handleDeleteComment(row.id)}
+            >
+              Xóa
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
 
   return (
-    <div className="relative py-4 px-4 md:px-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Quản lý bình luận</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Xem và phản hồi các bình luận của học viên về khóa học của bạn
-        </p>
+    <div className="relative py-4 px-4 md:px-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-card rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Tổng bình luận</p>
+              <p className="text-2xl font-bold">{totalComments}</p>
+              <p className="text-xs text-muted-foreground">Tất cả bình luận</p>
+            </div>
+            <MessageSquare className="h-8 w-8 text-muted-foreground" />
+          </div>
+        </div>
+        
+        <div className="bg-card rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Chờ phản hồi</p>
+              <p className="text-2xl font-bold">{pendingComments}</p>
+              <p className="text-xs text-muted-foreground">Cần phản hồi</p>
+            </div>
+            <Clock className="h-8 w-8 text-muted-foreground" />
+          </div>
+        </div>
+        
+        <div className="bg-card rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Đã phản hồi</p>
+              <p className="text-2xl font-bold">{repliedComments}</p>
+              <p className="text-xs text-muted-foreground">Đã được phản hồi</p>
+            </div>
+            <MessageCircle className="h-8 w-8 text-muted-foreground" />
+          </div>
+        </div>
+        
+        <div className="bg-card rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Đã giải quyết</p>
+              <p className="text-2xl font-bold">{resolvedComments}</p>
+              <p className="text-xs text-muted-foreground">Hoàn thành</p>
+            </div>
+            <Eye className="h-8 w-8 text-muted-foreground" />
+          </div>
+        </div>
       </div>
-
-      {/* Stats */}
-      <CommentStats stats={statsData} loading={loading} />
 
       {/* Filters */}
-      <div className="border rounded-lg p-4">
-        <CommentFilter
-          filter={filter}
-          onFilterChange={setFilter}
-          courses={courses}
-        />
+      <div className="mb-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap gap-2 items-center">
+            <Input 
+              value={searchTerm} 
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1) }} 
+              placeholder="Tìm kiếm bình luận..." 
+              className="h-9 w-52" 
+            />
+            <Select value={statusFilter} onValueChange={(v: "all" | "pending" | "replied" | "resolved") => { setStatusFilter(v); setPage(1) }}>
+              <SelectTrigger className="h-9 w-40">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="pending">Chờ phản hồi</SelectItem>
+                <SelectItem value="replied">Đã phản hồi</SelectItem>
+                <SelectItem value="resolved">Đã giải quyết</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
-      {/* Comments List */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">
-            Bình luận ({sortedComments.length})
-          </h2>
-        </div>
-        <CommentList
-          comments={sortedComments}
-          onReply={handleReply}
-          loading={loading}
-        />
+      {/* Table */}
+      <div className="relative min-h-[300px]">
+        <LoadingOverlay show={isPending || isFetching} />
+
+        {isError ? (
+          <div className="py-16 text-center text-sm text-destructive">Lỗi tải dữ liệu</div>
+        ) : comments.length === 0 ? (
+          <div className="py-16 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+              <Inbox className="h-10 w-10 text-muted-foreground/60" />
+              <span>Không có dữ liệu</span>
+            </div>
+          </div>
+        ) : (
+          <DynamicTable
+            columns={columns}
+            data={comments}
+            loading={isPending || isFetching}
+            pagination={{
+              totalItems: pagination?.total || 0,
+              currentPage: pagination?.page || page,
+              itemsPerPage: pagination?.limit || limit,
+              onPageChange: (p) => setPage(p),
+              pageSizeOptions: [10, 20, 50],
+              onPageSizeChange: (sz) => {
+                setLimit(sz);
+                setPage(1);
+              },
+            }}
+          />
+        )}
       </div>
 
-      {/* Pagination (nếu cần) */}
-      {commentsData.pagination.totalPage > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={filter.page === 1}
-            onClick={() => setFilter({ ...filter, page: (filter.page || 1) - 1 })}
-          >
-            Trước
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Trang {filter.page || 1} / {commentsData.pagination.totalPage}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={filter.page === commentsData.pagination.totalPage}
-            onClick={() => setFilter({ ...filter, page: (filter.page || 1) + 1 })}
-          >
-            Sau
-          </Button>
-        </div>
-      )}
-
-      {/* Reply Modal */}
-      <CommentReplyModal
-        comment={selectedComment}
-        open={replyModalOpen}
-        onOpenChange={setReplyModalOpen}
-        onReply={handleSubmitReply}
-        loading={loading}
+      {/* Reply Dialog */}
+      <ReplyDialog
+        open={!!selectedComment}
+        onOpenChange={() => setSelectedComment(null)}
+        type="comment"
+        item={selectedComment ? {
+          id: selectedComment.id,
+          content: selectedComment.content,
+          studentName: selectedComment.studentName,
+          studentAvatar: selectedComment.studentAvatar,
+          courseName: selectedComment.courseName,
+          createdAt: selectedComment.createdAt,
+        } : null}
+        onSubmit={submitReply}
+        isSubmitting={isReplying}
       />
     </div>
-  )
+  );
 }
-

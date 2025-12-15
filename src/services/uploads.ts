@@ -116,3 +116,59 @@ export async function uploadVideo(
     throw new Error(msg);
   }
 }
+
+export async function uploadDocument(
+  file: File,
+  opts: {
+    timeoutMs?: number;
+    onProgress?: (progress: number) => void;
+    fieldName?: string;
+  } = {}
+): Promise<{ url: string; fileName: string }> {
+  if (!file || file.size === 0) throw new Error("Không có file hợp lệ");
+
+  // Use image endpoint for documents (Cloudinary can handle various file types)
+  const endpoint = "/uploads/image";
+
+  const fd = new FormData();
+  const name = opts.fieldName || "file";
+  fd.append(name, file, file.name || "document");
+
+  try {
+    const res = await api.post(endpoint, fd, {
+      timeout: opts.timeoutMs ?? 120000,
+      maxContentLength: Infinity as any,
+      maxBodyLength: Infinity as any,
+      headers: { "Content-Type": undefined as any, Accept: "application/json" },
+      onUploadProgress: (evt: any) => {
+        if (opts.onProgress && evt.total) {
+          const p = Math.round((evt.loaded / evt.total) * 100);
+          opts.onProgress(p);
+        }
+      },
+    });
+
+    const data: any = res?.data;
+    const url =
+      data?.data?.url ||
+      data?.data?.secure_url ||
+      data?.url ||
+      data?.secure_url ||
+      data?.result?.url ||
+      data?.imageUrl ||
+      data?.data?.avatar;
+
+    if (!url) throw new Error("Upload không trả về URL");
+
+    return {
+      url,
+      fileName: file.name
+    };
+  } catch (err: any) {
+    const status = err?.response?.status;
+    const serverMsg = err?.response?.data?.message;
+    const msg = serverMsg || err?.message || "Lỗi upload tài liệu";
+    if (status) throw new Error(`${status}: ${msg}`);
+    throw new Error(msg);
+  }
+}
