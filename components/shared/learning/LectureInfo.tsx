@@ -20,6 +20,7 @@ import { lectureService } from '@/src/services/lecture';
 import { lectureNoteService, LectureNote } from '@/src/services/lecture-note';
 import CourseComment from '@/components/shared/course/CourseComment';
 import { Trash2, Edit2 } from 'lucide-react';
+import { LectureDocumentsView } from '@/components/shared/learning/LectureDocumentsView';
 
 interface Instructor {
   id: string;
@@ -356,6 +357,9 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
           )}
         </CardContent>
       </Card>
+
+      {/* Lecture Documents */}
+      <LectureDocumentsView lectureId={lecture.id} />
 
       {/* Course Comments Section */}
       {courseId && (

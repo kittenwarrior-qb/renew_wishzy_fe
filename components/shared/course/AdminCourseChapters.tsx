@@ -7,7 +7,8 @@ import {
   AccordionItem,
 } from "@/components/ui/accordion";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { ChevronDownIcon, Play, Trash2, Pencil, Plus } from "lucide-react";
+import { ChevronDownIcon, Play, Trash2, Pencil, Plus, FileText } from "lucide-react";
+import { LectureDocuments } from "@/components/shared/lecture/LectureDocuments";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/format-duration";
 import { ChapterType } from "@/src/types/chapter/chapter.types";
@@ -283,55 +284,59 @@ export function AdminCourseChapters({
                 {chapter.lecture.map((lecture, lectureIdx) => (
                   <div
                     key={lecture.id}
-                    className="group flex items-center justify-between p-3 rounded-lg border border-border/50 bg-background hover:border-primary/30 hover:bg-accent/50 transition-all duration-200"
+                    className="p-3 rounded-lg border border-border/50 bg-background hover:border-primary/30 transition-all duration-200"
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 text-primary flex-shrink-0">
-                        <Play className="w-5 h-5" />
+                    <div className="group flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 text-primary flex-shrink-0">
+                          <Play className="w-5 h-5" />
+                        </div>
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <span className="text-sm font-medium truncate">
+                            {lecture.name}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex flex-col min-w-0 flex-1">
-                        <span className="text-sm font-medium truncate">
-                          {lecture.name}
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50">
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {formatDuration(lecture.duration, "long")}
                         </span>
+                        <button
+                          type="button"
+                          className="p-1.5 cursor-pointer rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring opacity-0 group-hover:opacity-100"
+                          title="Sửa bài học"
+                          onClick={() => {
+                            setEditingLectureId(lecture.id);
+                            setOpenLectureEdit(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="p-1.5 cursor-pointer rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors focus:outline-none focus:ring-2 focus:ring-red-300 opacity-0 group-hover:opacity-100"
+                          title="Xoá bài học"
+                          onClick={() => setOpenDeleteLectureId(lecture.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                      <span className="text-sm text-muted-foreground whitespace-nowrap hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50">
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {formatDuration(lecture.duration, "long")}
-                      </span>
-                      <button
-                        type="button"
-                        className="p-1.5 cursor-pointer rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring opacity-0 group-hover:opacity-100"
-                        title="Sửa bài học"
-                        onClick={() => {
-                          setEditingLectureId(lecture.id);
-                          setOpenLectureEdit(true);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        className="p-1.5 cursor-pointer rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors focus:outline-none focus:ring-2 focus:ring-red-300 opacity-0 group-hover:opacity-100"
-                        title="Xoá bài học"
-                        onClick={() => setOpenDeleteLectureId(lecture.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    {/* Document Section */}
+                    <LectureDocuments lectureId={lecture.id} lectureName={lecture.name} />
                   </div>
                 ))}
               </div>
