@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Token</title>
+</head>
+<body>
+    <h1>Update Access Token</h1>
+    <p>Click the button to update the access token for instructor1</p>
+    <button onclick="updateToken()">Update Token</button>
+    <div id="result"></div>
+
+    <script>
+        function updateToken() {
+            const newToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNGM1YTAyNC02NDFkLTQwYjUtYmQyNC04OGY4YjE0MWNkMjEiLCJlbWFpbCI6Imluc3RydWN0b3IxQHdpc2h6eS5jb20iLCJyb2xlIjoiaW5zdHJ1Y3RvciIsImlhdCI6MTc2NTgwNjg3MCwiZXhwIjoxNzY1ODkzMjcwfQ.HgyfNQR1tP2gsb4xtAviyO-EfRZKlMm3kJ7nK9mc1Cg";
+            
+            localStorage.setItem('accessToken', newToken);
+            
+            const userData = {
+                id: "d4c5a024-641d-40b5-bd24-88f8b141cd21",
+                email: "instructor1@wishzy.com",
+                fullName: "Lê Hoàng Nam",
+                role: "instructor"
+            };
+            
+            localStorage.setItem('user_data', JSON.stringify(userData));
+            
+            document.getElementById('result').innerHTML = '<p style="color: green;">Token updated successfully! You can now close this tab and refresh the main app.</p>';
+        }
+    </script>
+</body>
+</html>

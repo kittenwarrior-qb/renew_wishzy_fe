@@ -30,6 +30,9 @@ import {
   ArrowRightToLine,
   GraduationCap,
   PlusCircle,
+  Star,
+  FileText,
+  FileQuestion,
 } from "lucide-react";
 import { useAppStore } from "@/stores/useAppStore";
 
@@ -55,6 +58,9 @@ export default function InstructorAppSidebar() {
       students: isActive("user/students"),
       comments: isActive("comments"),
       revenue: isActive("revenue"),
+      feedbacks: isActive("feedbacks"),
+      documents: isActive("documents"),
+      quizzes: isActive("quizzes"),
     });
   }, [pathname]);
 
@@ -153,6 +159,48 @@ export default function InstructorAppSidebar() {
           href: `${base}/comments`,
           icon: <MessageSquare className="h-[18px] w-[18px]" />,
           isActiveKey: "comments",
+        },
+      ],
+    },
+    {
+      key: "feedbacks",
+      label: "Đánh giá",
+      icon: <Star className="mr-2 h-4 w-4" />,
+      collapsible: false,
+      items: [
+        {
+          label: "Đánh giá & Phản hồi",
+          href: `${base}/feedbacks`,
+          icon: <Star className="h-[18px] w-[18px]" />,
+          isActiveKey: "feedbacks",
+        },
+      ],
+    },
+    {
+      key: "documents",
+      label: "Tài liệu",
+      icon: <FileText className="mr-2 h-4 w-4" />,
+      collapsible: false,
+      items: [
+        {
+          label: "Tài liệu khoá học",
+          href: `${base}/documents`,
+          icon: <FileText className="h-[18px] w-[18px]" />,
+          isActiveKey: "documents",
+        },
+      ],
+    },
+    {
+      key: "quizzes",
+      label: "Quiz",
+      icon: <FileQuestion className="mr-2 h-4 w-4" />,
+      collapsible: false,
+      items: [
+        {
+          label: "Quản lý Quiz",
+          href: `${base}/quizzes`,
+          icon: <FileQuestion className="h-[18px] w-[18px]" />,
+          isActiveKey: "quizzes",
         },
       ],
     },
