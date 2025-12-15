@@ -241,6 +241,48 @@ export default function QuizResultPage() {
             </CardContent>
           </Card>
 
+          {/* Certificate Message */}
+          {score >= 80 && (
+            <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+                    <Award className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-green-800 dark:text-green-400">
+                      🎉 Chúc mừng! Bạn đã đạt chứng chỉ
+                    </h3>
+                    <p className="text-sm text-green-700 dark:text-green-500">
+                      Chứng chỉ đã được gửi đến email của bạn. Bạn cũng có thể xem trong phần Hồ sơ.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Failed Message */}
+          {score < 80 && (
+            <Card className="bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
+                    <RotateCcw className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-orange-800 dark:text-orange-400">
+                      Chưa đạt yêu cầu
+                    </h3>
+                    <p className="text-sm text-orange-700 dark:text-orange-500">
+                      Bạn cần đạt tối thiểu 80% để nhận chứng chỉ. Hãy thử lại nhé!
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button

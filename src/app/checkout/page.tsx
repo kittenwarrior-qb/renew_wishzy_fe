@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CourseItemType } from "@/src/types/course/course-item.types"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { useApiPost } from "@/src/hooks/useApi"
 import { CreateOrderRequest, CreateOrderResponse } from "@/src/types/order.types"
 import { toast } from "sonner"
@@ -16,10 +17,16 @@ import vnpayLogo from '@/public/images/vnpay.jpg'
 import zalopayLogo from '@/public/images/zalopay.png'
 import { formatPrice } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
+import { voucherService, Voucher } from "@/src/services/voucher"
+import { TicketPercent, X, Loader2 } from "lucide-react"
 
 const CheckoutPage = () => {
   const { user, orderListCourse } = useAppStore()
   const [paymentMethod, setPaymentMethod] = useState<'vnpay' | 'zalopay' | 'momo' | 'banking'>('vnpay')
+  const [voucherCode, setVoucherCode] = useState('')
+  const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null)
+  const [voucherDiscount, setVoucherDiscount] = useState(0)
+  const [isValidatingVoucher, setIsValidatingVoucher] = useState(false)
   const router = useRouter()
 
   // Check authentication on mount
@@ -98,7 +105,41 @@ const CheckoutPage = () => {
     return sum + calculateFinalPrice(course)
   }, 0)
 
-  const discount = totalOriginal - totalSale
+  const courseDiscount = totalOriginal - totalSale
+  const finalTotal = Math.max(0, totalSale - voucherDiscount)
+
+  // Handle voucher validation
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) {
+      toast.error('Vui lòng nhập mã giảm giá')
+      return
+    }
+
+    setIsValidatingVoucher(true)
+    try {
+      const courseIds = orderListCourse.map(c => c.id)
+      const result = await voucherService.validate(voucherCode.trim(), totalSale, courseIds)
+      
+      if (result.valid && result.voucher && result.discount !== undefined) {
+        setAppliedVoucher(result.voucher)
+        setVoucherDiscount(result.discount)
+        toast.success(result.message || 'Áp dụng mã giảm giá thành công!')
+      } else {
+        toast.error(result.message || 'Mã giảm giá không hợp lệ')
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Có lỗi xảy ra khi kiểm tra mã giảm giá')
+    } finally {
+      setIsValidatingVoucher(false)
+    }
+  }
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null)
+    setVoucherDiscount(0)
+    setVoucherCode('')
+    toast.success('Đã xóa mã giảm giá')
+  }
 
   const handlePayment = () => {
     if (orderListCourse.length === 0) {
@@ -119,9 +160,10 @@ const CheckoutPage = () => {
     }))
 
     const orderData: CreateOrderRequest = {
-      totalPrice: totalSale,
+      totalPrice: finalTotal,
       paymentMethod,
       orderItems,
+      voucherId: appliedVoucher?.id,
     }
 
     // Debug logging
@@ -204,29 +246,93 @@ const CheckoutPage = () => {
           </Card>
         </div>
         {/* Right item */}
-        <div className="w-1/3 space-y-2">
+        <div className="w-1/3 space-y-4">
           <h1 className="text-2xl font-bold mb-4">Tổng hợp đơn hàng</h1>
-          <div className="flex items-center justify-between">
-            <span>Giá gốc:</span>
-            <span>{formatPrice(totalOriginal)}</span>
-          </div>
-          {discount > 0 && (
-            <div className="flex items-center justify-between">
-              <span>Giảm giá:</span>
-              <span className="text-red-500">-{formatPrice(discount)}</span>
+          
+          {/* Voucher Section */}
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <TicketPercent className="w-5 h-5 text-primary" />
+              <span className="font-semibold">Mã giảm giá</span>
             </div>
-          )}
-          <hr className="my-2"/>
-          <div className="flex items-center justify-between font-bold text-lg">
-            <span>Tổng cộng:</span>
-            <span className="text-primary">{formatPrice(totalSale)}</span>
+            
+            {appliedVoucher ? (
+              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div>
+                  <p className="font-semibold text-green-700">{appliedVoucher.code}</p>
+                  <p className="text-sm text-green-600">
+                    Giảm {appliedVoucher.discountType === 'percent' 
+                      ? `${appliedVoucher.discountValue}%` 
+                      : formatPrice(appliedVoucher.discountValue)}
+                    {appliedVoucher.maxDiscountAmount && appliedVoucher.discountType === 'percent' && (
+                      <span> (tối đa {formatPrice(appliedVoucher.maxDiscountAmount)})</span>
+                    )}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRemoveVoucher}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Nhập mã giảm giá"
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === 'Enter' && handleApplyVoucher()}
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  onClick={handleApplyVoucher}
+                  disabled={isValidatingVoucher || !voucherCode.trim()}
+                >
+                  {isValidatingVoucher ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    'Áp dụng'
+                  )}
+                </Button>
+              </div>
+            )}
+          </Card>
+
+          {/* Order Summary */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span>Giá gốc:</span>
+              <span>{formatPrice(totalOriginal)}</span>
+            </div>
+            {courseDiscount > 0 && (
+              <div className="flex items-center justify-between">
+                <span>Giảm giá khóa học:</span>
+                <span className="text-red-500">-{formatPrice(courseDiscount)}</span>
+              </div>
+            )}
+            {voucherDiscount > 0 && (
+              <div className="flex items-center justify-between">
+                <span>Giảm giá voucher:</span>
+                <span className="text-red-500">-{formatPrice(voucherDiscount)}</span>
+              </div>
+            )}
+            <hr className="my-2"/>
+            <div className="flex items-center justify-between font-bold text-lg">
+              <span>Tổng cộng:</span>
+              <span className="text-primary">{formatPrice(finalTotal)}</span>
+            </div>
           </div>
+          
           <Button 
             className="w-full mt-3 py-5"
             disabled={orderListCourse.length === 0 || createOrderMutation.isPending}
             onClick={handlePayment}
           >
-            {createOrderMutation.isPending ? 'Đang xử lý...' : `Thanh toán ngay ${formatPrice(totalSale)}`}
+            {createOrderMutation.isPending ? 'Đang xử lý...' : `Thanh toán ngay ${formatPrice(finalTotal)}`}
           </Button>
         </div>
       </div>

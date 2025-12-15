@@ -49,4 +49,23 @@ export const voucherService = {
     const data = root?.data ?? root
     return (data?.voucher ?? data) as Voucher
   },
+
+  async validate(
+    code: string,
+    orderTotal: number,
+    courseIds: string[],
+  ): Promise<{
+    valid: boolean
+    voucher?: Voucher
+    discount?: number
+    message?: string
+  }> {
+    const response = await api.post<any>(`${VOUCHER_ENDPOINTS.base}/validate`, {
+      code,
+      orderTotal,
+      courseIds,
+    })
+    const root = response?.data ?? {}
+    return root?.data ?? root
+  },
 }

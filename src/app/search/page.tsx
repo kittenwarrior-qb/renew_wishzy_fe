@@ -24,6 +24,7 @@ const SearchPage = () => {
   const initialLevel = searchParams.get("level") || "";
   const initialPrice = searchParams.get("price") || "";
   const initialCategoryId = searchParams.get("categoryId") || "";
+  const initialSort = searchParams.get("sort") || "";
 
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -31,6 +32,7 @@ const SearchPage = () => {
   const [selectedLevel, setSelectedLevel] = useState(initialLevel);
   const [selectedPrice, setSelectedPrice] = useState(initialPrice);
   const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategoryId);
+  const [selectedSort, setSelectedSort] = useState(initialSort);
   const [minPriceInput, setMinPriceInput] = useState(searchParams.get("minPrice") || "");
   const [maxPriceInput, setMaxPriceInput] = useState(searchParams.get("maxPrice") || "");
 
@@ -41,6 +43,7 @@ const SearchPage = () => {
     const level = searchParams.get("level");
     const price = searchParams.get("price");
     const categoryId = searchParams.get("categoryId");
+    const sort = searchParams.get("sort");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     
@@ -51,6 +54,7 @@ const SearchPage = () => {
     setSelectedLevel(level || "");
     setSelectedPrice(price || "");
     setSelectedCategoryId(categoryId || "");
+    setSelectedSort(sort || "");
     setMinPriceInput(minPrice || "");
     setMaxPriceInput(maxPrice || "");
   }, [searchParams]);
@@ -91,6 +95,9 @@ const SearchPage = () => {
   // Handle price filters - explicitly include 0 values
   if (minPrice !== undefined) filter.minPrice = minPrice;
   if (maxPrice !== undefined) filter.maxPrice = maxPrice;
+  
+  // Handle sort
+  if (selectedSort) filter.sort = selectedSort;
   
   const { data: coursesData, isLoading, isError } = useCourseList(filter);
   const { data: categoriesData, isLoading: isCategoriesLoading } = useAllCategories();
@@ -159,6 +166,7 @@ const SearchPage = () => {
     if (selectedRating) params.set("rating", selectedRating);
     if (selectedPrice) params.set("price", selectedPrice);
     if (selectedCategoryId) params.set("categoryId", selectedCategoryId);
+    if (selectedSort) params.set("sort", selectedSort);
     if (selectedPrice === "custom") {
       if (minPriceInput) params.set("minPrice", minPriceInput);
       if (maxPriceInput) params.set("maxPrice", maxPriceInput);
@@ -176,6 +184,7 @@ const SearchPage = () => {
     setSelectedLevel("");
     setSelectedPrice("");
     setSelectedCategoryId("");
+    setSelectedSort("");
     setMinPriceInput("");
     setMaxPriceInput("");
     
@@ -193,6 +202,7 @@ const SearchPage = () => {
     if (selectedRating) params.set("rating", selectedRating);
     if (selectedPrice) params.set("price", selectedPrice);
     if (selectedCategoryId) params.set("categoryId", selectedCategoryId);
+    if (selectedSort) params.set("sort", selectedSort);
     if (selectedPrice === "custom") {
       if (minPriceInput) params.set("minPrice", minPriceInput);
       if (maxPriceInput) params.set("maxPrice", maxPriceInput);
@@ -212,6 +222,7 @@ const SearchPage = () => {
     if (rating) params.set("rating", rating);
     if (selectedPrice) params.set("price", selectedPrice);
     if (selectedCategoryId) params.set("categoryId", selectedCategoryId);
+    if (selectedSort) params.set("sort", selectedSort);
     if (selectedPrice === "custom") {
       if (minPriceInput) params.set("minPrice", minPriceInput);
       if (maxPriceInput) params.set("maxPrice", maxPriceInput);
@@ -231,6 +242,7 @@ const SearchPage = () => {
     if (selectedRating) params.set("rating", selectedRating);
     if (price) params.set("price", price);
     if (selectedCategoryId) params.set("categoryId", selectedCategoryId);
+    if (selectedSort) params.set("sort", selectedSort);
     if (price === "custom") {
       if (minPriceInput) params.set("minPrice", minPriceInput);
       if (maxPriceInput) params.set("maxPrice", maxPriceInput);
@@ -250,6 +262,27 @@ const SearchPage = () => {
     if (selectedRating) params.set("rating", selectedRating);
     if (selectedPrice) params.set("price", selectedPrice);
     if (categoryId) params.set("categoryId", categoryId);
+    if (selectedSort) params.set("sort", selectedSort);
+    if (selectedPrice === "custom") {
+      if (minPriceInput) params.set("minPrice", minPriceInput);
+      if (maxPriceInput) params.set("maxPrice", maxPriceInput);
+    }
+    
+    const url = `/search?${params.toString()}`;
+    router.push(url);
+  };
+  
+  const handleSortChange = (sort: string) => {
+    setSelectedSort(sort);
+    setCurrentPage(1);
+    
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("search", searchQuery);
+    if (selectedLevel) params.set("level", selectedLevel);
+    if (selectedRating) params.set("rating", selectedRating);
+    if (selectedPrice) params.set("price", selectedPrice);
+    if (selectedCategoryId) params.set("categoryId", selectedCategoryId);
+    if (sort) params.set("sort", sort);
     if (selectedPrice === "custom") {
       if (minPriceInput) params.set("minPrice", minPriceInput);
       if (maxPriceInput) params.set("maxPrice", maxPriceInput);
@@ -277,6 +310,24 @@ const SearchPage = () => {
     courses = courses.filter((course: any) => {
       const price = Number(course.price) || 0;
       return price > 0;
+    });
+  }
+  
+  // Client-side sorting
+  if (selectedSort) {
+    courses = [...courses].sort((a: any, b: any) => {
+      switch (selectedSort) {
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'popular':
+          return (b.numberOfStudents || 0) - (a.numberOfStudents || 0);
+        case 'price-asc':
+          return (Number(a.price) || 0) - (Number(b.price) || 0);
+        case 'price-desc':
+          return (Number(b.price) || 0) - (Number(a.price) || 0);
+        default:
+          return 0;
+      }
     });
   }
   
@@ -351,9 +402,11 @@ const SearchPage = () => {
           selectedRating={selectedRating}
           selectedLevel={selectedLevel}
           selectedPrice={selectedPrice}
+          selectedSort={selectedSort}
           onRatingChange={handleRatingChange}
           onLevelChange={handleLevelChange}
           onPriceChange={handlePriceChange}
+          onSortChange={handleSortChange}
           minPrice={minPriceInput}
           maxPrice={maxPriceInput}
           onMinPriceChange={setMinPriceInput}
@@ -368,7 +421,7 @@ const SearchPage = () => {
           onCategoryChange={handleCategoryChange}
         />
 
-        {(selectedRating || selectedLevel || selectedPrice || selectedCategoryId) && (
+        {(selectedRating || selectedLevel || selectedPrice || selectedCategoryId || selectedSort) && (
           <Button
             variant="ghost"
             size="sm"

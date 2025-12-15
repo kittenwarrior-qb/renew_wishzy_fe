@@ -15,9 +15,11 @@ interface FilterPopoversProps {
   selectedRating: string;
   selectedLevel: string;
   selectedPrice: string;
+  selectedSort?: string;
   onRatingChange: (rating: string) => void;
   onLevelChange: (level: string) => void;
   onPriceChange: (price: string) => void;
+  onSortChange?: (sort: string) => void;
   minPrice?: string;
   maxPrice?: string;
   onMinPriceChange?: (value: string) => void;
@@ -28,9 +30,11 @@ export const FilterPopovers = ({
   selectedRating,
   selectedLevel,
   selectedPrice,
+  selectedSort = '',
   onRatingChange,
   onLevelChange,
   onPriceChange,
+  onSortChange,
   minPrice = '',
   maxPrice = '',
   onMinPriceChange,
@@ -181,6 +185,42 @@ export const FilterPopovers = ({
                 </div>
               </div>
             )}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="rounded-full">
+            {selectedSort === 'newest' ? 'Mới nhất' : selectedSort === 'popular' ? 'Bán chạy' : selectedSort === 'price-asc' ? 'Giá thấp' : selectedSort === 'price-desc' ? 'Giá cao' : 'Sắp xếp'}
+            <ChevronDown className="ml-1 h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-3" align="start">
+          <div className="space-y-2">
+            <h4 className="font-medium">Sắp xếp theo</h4>
+            <RadioGroup value={selectedSort} onValueChange={onSortChange}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="" id="s0" />
+                <Label htmlFor="s0">Mặc định</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="newest" id="s1" />
+                <Label htmlFor="s1">Mới nhất</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="popular" id="s2" />
+                <Label htmlFor="s2">Bán chạy</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="price-asc" id="s3" />
+                <Label htmlFor="s3">Giá thấp đến cao</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="price-desc" id="s4" />
+                <Label htmlFor="s4">Giá cao đến thấp</Label>
+              </div>
+            </RadioGroup>
           </div>
         </PopoverContent>
       </Popover>
