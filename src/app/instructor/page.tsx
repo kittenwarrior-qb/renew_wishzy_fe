@@ -237,7 +237,7 @@ const InstructorDashboard = () => {
               <div className="space-y-4">
                 {topCoursesByRevenue.map((course, idx) => {
                   const maxRevenue = topCoursesByRevenue[0]?.revenue || 1;
-                  const percentage = (course.revenue || 0) / maxRevenue * 100;
+                  const percentage = (course.revenue || 0) / maxRevenue * 90;
 
                   return (
                     <div key={course.courseId} className="space-y-2">
@@ -269,7 +269,7 @@ const InstructorDashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="w-full bg-muted rounded-full h-2 ml-11">
+                      <div className="w-full  rounded-full h-2 ml-11">
                         <div
                           className="bg-gradient-to-r from-yellow-400 to-yellow-600 h-full rounded-full transition-all"
                           style={{ width: `${percentage}%` }}

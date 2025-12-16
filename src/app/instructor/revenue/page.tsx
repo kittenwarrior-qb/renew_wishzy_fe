@@ -49,41 +49,27 @@ export default function RevenuePage() {
   const transactions = revenueData?.data?.items || [];
   const pagination = revenueData?.data?.pagination;
 
-  // Calculate additional statistics from current transactions for more accurate display
-  const enhancedStatistics = React.useMemo(() => {
-    if (!statistics) return null;
+  // Use API statistics directly - avoid double calculation
+  const displayStatistics = React.useMemo(() => {
+    if (!statistics) {
+      // Fallback calculation only if API doesn't provide statistics
+      const completedTransactions = transactions.filter(t => t.status === 'completed');
+      const totalRevenue = completedTransactions.reduce((sum, t) => sum + (Number(t.instructorEarning) || 0), 0);
+      
+      return {
+        totalRevenue,
+        totalOrders: transactions.length,
+        completedOrders: completedTransactions.length,
+        pendingOrders: transactions.filter(t => t.status === 'pending').length,
+        averageOrderValue: completedTransactions.length > 0 ? totalRevenue / completedTransactions.length : 0,
+        monthlyRevenue: 0, // Cannot calculate without date range
+        revenueGrowth: 0
+      };
+    }
 
-    // Calculate from current transaction data for more accurate numbers
-    const completedTransactions = transactions.filter(t => t.status === 'completed');
-    const currentPageRevenue = completedTransactions.reduce((sum, t) => sum + (t.instructorEarning || 0), 0);
-    
-    // Calculate monthly revenue from current data
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const monthlyTransactions = completedTransactions.filter(t => {
-      const transactionDate = new Date(t.transactionDate);
-      return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear;
-    });
-    const currentMonthRevenue = monthlyTransactions.reduce((sum, t) => sum + (t.instructorEarning || 0), 0);
-
-    // Use API statistics as base, but enhance with current data if available
-    const enhanced = {
-      totalRevenue: statistics.totalRevenue || currentPageRevenue,
-      totalOrders: statistics.totalOrders || transactions.length,
-      completedOrders: statistics.completedOrders || completedTransactions.length,
-      pendingOrders: statistics.pendingOrders || transactions.filter(t => t.status === 'pending').length,
-      averageOrderValue: statistics.averageOrderValue || (completedTransactions.length > 0 ? currentPageRevenue / completedTransactions.length : 0),
-      monthlyRevenue: statistics.monthlyRevenue || currentMonthRevenue,
-      revenueGrowth: statistics.revenueGrowth || 0
-    };
-
-    console.log('📊 Enhanced Statistics:', enhanced);
-    console.log('📊 Original API Statistics:', statistics);
-    console.log('📊 Current Page Revenue:', currentPageRevenue);
-    console.log('📊 Monthly Revenue:', currentMonthRevenue);
-    console.log('📊 Completed Transactions:', completedTransactions.length);
-
-    return enhanced;
+    // Use API statistics directly to avoid duplication
+    console.log('📊 Using API Statistics:', statistics);
+    return statistics;
   }, [statistics, transactions]);
 
   // Process analytics data from transactions
@@ -121,11 +107,12 @@ export default function RevenuePage() {
       
       const courseData = courseStats.get(courseId);
       if (transaction.status === 'completed') {
-        courseData.totalRevenue += transaction.instructorEarning;
+        // Convert to number to prevent string concatenation
+        courseData.totalRevenue += Number(transaction.instructorEarning) || 0;
         courseData.totalSales += 1;
         courseData.totalStudents.add(transaction.studentEmail);
       }
-      
+
       // Payment method statistics
       const method = transaction.paymentProvider;
       if (!paymentMethods.has(method)) {
@@ -133,7 +120,8 @@ export default function RevenuePage() {
       }
       if (transaction.status === 'completed') {
         paymentMethods.get(method).count += 1;
-        paymentMethods.get(method).revenue += transaction.instructorEarning;
+        // Convert to number to prevent string concatenation
+        paymentMethods.get(method).revenue += Number(transaction.instructorEarning) || 0;
       }
     });
 
@@ -227,7 +215,7 @@ export default function RevenuePage() {
       if (format === 'csv') {
         exportToCSV(exportData, 'revenue-report');
       } else if (format === 'json') {
-        const fullReport = generateRevenueReport(exportData, enhancedStatistics);
+        const fullReport = generateRevenueReport(exportData, displayStatistics);
         exportToJSON(fullReport, 'revenue-report');
       }
     }
@@ -291,7 +279,7 @@ export default function RevenuePage() {
   ];
 
   return (
-    <div className="relative py-4 px-4 md:px-6">
+    <div className="relative">
       {/* Debug Stats (Development Only) */}
       {/* <DebugStats 
         statistics={statistics}
@@ -306,7 +294,7 @@ export default function RevenuePage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Tổng doanh thu</p>
-              <p className="text-2xl font-bold">{formatCurrency(enhancedStatistics?.totalRevenue || 0)}</p>
+              <p className="text-2xl font-bold">{formatCurrency(displayStatistics?.totalRevenue || 0)}</p>
               <p className="text-xs text-muted-foreground">Tất cả thời gian</p>
             </div>
             <CreditCard className="h-8 w-8 text-muted-foreground" />
@@ -317,7 +305,7 @@ export default function RevenuePage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Doanh thu tháng</p>
-              <p className="text-2xl font-bold">{formatCurrency(enhancedStatistics?.monthlyRevenue || 0)}</p>
+              <p className="text-2xl font-bold">{formatCurrency(displayStatistics?.monthlyRevenue || 0)}</p>
               <p className="text-xs text-muted-foreground">Tháng hiện tại</p>
             </div>
             <TrendingUp className="h-8 w-8 text-muted-foreground" />
@@ -328,8 +316,8 @@ export default function RevenuePage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Tổng đơn hàng</p>
-              <p className="text-2xl font-bold">{enhancedStatistics?.totalOrders || 0}</p>
-              <p className="text-xs text-muted-foreground">{enhancedStatistics?.completedOrders || 0} hoàn thành</p>
+              <p className="text-2xl font-bold">{displayStatistics?.totalOrders || 0}</p>
+              <p className="text-xs text-muted-foreground">{displayStatistics?.completedOrders || 0} hoàn thành</p>
             </div>
             <ShoppingCart className="h-8 w-8 text-muted-foreground" />
           </div>
@@ -339,7 +327,7 @@ export default function RevenuePage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Giá trị TB/đơn</p>
-              <p className="text-2xl font-bold">{formatCurrency(enhancedStatistics?.averageOrderValue || 0)}</p>
+              <p className="text-2xl font-bold">{formatCurrency(displayStatistics?.averageOrderValue || 0)}</p>
               <p className="text-xs text-muted-foreground">Trung bình mỗi giao dịch</p>
             </div>
             <Calendar className="h-8 w-8 text-muted-foreground" />
@@ -354,17 +342,22 @@ export default function RevenuePage() {
             <BarChart3 className="h-5 w-5" />
             Biểu đồ doanh thu
           </h3>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="thisWeek">7 ngày</SelectItem>
-              <SelectItem value="thisMonth">30 ngày</SelectItem>
-              <SelectItem value="thisQuarter">90 ngày</SelectItem>
-              <SelectItem value="thisYear">1 năm</SelectItem>
-            </SelectContent>
-          </Select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Khoảng thời gian
+            </label>
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Chọn thời gian" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="thisWeek">📊 7 ngày</SelectItem>
+                <SelectItem value="thisMonth">📊 30 ngày</SelectItem>
+                <SelectItem value="thisQuarter">📊 90 ngày</SelectItem>
+                <SelectItem value="thisYear">📊 1 năm</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         <div className="h-[300px] relative">
@@ -422,7 +415,7 @@ export default function RevenuePage() {
 
       {/* Performance Metrics */}
       <div className="mb-6">
-        <PerformanceMetrics statistics={enhancedStatistics || {
+        <PerformanceMetrics statistics={displayStatistics || {
           totalRevenue: 0,
           totalOrders: 0,
           completedOrders: 0,
@@ -548,17 +541,22 @@ export default function RevenuePage() {
             <h3 className="text-lg font-semibold">Lịch sử giao dịch</h3>
           </div>
           <div className="flex flex-wrap gap-2 items-center">
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="thisWeek">Tuần này</SelectItem>
-                <SelectItem value="thisMonth">Tháng này</SelectItem>
-                <SelectItem value="thisQuarter">Quý này</SelectItem>
-                <SelectItem value="thisYear">Năm này</SelectItem>
-              </SelectContent>
-            </Select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Lọc theo thời gian
+              </label>
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger className="h-9 w-[180px]">
+                  <SelectValue placeholder="Chọn khoảng thời gian" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="thisWeek">📅 Tuần này</SelectItem>
+                  <SelectItem value="thisMonth">📅 Tháng này</SelectItem>
+                  <SelectItem value="thisQuarter">📅 Quý này</SelectItem>
+                  <SelectItem value="thisYear">📅 Năm này</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>

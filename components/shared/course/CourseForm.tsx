@@ -77,7 +77,7 @@ const PriceInput: React.FC<{
           onChange={(e) => {
             const raw = e.target.value.replace(/[^0-9]/g, "");
             const num = raw ? parseInt(raw, 10) : 0;
-            setDisplayValue(e.target.value);
+            setDisplayValue(raw); // Chỉ hiển thị số, không hiển thị ký tự khác
             onChange(num);
           }}
           onFocus={() => setIsFocused(true)}

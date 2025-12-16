@@ -16,18 +16,17 @@ import { Plus, Pencil, Trash2, Inbox, ExternalLink, Image as ImageIcon } from "l
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 import { SaleBadge } from "./components/SaleBadge"
 import { getSaleStatus, getDiscountPercentage } from "@/types/sale"
 
-type CourseFormValue = Partial<Pick<Course, "name" | "price" | "level" | "totalDuration" | "categoryId" | "description" | "notes" | "thumbnail">>
+// Remove unused type
 
 export default function Page() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { theme, user } = useAppStore()
-  const logoSrc = theme === 'dark' ? "/images/white-logo.png" : "/images/black-logo.png"
+  const { user } = useAppStore()
   const { setPrimaryAction } = useAdminHeaderStore()
 
   const [page, setPage] = React.useState<number>(Number(searchParams.get("page") || 1))
@@ -72,7 +71,7 @@ export default function Page() {
   const total = data?.total ?? 0
   const currentPage = data?.page ?? page
   const pageSize = data?.limit ?? limit
-  const totalPages = data?.totalPages ?? Math.ceil((total || 0) / (pageSize || 10))
+  // Remove unused variable
 
   const { mutate: toggleStatus, isPending: toggling } = useToggleCourseStatus()
   const { mutate: deleteCourse, isPending: deleting } = useDeleteCourse()
@@ -81,48 +80,88 @@ export default function Page() {
   const [deletingTarget, setDeletingTarget] = React.useState<Course | null>(null)
   const onConfirmDelete = (c: Course) => { setDeletingTarget(c); setOpenDelete(true) }
 
+  // Remove primary action since we have inline button now
   React.useEffect(() => {
-    setPrimaryAction({
-      label: "Thêm khoá học",
-      variant: "default",
-      onClick: () => router.push(`/instructor/courses/create`),
-    })
-
+    setPrimaryAction(null)
     return () => setPrimaryAction(null)
-  }, [setPrimaryAction, router])
+  }, [setPrimaryAction])
 
   return (
-    <div className="relative py-4 px-4 md:px-6">
+    <div className="relative mx-auto max-w-[1600px] overflow-hidden px-4 py-4 md:px-6">
+      
       <div className="mb-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-2 items-center">
-            <Input value={name} onChange={(e) => { setName(e.target.value); setPage(1) }} placeholder="Tìm theo tên" className="h-9 w-52" />
-            <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1) }}>
-              <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all">Tất cả</SelectItem>
-                <SelectItem value="true">Đã xuất bản</SelectItem>
-                <SelectItem value="false">Nháp</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={level} onValueChange={(v) => { setLevel(v); setPage(1) }}>
-              <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Cấp độ" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all">Tất cả</SelectItem>
-                <SelectItem value="beginner">Beginner</SelectItem>
-                <SelectItem value="intermediate">Intermediate</SelectItem>
-                <SelectItem value="advanced">Advanced</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={categoryId} onValueChange={(v) => { setCategoryId(v); setPage(1) }}>
-              <SelectTrigger className="h-9 w-56"><SelectValue placeholder="Danh mục" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all">Tất cả</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={String((c as any).id)} value={String((c as any).id)}>{(c as any).name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          {/* Left side - Search and Filters */}
+          <div className="flex flex-1 flex-col gap-4 md:flex-row md:items-end md:space-x-4">
+            {/* Search */}
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-medium text-gray-700">Tìm kiếm</label>
+              <Input 
+                value={name} 
+                onChange={(e) => { setName(e.target.value); setPage(1) }} 
+                placeholder="Nhập tên khóa học..." 
+                className="h-9 w-52" 
+              />
+            </div>
+            
+            {/* Status Filter */}
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-medium text-gray-700">Trạng thái</label>
+              <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1) }}>
+                <SelectTrigger className="h-9 w-40">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Tất cả</SelectItem>
+                  <SelectItem value="true">Đã xuất bản</SelectItem>
+                  <SelectItem value="false">Nháp</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Level Filter */}
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-medium text-gray-700">Cấp độ</label>
+              <Select value={level} onValueChange={(v) => { setLevel(v); setPage(1) }}>
+                <SelectTrigger className="h-9 w-44">
+                  <SelectValue placeholder="Chọn cấp độ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Tất cả</SelectItem>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Category Filter */}
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-medium text-gray-700">Danh mục</label>
+              <Select value={categoryId} onValueChange={(v) => { setCategoryId(v); setPage(1) }}>
+                <SelectTrigger className="h-9 w-56">
+                  <SelectValue placeholder="Chọn danh mục" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Tất cả</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={String((c as any).id)} value={String((c as any).id)}>{(c as any).name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {/* Right side - Add Course Button */}
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-gray-700 invisible">Action</label>
+            <Button 
+              onClick={() => router.push('/instructor/courses/create')} 
+              className="whitespace-nowrap h-9"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Thêm khóa học
+            </Button>
           </div>
         </div>
       </div>

@@ -129,7 +129,7 @@ export default function FeedbacksPage() {
   };
 
   return (
-    <div className="relative py-4 px-4 md:px-6">
+    <div className="relative">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-card text-card-foreground rounded-lg border p-4">
@@ -175,24 +175,34 @@ export default function FeedbacksPage() {
 
       {/* Search and Filters */}
       <div className="mb-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-2 items-center">
-            <Input 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-              placeholder="Tìm kiếm đánh giá..." 
-              className="h-9 w-52" 
-            />
-            <Select value={ratingFilter} onValueChange={(value) => setRatingFilter(value as "all" | "high" | "low")}>
-              <SelectTrigger className="h-9 w-40">
-                <SelectValue placeholder="Đánh giá" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="high">Đánh giá cao (4-5 sao)</SelectItem>
-                <SelectItem value="low">Cần cải thiện (1-3 sao)</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tìm kiếm đánh giá
+              </label>
+              <Input 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                placeholder="Nhập nội dung đánh giá để tìm kiếm..." 
+                className="h-9 w-52" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lọc theo mức đánh giá
+              </label>
+              <Select value={ratingFilter} onValueChange={(value) => setRatingFilter(value as "all" | "high" | "low")}>
+                <SelectTrigger className="h-9 w-48">
+                  <SelectValue placeholder="Chọn mức đánh giá" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">⭐ Tất cả đánh giá</SelectItem>
+                  <SelectItem value="high">🌟 Đánh giá cao (4-5 sao)</SelectItem>
+                  <SelectItem value="low">⚠️ Cần cải thiện (1-3 sao)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>

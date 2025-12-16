@@ -45,7 +45,7 @@ export function PerformanceMetrics({ statistics, transactions }: PerformanceMetr
     : 0;
 
   const averageTransactionValue = transactions.length > 0
-    ? transactions.reduce((sum, t) => sum + t.instructorEarning, 0) / transactions.length
+    ? transactions.reduce((sum, t) => sum + (Number(t.instructorEarning) || 0), 0) / transactions.length
     : 0;
 
   // Calculate monthly growth (mock calculation)

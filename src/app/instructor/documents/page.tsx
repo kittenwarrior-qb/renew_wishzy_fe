@@ -132,7 +132,7 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="relative py-4 px-4 md:px-6">
+    <div className="relative">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-card text-card-foreground rounded-lg border p-4">
@@ -174,26 +174,36 @@ export default function DocumentsPage() {
 
       {/* Search and Filters */}
       <div className="mb-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-2 items-center">
-            <Input 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-              placeholder="Tìm kiếm tài liệu..." 
-              className="h-9 w-52" 
-            />
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="h-9 w-40">
-                <SelectValue placeholder="Loại file" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="pdf">PDF</SelectItem>
-                <SelectItem value="docx">Word</SelectItem>
-                <SelectItem value="png">Hình ảnh</SelectItem>
-                <SelectItem value="zip">Archive</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tìm kiếm tài liệu
+              </label>
+              <Input 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                placeholder="Nhập tên tài liệu để tìm kiếm..." 
+                className="h-9 w-52" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lọc theo loại file
+              </label>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="h-9 w-40">
+                  <SelectValue placeholder="Chọn loại file" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">📁 Tất cả loại</SelectItem>
+                  <SelectItem value="pdf">📄 PDF</SelectItem>
+                  <SelectItem value="docx">📝 Word</SelectItem>
+                  <SelectItem value="png">🖼️ Hình ảnh</SelectItem>
+                  <SelectItem value="zip">📦 Archive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <Button onClick={() => setIsUploadDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />

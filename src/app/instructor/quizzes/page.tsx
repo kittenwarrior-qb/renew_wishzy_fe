@@ -87,7 +87,7 @@ const InstructorQuizzesPage = () => {
   };
 
   return (
-    <div className="relative py-4 px-4 md:px-6">
+    <div className="relative max-w-[1500px]">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-card text-card-foreground rounded-lg border p-4">
@@ -135,24 +135,34 @@ const InstructorQuizzesPage = () => {
 
       {/* Search and Filters */}
       <div className="mb-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-2 items-center">
-            <Input 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-              placeholder="Tìm kiếm quiz..." 
-              className="h-9 w-52" 
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-9 w-40">
-                <SelectValue placeholder="Trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="public">Công khai</SelectItem>
-                <SelectItem value="private">Riêng tư</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tìm kiếm quiz
+              </label>
+              <Input 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                placeholder="Nhập tên quiz để tìm kiếm..." 
+                className="h-9 w-52" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lọc theo trạng thái
+              </label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 w-40">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">📋 Tất cả trạng thái</SelectItem>
+                  <SelectItem value="public">🌐 Công khai</SelectItem>
+                  <SelectItem value="private">🔒 Riêng tư</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <Link href="/instructor/quizzes/create">
             <Button>

@@ -159,7 +159,7 @@ export default function StudentsPage() {
           <DropdownMenuContent align="end">
             <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleSendMessage(row.id)}>
-              Gửi tin nhắn
+              {/* Gửi tin nhắn */}
             </DropdownMenuItem>
             <DropdownMenuItem>Xem tiến độ</DropdownMenuItem>
           </DropdownMenuContent>
@@ -169,7 +169,7 @@ export default function StudentsPage() {
   ];
 
   return (
-    <div className="relative py-4 px-4 md:px-6">
+    <div className="relative">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-card rounded-lg border p-4">
@@ -219,24 +219,34 @@ export default function StudentsPage() {
 
       {/* Filters */}
       <div className="mb-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap gap-2 items-center">
-            <Input 
-              value={searchTerm} 
-              onChange={(e) => { setSearchTerm(e.target.value); setPage(1) }} 
-              placeholder="Tìm kiếm học viên..." 
-              className="h-9 w-52" 
-            />
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1) }}>
-              <SelectTrigger className="h-9 w-40">
-                <SelectValue placeholder="Trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="active">Hoạt động</SelectItem>
-                <SelectItem value="inactive">Không hoạt động</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tìm kiếm học viên
+              </label>
+              <Input 
+                value={searchTerm} 
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1) }} 
+                placeholder="Nhập tên hoặc email học viên..." 
+                className="h-9 w-52" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lọc theo trạng thái
+              </label>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1) }}>
+                <SelectTrigger className="h-9 w-44">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">👥 Tất cả học viên</SelectItem>
+                  <SelectItem value="active">✅ Đang hoạt động</SelectItem>
+                  <SelectItem value="inactive">⏸️ Không hoạt động</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>

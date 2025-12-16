@@ -12,20 +12,24 @@ import {
   CheckCircle
 } from "lucide-react"
 
-interface EngagementStats {
+interface CommentStats {
   totalComments: number;
   pendingComments: number;
   repliedComments: number;
   resolvedComments: number;
+}
+
+interface FeedbackStats {
   totalFeedbacks: number;
   averageRating: number;
+  ratingDistribution: Record<number, number>;
   highRatings: number;
   needReply: number;
 }
 
 interface EngagementOverviewProps {
-  commentsStats?: EngagementStats;
-  feedbacksStats?: EngagementStats;
+  commentsStats?: CommentStats;
+  feedbacksStats?: FeedbackStats;
   isLoading?: boolean;
 }
 
