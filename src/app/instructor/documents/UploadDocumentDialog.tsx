@@ -49,7 +49,10 @@ export function UploadDocumentDialog({
     try {
       setIsLoadingCourses(true);
       const response = await api.get('/courses/instructor/my-courses', {
-        params: { limit: 100 } // Get all courses
+        params: { 
+          page: 1,
+          limit: 100 
+        }
       });
 
       const coursesData = response.data?.data?.items || [];
@@ -147,10 +150,11 @@ export function UploadDocumentDialog({
       // Step 2: Create document record in database
       const documentData = {
         name: selectedFile.name,
+        notes: `Tài liệu được tải lên từ khóa học`, // Add notes field
+        descriptions: documentDescription || `Tài liệu ${selectedFile.name} được tải lên bởi instructor`,
         fileUrl: url,
         entityId: selectedCourseId,
-        entityType: 'course', // Always create at course level for now
-        descriptions: documentDescription || undefined,
+        entityType: 'course', // Backend will validate this as enum
       };
 
       const response = await api.post('/documents', documentData);

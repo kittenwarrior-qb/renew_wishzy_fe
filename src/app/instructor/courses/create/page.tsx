@@ -45,15 +45,9 @@ export default function CreateCoursePage() {
     }, [isPending, form, createCourse, router])
 
     React.useEffect(() => {
-        setPrimaryAction({
-            label: isPending ? "Đang lưu..." : "Tạo khóa học",
-            variant: "default",
-            disabled: isPending,
-            onClick: handleSubmit,
-        })
-
+        setPrimaryAction(null)
         return () => setPrimaryAction(null)
-    }, [setPrimaryAction, isPending, handleSubmit])
+    }, [setPrimaryAction])
 
     return (
         <div className="relative py-4 px-4 md:px-6">
@@ -64,6 +58,8 @@ export default function CreateCoursePage() {
                 loading={isPending}
                 onDirtyChange={setDirty}
                 onSubmit={handleSubmit}
+                submitLabel={isPending ? "Đang lưu..." : "Tạo khóa học"}
+                title="Tạo khóa học mới"
             />
         </div>
     )
