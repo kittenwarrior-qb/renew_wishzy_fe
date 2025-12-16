@@ -127,8 +127,8 @@ export async function uploadDocument(
 ): Promise<{ url: string; fileName: string }> {
   if (!file || file.size === 0) throw new Error("Không có file hợp lệ");
 
-  // Use image endpoint for documents (Cloudinary can handle various file types)
-  const endpoint = "/uploads/image";
+  // Use document endpoint for documents
+  const endpoint = "/uploads/document";
 
   const fd = new FormData();
   const name = opts.fieldName || "file";

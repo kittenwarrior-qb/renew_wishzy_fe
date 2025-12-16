@@ -167,7 +167,7 @@ export default function DocumentsPage() {
             <div className="text-sm font-medium">Trung bình/tài liệu</div>
             <Eye className="h-4 w-4 text-muted-foreground" />
           </div>
-          <div className="text-2xl font-bold">{Math.round(totalDownloads / totalDocuments)}</div>
+          <div className="text-2xl font-bold">{totalDocuments > 0 ? Math.round(totalDownloads / totalDocuments) : 0}</div>
           <p className="text-xs text-muted-foreground">Lượt tải/tài liệu</p>
         </div>
       </div>
