@@ -70,7 +70,10 @@ export default function CourseDetailPage() {
 
             <div className="space-y-2">
                 {course?.description ? (
-                    <p className="text-sm text-muted-foreground">{course.description}</p>
+                    <div 
+                        className="text-sm text-muted-foreground prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: course.description }}
+                    />
                 ) : null}
             </div>
 

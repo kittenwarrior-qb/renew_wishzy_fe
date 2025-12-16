@@ -55,7 +55,9 @@ export default function InstructorLayout({ children }: { children: React.ReactNo
       <SidebarInset className="md:!m-0 md:!ml-0 md:!rounded-none md:!shadow-none">
         <HeaderAdmin />
         <main className="flex-1 overflow-auto p-4 md:p-6">
-          {children}
+          <div className="mx-auto max-w-[1600px] overflow-hidden">
+            {children}
+          </div>
         </main>
       </SidebarInset>
       <Notifications />

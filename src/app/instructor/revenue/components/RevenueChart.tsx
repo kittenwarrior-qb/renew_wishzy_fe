@@ -34,13 +34,13 @@ interface RevenueChartProps {
 
 export function RevenueChart({ transactions, timeRange }: RevenueChartProps) {
   const formatCurrency = (amount: number) => {
+    const validAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
+      minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-      notation: 'compact',
-      compactDisplay: 'short',
-    }).format(amount)
+    }).format(validAmount)
   }
 
   // Process transactions into chart data based on time range
@@ -95,7 +95,9 @@ export function RevenueChart({ transactions, timeRange }: RevenueChartProps) {
       }
 
       const group = groupedData.get(periodKey)!;
-      group.revenue += transaction.instructorEarning;
+      // Ensure we only count each transaction once
+      const earning = Number(transaction.instructorEarning) || 0;
+      group.revenue += earning;
       group.sales += 1;
       group.students.add(transaction.studentEmail);
     });
@@ -135,9 +137,15 @@ export function RevenueChart({ transactions, timeRange }: RevenueChartProps) {
     return result.slice(-10); // Show last 10 periods
   }, [transactions, timeRange]);
 
-  const maxRevenue = Math.max(...chartData.map((d) => d.revenue), 0);
-  const totalRevenue = chartData.reduce((sum, d) => sum + d.revenue, 0);
-  const totalSales = chartData.reduce((sum, d) => sum + d.sales, 0);
+  const maxRevenue = Math.max(...chartData.map((d) => Number(d.revenue) || 0), 0);
+  const totalRevenue = chartData.reduce((sum, d) => sum + (Number(d.revenue) || 0), 0);
+  const totalSales = chartData.reduce((sum, d) => sum + (Number(d.sales) || 0), 0);
+
+  // Debug logs (can be removed in production)
+  console.log('📊 RevenueChart - Processing', transactions.length, 'transactions');
+  console.log('📊 RevenueChart - Chart data points:', chartData.length);
+  console.log('📊 RevenueChart - Total revenue:', totalRevenue);
+
 
   if (chartData.length === 0) {
     return (
@@ -159,7 +167,7 @@ export function RevenueChart({ transactions, timeRange }: RevenueChartProps) {
           <span className="font-medium">Biểu đồ doanh thu theo thời gian</span>
         </div>
         <div className="text-sm text-muted-foreground">
-          Tổng: {formatCurrency(totalRevenue)} • {totalSales} đơn hàng
+          Tổng: {formatCurrency(totalRevenue)} • {totalSales}  đơn hàng
         </div>
       </div>
 

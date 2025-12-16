@@ -64,7 +64,7 @@ export default function SalesManagementPage() {
   }
 
   return (
-    <div className="relative py-4 px-4 md:px-6 space-y-6">
+    <div className="relative space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Quản lý giá sale</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -117,26 +117,36 @@ export default function SalesManagementPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap gap-2 items-center">
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo tên khóa học"
-            className="h-9 w-64"
-          />
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as SaleStatus | "all")}>
-            <SelectTrigger className="h-9 w-40">
-              <SelectValue placeholder="Trạng thái sale" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="active">Đang sale</SelectItem>
-              <SelectItem value="upcoming">Sắp sale</SelectItem>
-              <SelectItem value="expired">Hết sale</SelectItem>
-              <SelectItem value="none">Không sale</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-wrap gap-4 items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tìm kiếm khóa học
+            </label>
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Nhập tên khóa học để tìm kiếm..."
+              className="h-9 w-64"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Lọc theo trạng thái sale
+            </label>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as SaleStatus | "all")}>
+              <SelectTrigger className="h-9 w-48">
+                <SelectValue placeholder="Chọn trạng thái sale" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">🏷️ Tất cả trạng thái</SelectItem>
+                <SelectItem value="active">🔥 Đang sale</SelectItem>
+                <SelectItem value="upcoming">⏰ Sắp sale</SelectItem>
+                <SelectItem value="expired">⏹️ Hết sale</SelectItem>
+                <SelectItem value="none">💰 Không sale</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
