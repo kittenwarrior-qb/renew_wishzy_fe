@@ -197,9 +197,9 @@ export default function FeedbacksPage() {
                   <SelectValue placeholder="Chọn mức đánh giá" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">⭐ Tất cả đánh giá</SelectItem>
-                  <SelectItem value="high">🌟 Đánh giá cao (4-5 sao)</SelectItem>
-                  <SelectItem value="low">⚠️ Cần cải thiện (1-3 sao)</SelectItem>
+                  <SelectItem value="all">Tất cả đánh giá</SelectItem>
+                  <SelectItem value="high">Đánh giá cao (4-5 sao)</SelectItem>
+                  <SelectItem value="low">Cần cải thiện (1-3 sao)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

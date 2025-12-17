@@ -296,10 +296,10 @@ export default function CommentsPage() {
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">📋 Tất cả trạng thái</SelectItem>
-                  <SelectItem value="pending">⏳ Chờ phản hồi</SelectItem>
-                  <SelectItem value="replied">✅ Đã phản hồi</SelectItem>
-                  <SelectItem value="resolved">🎯 Đã giải quyết</SelectItem>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="pending">Chờ phản hồi</SelectItem>
+                  <SelectItem value="replied">Đã phản hồi</SelectItem>
+                  <SelectItem value="resolved">Đã giải quyết</SelectItem>
                 </SelectContent>
               </Select>
             </div>

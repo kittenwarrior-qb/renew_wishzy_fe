@@ -191,7 +191,12 @@ export function LectureFormModal({
     else if (name.length > 255) next.name = "Tên tối đa 255 ký tự";
 
     const fileUrl = form.fileUrl.trim();
-    if (!fileUrl) next.fileUrl = "Video là bắt buộc";
+    if (!fileUrl) {
+      next.fileUrl = "Video là bắt buộc";
+    } else if (!fileUrl.startsWith('http')) {
+      next.fileUrl = "URL video không hợp lệ";
+      console.error("❌ Invalid video URL:", fileUrl);
+    }
 
     // Duration is auto-filled from video, but still validate it exists
     if (!form.duration || form.duration === "") {
@@ -583,11 +588,13 @@ async function handleFileUpload(
         console.warn("Could not extract video duration from file:", err);
       }
     }
-  } catch (_err) {
-    setErrors((prev) => ({ ...prev, fileUrl: "Tải video thất bại" }));
+  } catch (err: any) {
+    console.error("❌ Video upload failed:", err);
+    const errorMessage = err?.message || "Tải video thất bại";
+    setErrors((prev) => ({ ...prev, fileUrl: errorMessage }));
     notify({
       title: "Tải video thất bại",
-      description: "Vui lòng thử lại hoặc chọn tệp khác",
+      description: errorMessage,
       variant: "destructive",
     });
   } finally {

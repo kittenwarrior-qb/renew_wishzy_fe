@@ -58,9 +58,9 @@ export default function HeaderAdmin() {
   return (
     <header className="sticky top-0 z-20 h-14 border-b bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center gap-3 px-3 md:px-6">
       <SidebarTrigger className="mr-2 md:hidden" />
-      <div className="hidden md:block text-base font-semibold text-foreground">
+      {/* <div className="hidden md:block text-base font-semibold text-foreground">
         <HeaderTitle pathname={pathname} courseName={course?.name} />
-      </div>
+      </div> */}
       <div className="ml-auto flex items-center gap-2">
         {primaryAction ? (
           <Button

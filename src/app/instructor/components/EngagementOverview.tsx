@@ -98,35 +98,54 @@ export function EngagementOverview({
             <Badge variant="outline">{commentsStats?.totalComments || 0}</Badge>
           </div>
           
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Chờ phản hồi
-              </span>
-              <span>{commentsStats?.pendingComments || 0}</span>
-            </div>
-            <Progress 
-              value={formatPercentage(commentsStats?.pendingComments || 0, commentsStats?.totalComments || 1)} 
-              className="h-2" 
-            />
-          </div>
+          {/* Chart Style Display */}
+          <div className="relative bg-gradient-to-t from-muted/20 to-transparent rounded-lg p-3">
+            <div className="flex items-end justify-center gap-4 h-24">
+              {/* Pending Comments */}
+              <div className="flex flex-col items-center gap-1 group">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold bg-orange-500 text-white px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                  {commentsStats?.pendingComments || 0} bình luận
+                </div>
+                <div className="relative w-12 flex flex-col items-center">
+                  <div 
+                    className="w-full bg-gradient-to-t from-orange-500 to-orange-400 rounded-t-md transition-all duration-500"
+                    style={{ 
+                      height: `${Math.max(formatPercentage(commentsStats?.pendingComments || 0, commentsStats?.totalComments || 1), 8)}%`,
+                      minHeight: '8px'
+                    }}
+                  />
+                  <div className="w-full h-0.5 bg-border rounded-full" />
+                </div>
+                <div className="text-xs text-center text-muted-foreground mt-1">
+                  <Clock className="h-3 w-3 mx-auto mb-1" />
+                  Chờ phản hồi
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-1">
-                <CheckCircle className="h-3 w-3" />
-                Đã xử lý
-              </span>
-              <span>{(commentsStats?.repliedComments || 0) + (commentsStats?.resolvedComments || 0)}</span>
+              {/* Processed Comments */}
+              <div className="flex flex-col items-center gap-1 group">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold bg-green-500 text-white px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                  {(commentsStats?.repliedComments || 0) + (commentsStats?.resolvedComments || 0)} bình luận
+                </div>
+                <div className="relative w-12 flex flex-col items-center">
+                  <div 
+                    className="w-full bg-gradient-to-t from-green-500 to-green-400 rounded-t-md transition-all duration-500"
+                    style={{ 
+                      height: `${Math.max(formatPercentage(
+                        (commentsStats?.repliedComments || 0) + (commentsStats?.resolvedComments || 0), 
+                        commentsStats?.totalComments || 1
+                      ), 8)}%`,
+                      minHeight: '8px'
+                    }}
+                  />
+                  <div className="w-full h-0.5 bg-border rounded-full" />
+                </div>
+                <div className="text-xs text-center text-muted-foreground mt-1">
+                  <CheckCircle className="h-3 w-3 mx-auto mb-1" />
+                  Đã xử lý
+                </div>
+              </div>
             </div>
-            <Progress 
-              value={formatPercentage(
-                (commentsStats?.repliedComments || 0) + (commentsStats?.resolvedComments || 0), 
-                commentsStats?.totalComments || 1
-              )} 
-              className="h-2" 
-            />
           </div>
         </CardContent>
       </Card>
@@ -157,32 +176,51 @@ export function EngagementOverview({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-1">
-                <TrendingUp className="h-3 w-3" />
-                Đánh giá cao (4-5⭐)
-              </span>
-              <span>{feedbacksStats?.highRatings || 0}</span>
-            </div>
-            <Progress 
-              value={formatPercentage(feedbacksStats?.highRatings || 0, feedbacksStats?.totalFeedbacks || 1)} 
-              className="h-2" 
-            />
-          </div>
+          {/* Chart Style Display */}
+          <div className="relative bg-gradient-to-t from-muted/20 to-transparent rounded-lg p-3">
+            <div className="flex items-end justify-center gap-4 h-24">
+              {/* High Ratings */}
+              <div className="flex flex-col items-center gap-1 group">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold bg-yellow-500 text-white px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                  {feedbacksStats?.highRatings || 0} đánh giá
+                </div>
+                <div className="relative w-12 flex flex-col items-center">
+                  <div 
+                    className="w-full bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t-md transition-all duration-500"
+                    style={{ 
+                      height: `${Math.max(formatPercentage(feedbacksStats?.highRatings || 0, feedbacksStats?.totalFeedbacks || 1), 8)}%`,
+                      minHeight: '8px'
+                    }}
+                  />
+                  <div className="w-full h-0.5 bg-border rounded-full" />
+                </div>
+                <div className="text-xs text-center text-muted-foreground mt-1">
+                  <TrendingUp className="h-3 w-3 mx-auto mb-1" />
+                  Đánh giá cao
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                Cần phản hồi
-              </span>
-              <span>{feedbacksStats?.needReply || 0}</span>
+              {/* Need Reply */}
+              <div className="flex flex-col items-center gap-1 group">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold bg-blue-500 text-white px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                  {feedbacksStats?.needReply || 0} đánh giá
+                </div>
+                <div className="relative w-12 flex flex-col items-center">
+                  <div 
+                    className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-md transition-all duration-500"
+                    style={{ 
+                      height: `${Math.max(formatPercentage(feedbacksStats?.needReply || 0, feedbacksStats?.totalFeedbacks || 1), 8)}%`,
+                      minHeight: '8px'
+                    }}
+                  />
+                  <div className="w-full h-0.5 bg-border rounded-full" />
+                </div>
+                <div className="text-xs text-center text-muted-foreground mt-1">
+                  <Users className="h-3 w-3 mx-auto mb-1" />
+                  Cần phản hồi
+                </div>
+              </div>
             </div>
-            <Progress 
-              value={formatPercentage(feedbacksStats?.needReply || 0, feedbacksStats?.totalFeedbacks || 1)} 
-              className="h-2" 
-            />
           </div>
         </CardContent>
       </Card>
