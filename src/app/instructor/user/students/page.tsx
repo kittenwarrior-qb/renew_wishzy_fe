@@ -241,9 +241,9 @@ export default function StudentsPage() {
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">👥 Tất cả học viên</SelectItem>
-                  <SelectItem value="active">✅ Đang hoạt động</SelectItem>
-                  <SelectItem value="inactive">⏸️ Không hoạt động</SelectItem>
+                  <SelectItem value="all"> Tất cả học viên</SelectItem>
+                  <SelectItem value="active"> Đang hoạt động</SelectItem>
+                  <SelectItem value="inactive">Không hoạt động</SelectItem>
                 </SelectContent>
               </Select>
             </div>

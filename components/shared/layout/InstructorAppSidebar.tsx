@@ -24,7 +24,7 @@ import {
   Users,
   BookOpen,
   MessageSquare,
-  TrendingUp,
+
   ChevronDown,
   ArrowLeftToLine,
   ArrowRightToLine,
@@ -48,7 +48,35 @@ export default function InstructorAppSidebar() {
   const base = `/instructor`;
   const isActive = (sub: string) => {
     if (sub === ".") return (pathname || "").replace(/\/$/, "") === base;
-    return (pathname || "").startsWith(`${base}/${sub}`);
+    
+    const currentPath = (pathname || "").replace(/\/$/, "");
+    const targetPath = `${base}/${sub}`.replace(/\/$/, "");
+    
+    // Handle specific course routes to avoid conflicts
+    if (sub === "courses") {
+      // Match /instructor/courses and /instructor/courses/[id] (course detail pages)
+      // But NOT /instructor/courses/create or /instructor/courses/edit/[id]
+      return (
+        currentPath === targetPath || 
+        (currentPath.startsWith(`${targetPath}/`) && 
+         !currentPath.includes('/create') && 
+         !currentPath.includes('/edit') &&
+         currentPath.split('/').length === 4) // /instructor/courses/[id]
+      );
+    }
+    
+    if (sub === "courses/create") {
+      // Match /instructor/courses/create exactly
+      return currentPath === targetPath;
+    }
+    
+    if (sub.includes("courses/edit")) {
+      // Match /instructor/courses/edit/[id] pattern
+      return currentPath.startsWith(`${base}/courses/edit/`);
+    }
+    
+    // For other routes, use startsWith as before
+    return currentPath.startsWith(targetPath);
   };
 
   useEffect(() => {
@@ -57,7 +85,7 @@ export default function InstructorAppSidebar() {
       courses: isActive("courses") || isActive("course"),
       students: isActive("user/students"),
       comments: isActive("comments"),
-      revenue: isActive("revenue"),
+
       feedbacks: isActive("feedbacks"),
       documents: isActive("documents"),
       quizzes: isActive("quizzes"),
@@ -134,20 +162,7 @@ export default function InstructorAppSidebar() {
         },
       ],
     },
-    {
-      key: "revenue",
-      label: "Doanh thu",
-      icon: <TrendingUp className="mr-2 h-4 w-4" />,
-      collapsible: false,
-      items: [
-        {
-          label: "Thống kê doanh thu",
-          href: `${base}/revenue`,
-          icon: <BarChart3 className="h-[18px] w-[18px]" />,
-          isActiveKey: "revenue",
-        },
-      ],
-    },
+
     {
       key: "comments",
       label: "Bình luận",

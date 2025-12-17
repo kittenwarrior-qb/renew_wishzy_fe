@@ -196,11 +196,11 @@ export default function DocumentsPage() {
                   <SelectValue placeholder="Chọn loại file" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">📁 Tất cả loại</SelectItem>
-                  <SelectItem value="pdf">📄 PDF</SelectItem>
-                  <SelectItem value="docx">📝 Word</SelectItem>
-                  <SelectItem value="png">🖼️ Hình ảnh</SelectItem>
-                  <SelectItem value="zip">📦 Archive</SelectItem>
+                  <SelectItem value="all">Tất cả loại</SelectItem>
+                  <SelectItem value="pdf">PDF</SelectItem>
+                  <SelectItem value="docx">Word</SelectItem>
+                  <SelectItem value="png">Hình ảnh</SelectItem>
+                  <SelectItem value="zip">Archive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -212,7 +212,7 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      <div className="relative min-h-[300px]">
+      <div className="relative min-h-[300px] max-h-[calc(100vh-300px)] overflow-hidden">
         <LoadingOverlay show={isPending || isFetching} />
 
         {documents.length === 0 ? (
@@ -223,8 +223,9 @@ export default function DocumentsPage() {
             </div>
           </div>
         ) : (
-          (() => {
-            const columns: Column<any>[] = [
+          <div className="overflow-auto max-w-[1320px]">
+            {(() => {
+              const columns: Column<any>[] = [
               {
                 key: 'name',
                 label: 'Tên file',
@@ -337,7 +338,8 @@ export default function DocumentsPage() {
                 }}
               />
             )
-          })()
+            })()}
+          </div>
         )}
       </div>
 
