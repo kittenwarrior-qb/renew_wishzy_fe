@@ -82,23 +82,21 @@ export function UploadDocumentDialog({
         return;
       }
 
-      // Check file type
+      // Check file type - Only PDF and DOC/DOCX supported by API
       const allowedTypes = [
         'application/pdf',
         'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'image/png',
-        'image/jpeg',
-        'image/jpg',
-        'application/zip',
-        'application/x-rar-compressed',
-        'text/plain'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ];
 
-      if (!allowedTypes.includes(file.type)) {
+      // Also check by file extension as some browsers may not set correct MIME types
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      const allowedExtensions = ['pdf', 'doc', 'docx'];
+
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension || '')) {
         notify({
           title: "Loại file không hỗ trợ",
-          description: "Vui lòng chọn file PDF, DOC, DOCX, PNG, JPG, ZIP hoặc TXT",
+          description: "API chỉ hỗ trợ file PDF, DOC và DOCX",
           variant: "destructive"
         });
         return;
@@ -153,6 +151,7 @@ export function UploadDocumentDialog({
         notes: `Tài liệu được tải lên từ khóa học`, // Add notes field
         descriptions: documentDescription || `Tài liệu ${selectedFile.name} được tải lên bởi instructor`,
         fileUrl: url,
+        size: selectedFile.size, // Add file size in bytes
         entityId: selectedCourseId,
         entityType: 'course', // Backend will validate this as enum
       };
@@ -233,7 +232,7 @@ export function UploadDocumentDialog({
                     Chọn file
                   </Button>
                   <p className="text-xs text-muted-foreground mt-4">
-                    Hỗ trợ: PDF, DOC, DOCX, PNG, JPG, ZIP, TXT (Tối đa 10MB)
+                    Hỗ trợ: PDF, DOC, DOCX (Tối đa 10MB)
                   </p>
                 </>
               ) : (
@@ -266,7 +265,7 @@ export function UploadDocumentDialog({
               type="file"
               className="hidden"
               onChange={handleFileSelect}
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.zip,.rar,.txt"
+              accept=".pdf,.doc,.docx"
             />
           </div>
 

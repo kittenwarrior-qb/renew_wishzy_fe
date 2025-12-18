@@ -21,12 +21,9 @@ import {
   Eye,
   Plus,
   File,
-  Image,
-  Video,
-  Package,
   Inbox
 } from "lucide-react";
-import { useInstructorDocuments, useUploadDocument, useDeleteDocument } from "@/hooks/useInstructorApi";
+import { useInstructorDocuments, useDeleteDocument } from "@/hooks/useInstructorApi";
 import type { DocumentListQuery } from "@/types/instructor";
 import { UploadDocumentDialog } from "./UploadDocumentDialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,30 +36,49 @@ export default function DocumentsPage() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState("all");
   const [isUploadDialogOpen, setIsUploadDialogOpen] = React.useState(false);
+  const [selectedDocument, setSelectedDocument] = React.useState<any>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
 
   // API query parameters
-  const queryParams: DocumentListQuery = React.useMemo(() => ({
-    page,
-    limit,
-    search: searchTerm || undefined,
-    fileType: typeFilter !== "all" ? typeFilter : undefined,
-    sortBy: "uploadedAt",
-    sortOrder: "desc"
-  }), [page, limit, searchTerm, typeFilter]);
+  const queryParams: DocumentListQuery = React.useMemo(() => {
+    let fileType = undefined;
+    if (typeFilter !== "all") {
+      if (typeFilter === "word") {
+        // For word filter, we'll handle client-side filtering since API expects specific types
+        fileType = undefined;
+      } else {
+        fileType = typeFilter;
+      }
+    }
+    
+    return {
+      page,
+      limit,
+      search: searchTerm || undefined,
+      fileType,
+      sortBy: "uploadedAt",
+      sortOrder: "desc"
+    };
+  }, [page, limit, searchTerm, typeFilter]);
 
   // API hooks
   const { data: documentsData, isPending, isFetching } = useInstructorDocuments(queryParams);
-  const uploadDocumentMutation = useUploadDocument();
   const deleteDocumentMutation = useDeleteDocument();
 
   // Extract data from API response
-  const documents = documentsData?.data?.items || [];
+  const rawDocuments = documentsData?.data?.items || [];
   const pagination = documentsData?.data?.pagination;
-  const statistics = documentsData?.data?.statistics;
 
-  const totalDocuments = statistics?.totalDocuments || 0;
-  const totalDownloads = statistics?.totalDownloads || 0;
-  const totalSize = statistics?.totalSize || 0;
+  // Apply client-side filtering for "word" filter
+  const documents = React.useMemo(() => {
+    if (typeFilter === "word") {
+      return rawDocuments.filter((doc: any) => 
+        doc.fileType?.toLowerCase() === 'doc' || doc.fileType?.toLowerCase() === 'docx'
+      );
+    }
+    return rawDocuments;
+  }, [rawDocuments, typeFilter]);
+
   const total = pagination?.total || 0;
   const currentPage = pagination?.page || 1;
   const pageSize = pagination?.limit || 10;
@@ -78,21 +94,12 @@ export default function DocumentsPage() {
   };
 
   const getFileIcon = (type: string) => {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case "pdf":
         return <File className="h-4 w-4 text-red-500" />;
+      case "doc":
       case "docx":
         return <FileText className="h-4 w-4 text-blue-500" />;
-      case "png":
-      case "jpg":
-      case "jpeg":
-        return <Image className="h-4 w-4 text-green-500" />;
-      case "mp4":
-      case "avi":
-        return <Video className="h-4 w-4 text-purple-500" />;
-      case "zip":
-      case "rar":
-        return <Package className="h-4 w-4 text-orange-500" />;
       default:
         return <File className="h-4 w-4 text-gray-500" />;
     }
@@ -101,17 +108,13 @@ export default function DocumentsPage() {
   const getTypeBadge = (type: string) => {
     const colors: { [key: string]: string } = {
       pdf: "bg-red-100 text-red-800",
-      docx: "bg-blue-100 text-blue-800",
-      png: "bg-green-100 text-green-800",
-      jpg: "bg-green-100 text-green-800",
-      jpeg: "bg-green-100 text-green-800",
-      mp4: "bg-purple-100 text-purple-800",
-      zip: "bg-orange-100 text-orange-800",
-      rar: "bg-orange-100 text-orange-800"
+      doc: "bg-blue-100 text-blue-800",
+      docx: "bg-blue-100 text-blue-800"
     };
 
+    const normalizedType = type.toLowerCase();
     return (
-      <Badge className={colors[type] || "bg-gray-100 text-gray-800"}>
+      <Badge className={colors[normalizedType] || "bg-gray-100 text-gray-800"}>
         {type.toUpperCase()}
       </Badge>
     );
@@ -131,10 +134,59 @@ export default function DocumentsPage() {
     }
   };
 
+  const handleDownload = async (doc: any) => {
+    try {
+      // Call backend API to get download URL
+      const response = await fetch(`/api/documents/instructor/${doc.id}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get download URL');
+      }
+
+      const data = await response.json();
+      const downloadUrl = data.data?.downloadUrl || data.downloadUrl;
+
+      // Fetch the actual file
+      const fileResponse = await fetch(downloadUrl);
+      if (!fileResponse.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await fileResponse.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.name;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback to direct URL
+      window.open(doc.url, '_blank');
+    }
+  };
+
+  const handlePreview = (doc: any) => {
+    setSelectedDocument(doc);
+    setIsPreviewModalOpen(true);
+  };
+
   return (
     <div className="relative">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-card text-card-foreground rounded-lg border p-4">
           <div className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div className="text-sm font-medium">Tổng tài liệu</div>
@@ -170,7 +222,7 @@ export default function DocumentsPage() {
           <div className="text-2xl font-bold">{totalDocuments > 0 ? Math.round(totalDownloads / totalDocuments) : 0}</div>
           <p className="text-xs text-muted-foreground">Lượt tải/tài liệu</p>
         </div>
-      </div>
+      </div> */}
 
       {/* Search and Filters */}
       <div className="mb-4">
@@ -198,9 +250,7 @@ export default function DocumentsPage() {
                 <SelectContent>
                   <SelectItem value="all">Tất cả loại</SelectItem>
                   <SelectItem value="pdf">PDF</SelectItem>
-                  <SelectItem value="docx">Word</SelectItem>
-                  <SelectItem value="png">Hình ảnh</SelectItem>
-                  <SelectItem value="zip">Archive</SelectItem>
+                  <SelectItem value="word">Word (DOC/DOCX)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -258,31 +308,20 @@ export default function DocumentsPage() {
                   <span className="text-sm text-muted-foreground">{row.lectureTitle || 'Chung'}</span>
                 ),
               },
-              {
-                key: 'size',
-                label: 'Kích thước',
-                type: 'short',
-                render: (row: any) => (
-                  <span className="text-sm">{formatFileSize(row.size)}</span>
-                ),
-              },
+              // {
+              //   key: 'size',
+              //   label: 'Kích thước',
+              //   type: 'short',
+              //   render: (row: any) => (
+              //     <span className="text-sm">{formatFileSize(row.size)}</span>
+              //   ),
+              // },
               {
                 key: 'uploadedAt',
                 label: 'Ngày tải lên',
                 type: 'short',
                 render: (row: any) => (
                   <span className="text-sm text-muted-foreground">{formatDate(row.uploadedAt)}</span>
-                ),
-              },
-              {
-                key: 'downloadCount',
-                label: 'Lượt tải',
-                type: 'short',
-                render: (row: any) => (
-                  <div className="flex items-center space-x-1">
-                    <Download className="h-3 w-3" />
-                    <span className="text-sm">{row.downloadCount}</span>
-                  </div>
                 ),
               },
               {
@@ -297,11 +336,11 @@ export default function DocumentsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => window.open(row.url, '_blank')}>
+                      <DropdownMenuItem onClick={() => handlePreview(row)}>
                         <Eye className="h-4 w-4 mr-2" />
                         Xem trước
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => window.open(row.downloadUrl, '_blank')}>
+                      <DropdownMenuItem onClick={() => handleDownload(row)}>
                         <Download className="h-4 w-4 mr-2" />
                         Tải xuống
                       </DropdownMenuItem>
@@ -309,7 +348,7 @@ export default function DocumentsPage() {
                         <Upload className="h-4 w-4 mr-2" />
                         Cập nhật
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => handleDeleteDocument(row.id)}
                       >
@@ -352,6 +391,83 @@ export default function DocumentsPage() {
           queryClient.invalidateQueries({ queryKey: instructorQueryKeys.documents });
         }}
       />
+
+      {/* Preview Document Modal */}
+      {selectedDocument && (
+        <div
+          className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity ${
+            isPreviewModalOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          onClick={() => setIsPreviewModalOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="relative bg-background rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  {getFileIcon(selectedDocument.fileType)}
+                  <div>
+                    <h2 className="text-xl font-semibold">{selectedDocument.name}</h2>
+                    <div className="mt-1">
+                      {getTypeBadge(selectedDocument.fileType)}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsPreviewModalOpen(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Khóa học</p>
+                    <p className="font-medium">{selectedDocument.courseName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Bài giảng</p>
+                    <p className="font-medium">{selectedDocument.lectureTitle || 'Chung'}</p>
+                  </div>
+                  {/* <div>
+                    <p className="text-sm text-muted-foreground">Kích thước</p>
+                    <p className="font-medium">{formatFileSize(selectedDocument.size)}</p>
+                  </div> */}
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ngày tải lên</p>
+                    <p className="font-medium">{formatDate(selectedDocument.uploadedAt)}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button
+                    onClick={() => window.open(selectedDocument.url, '_blank')}
+                    className="flex-1"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Mở file
+                  </Button>
+                  <Button
+                    onClick={() => handleDownload(selectedDocument)}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Tải xuống
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
