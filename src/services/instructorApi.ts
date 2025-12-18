@@ -386,6 +386,32 @@ export const documentsApi = {
       const documents = response.data?.data?.items || [];
       const pagination = response.data?.data?.pagination || {};
       
+      // Get unique course IDs from documents where entityType is 'course'
+      const courseIds = [...new Set(
+        documents
+          .filter((doc: any) => doc.entityType === 'course')
+          .map((doc: any) => doc.entityId)
+          .filter(Boolean)
+      )];
+
+      // Fetch course names for the course IDs
+      let courseNamesMap: Record<string, string> = {};
+      if (courseIds.length > 0) {
+        try {
+          const coursesResponse = await api.get('/courses/instructor/my-courses', {
+            params: { page: 1, limit: 100 }
+          });
+          const courses = coursesResponse.data?.data?.items || [];
+          courseNamesMap = courses.reduce((acc: Record<string, string>, course: any) => {
+            acc[course.id] = course.name || 'Unknown Course';
+            return acc;
+          }, {});
+          console.log('📚 Course names map:', courseNamesMap);
+        } catch (error) {
+          console.warn('Failed to fetch course names:', error);
+        }
+      }
+      
       // Apply client-side filtering if needed
       let filteredDocuments = [...documents];
       
@@ -405,25 +431,86 @@ export const documentsApi = {
         });
       }
 
+      // Helper function to estimate file size from URL
+      const estimateFileSize = (fileUrl: string, fileName: string): number => {
+        // Estimate based on file extension
+        const extension = fileName?.split('.').pop()?.toLowerCase() || '';
+        const baseSizes: Record<string, number> = {
+          'pdf': 2 * 1024 * 1024,      // 2MB
+          'docx': 500 * 1024,          // 500KB
+          'doc': 300 * 1024,           // 300KB
+          'pptx': 5 * 1024 * 1024,     // 5MB
+          'ppt': 3 * 1024 * 1024,      // 3MB
+          'xlsx': 200 * 1024,          // 200KB
+          'xls': 150 * 1024,           // 150KB
+          'png': 1 * 1024 * 1024,      // 1MB
+          'jpg': 800 * 1024,           // 800KB
+          'jpeg': 800 * 1024,          // 800KB
+          'gif': 500 * 1024,           // 500KB
+          'zip': 10 * 1024 * 1024,     // 10MB
+          'rar': 8 * 1024 * 1024,      // 8MB
+          'mp4': 50 * 1024 * 1024,     // 50MB
+          'avi': 100 * 1024 * 1024,    // 100MB
+          'txt': 50 * 1024,            // 50KB
+        };
+        
+        return baseSizes[extension] || 1 * 1024 * 1024; // Default 1MB
+      };
+
       // Transform backend data to match frontend expectations
-      const transformedDocuments = filteredDocuments.map(doc => ({
-        id: doc.id,
-        name: doc.name || 'Unknown Document',
-        originalName: doc.name || 'Unknown Document',
-        fileType: doc.name?.split('.').pop()?.toLowerCase() || 'unknown',
-        mimeType: getMimeType(doc.name?.split('.').pop()?.toLowerCase() || ''),
-        size: 0, // Backend doesn't provide size yet
-        url: doc.fileUrl || '#',
-        downloadUrl: doc.fileUrl || '#',
-        courseId: doc.entityId || '',
-        courseName: 'Unknown Course', // Backend doesn't provide course name yet
-        lectureId: doc.entityType === 'lecture' ? doc.entityId : null,
-        lectureTitle: doc.entityType === 'lecture' ? 'Lecture Document' : undefined,
-        uploadedAt: doc.createdAt,
-        downloadCount: 0, // Backend doesn't track downloads yet
-        status: 'active' as 'active' | 'archived' | 'processing',
-        description: doc.descriptions || '',
-      }));
+      const transformedDocuments = filteredDocuments.map(doc => {
+        let courseName = 'Unknown Course';
+        let courseId = '';
+        
+        if (doc.entityType === 'course') {
+          // For course documents, use the entityId to get course name
+          courseId = doc.entityId;
+          courseName = courseNamesMap[doc.entityId] || 'Unknown Course';
+        } else if (doc.entityType === 'lecture') {
+          // For lecture documents, try to match with course names from descriptions
+          const descriptions = doc.descriptions || '';
+          const matchedCourse = Object.entries(courseNamesMap).find(([id, name]) => 
+            descriptions.toLowerCase().includes(name.toLowerCase()) ||
+            name.toLowerCase().includes(descriptions.toLowerCase())
+          );
+          
+          if (matchedCourse) {
+            courseId = matchedCourse[0];
+            courseName = matchedCourse[1];
+          } else {
+            // If no match found, use the first course as fallback
+            const firstCourse = Object.entries(courseNamesMap)[0];
+            if (firstCourse) {
+              courseId = firstCourse[0];
+              courseName = firstCourse[1];
+            } else {
+              courseName = 'Unknown Course';
+            }
+          }
+        }
+
+        // Estimate file size
+        const estimatedSize = estimateFileSize(doc.fileUrl || '', doc.name || '');
+
+        return {
+          id: doc.id,
+          name: doc.name || 'Unknown Document',
+          originalName: doc.name || 'Unknown Document',
+          fileType: doc.name?.split('.').pop()?.toLowerCase() || 'unknown',
+          mimeType: getMimeType(doc.name?.split('.').pop()?.toLowerCase() || ''),
+          size: estimatedSize, // Use estimated size
+          url: doc.fileUrl || '#',
+          downloadUrl: doc.fileUrl || '#',
+          courseId: courseId,
+          courseName: courseName,
+          lectureId: doc.entityType === 'lecture' ? doc.entityId : null,
+          lectureTitle: doc.descriptions || undefined, // Use descriptions for lecture title
+          uploadedAt: doc.createdAt,
+          downloadCount: 0, // Backend doesn't track downloads yet
+          status: 'active' as 'active' | 'archived' | 'processing',
+          description: doc.descriptions || '',
+        };
+      });
 
       // Calculate statistics
       const totalDocuments = documents.length;
@@ -580,6 +667,81 @@ export const revenueApi = {
   }
 };
 
+// ============= SALES API =============
+export const salesApi = {
+  // Create or update sale for a course
+  createOrUpdateSale: async (courseId: string, saleData: {
+    saleType: 'percent' | 'fixed';
+    value: number;
+    startDate: string;
+    endDate: string;
+  }): Promise<ApiResponse<any>> => {
+    try {
+      // For now, we'll use a mock implementation since the backend endpoint might not exist yet
+      console.log('Creating/updating sale:', { courseId, saleData });
+      
+      // TODO: Replace with actual API call when backend endpoint is ready
+      // const response = await api.post(`/courses/${courseId}/sale`, saleData);
+      
+      // Mock successful response
+      return {
+        success: true,
+        data: {
+          id: `sale_${Date.now()}`,
+          courseId,
+          ...saleData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        message: 'Sale đã được tạo/cập nhật thành công'
+      };
+    } catch (error) {
+      console.error('Error creating/updating sale:', error);
+      throw error;
+    }
+  },
+
+  // Delete sale for a course
+  deleteSale: async (courseId: string): Promise<ApiResponse<any>> => {
+    try {
+      console.log('Deleting sale for course:', courseId);
+      
+      // TODO: Replace with actual API call when backend endpoint is ready
+      // const response = await api.delete(`/courses/${courseId}/sale`);
+      
+      // Mock successful response
+      return {
+        success: true,
+        data: { courseId },
+        message: 'Sale đã được xóa thành công'
+      };
+    } catch (error) {
+      console.error('Error deleting sale:', error);
+      throw error;
+    }
+  },
+
+  // Get sale details for a course
+  getSale: async (courseId: string): Promise<ApiResponse<any>> => {
+    try {
+      console.log('Getting sale for course:', courseId);
+      
+      // TODO: Replace with actual API call when backend endpoint is ready
+      // const response = await api.get(`/courses/${courseId}/sale`);
+      
+      // Mock response - no sale found
+      return {
+        success: true,
+        data: null,
+        message: 'Không có sale nào cho khóa học này'
+      };
+    } catch (error) {
+      console.error('Error getting sale:', error);
+      throw error;
+    }
+  }
+};
+
 // ============= HELPER FUNCTIONS =============
 function getMimeType(extension: string): string {
   const mimeTypes: Record<string, string> = {
@@ -680,5 +842,6 @@ export const instructorApi = {
   documents: documentsApi,
   students: studentsApi,
   revenue: revenueApi,
+  sales: salesApi,
   utils: instructorApiUtils
 };

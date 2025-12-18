@@ -9,6 +9,8 @@ import Switch from "@/components/ui/switch"
 import { AdminActionDialog } from "@/components/admin/common/AdminActionDialog"
 import Link from "next/link"
 import { notify } from "@/components/shared/admin/Notifications"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { useAppStore } from "@/stores/useAppStore"
 import { useCourseList, useToggleCourseStatus, useDeleteCourse, type Course } from "@/components/shared/course/useCourse"
 import { useParentCategories } from "@/components/shared/category/useCategory"
@@ -16,7 +18,6 @@ import { Plus, Pencil, Trash2, Inbox, ExternalLink, Image as ImageIcon } from "l
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 import { SaleBadge } from "./components/SaleBadge"
 import { getSaleStatus, getDiscountPercentage } from "@/types/sale"
@@ -79,6 +80,39 @@ export default function Page() {
   const [openDelete, setOpenDelete] = React.useState(false)
   const [deletingTarget, setDeletingTarget] = React.useState<Course | null>(null)
   const onConfirmDelete = (c: Course) => { setDeletingTarget(c); setOpenDelete(true) }
+
+  // Sale management states
+  const [openSale, setOpenSale] = React.useState(false)
+  const [saleTarget, setSaleTarget] = React.useState<Course | null>(null)
+  const [saleForm, setSaleForm] = React.useState({
+    saleType: 'percent' as 'percent' | 'fixed',
+    value: '',
+    startDate: '',
+    endDate: '',
+  })
+
+  const openSaleDialog = (course: Course) => {
+    setSaleTarget(course)
+    const saleInfo = (course as any).saleInfo
+    if (saleInfo) {
+      // Edit existing sale
+      setSaleForm({
+        saleType: saleInfo.saleType || 'percent',
+        value: String(saleInfo.value || ''),
+        startDate: saleInfo.startDate ? new Date(saleInfo.startDate).toISOString().split('T')[0] : '',
+        endDate: saleInfo.endDate ? new Date(saleInfo.endDate).toISOString().split('T')[0] : '',
+      })
+    } else {
+      // Create new sale
+      setSaleForm({
+        saleType: 'percent',
+        value: '',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: '',
+      })
+    }
+    setOpenSale(true)
+  }
 
   // Remove primary action since we have inline button now
   React.useEffect(() => {
@@ -230,9 +264,9 @@ export default function Page() {
                 render: (row: Course) => (
                   <Link
                     href={`/instructor/courses/${row.id}`}
-                    className="hover:underline flex items-center gap-2 cursor-pointer"
+                    className="flex items-center gap-2 text-foreground hover:text-primary hover:underline focus:outline-none focus:text-primary focus:underline transition-colors duration-200"
                   >
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink className="h-4 w-4 flex-shrink-0" />
 
                     <TruncateTooltipWrapper lineClamp={1} maxWidth={260}>
                       <span>{row.name}</span>
@@ -303,6 +337,53 @@ export default function Page() {
                 },
               },
               {
+                key: 'sale',
+                label: 'Sale',
+                type: 'short',
+                render: (row: Course) => {
+                  const saleInfo = (row as any).saleInfo
+                  const saleStatus = getSaleStatus(saleInfo)
+                  const hasSale = saleStatus !== 'none'
+                  
+                  return (
+                    <div className="flex flex-col items-center gap-1">
+                      <button
+                        type="button"
+                        className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                          hasSale 
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                        onClick={() => openSaleDialog(row)}
+                        title={hasSale ? 'Đang có sale - Click để chỉnh sửa' : 'Không có sale - Click để tạo'}
+                      >
+                        {hasSale ? (
+                          <div className="flex items-center gap-1">
+                            <span>🏷️</span>
+                            <span>
+                              {saleInfo?.saleType === 'percent' 
+                                ? `-${saleInfo.value}%`
+                                : `-${saleInfo.value.toLocaleString()}đ`
+                              }
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <span>➕</span>
+                            <span>Tạo sale</span>
+                          </div>
+                        )}
+                      </button>
+                      {hasSale && saleInfo && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(saleInfo.endDate).toLocaleDateString('vi-VN')}
+                        </span>
+                      )}
+                    </div>
+                  )
+                },
+              },
+              {
                 key: 'status',
                 label: 'Trạng thái',
                 type: 'short',
@@ -358,7 +439,7 @@ export default function Page() {
                   <div className="flex items-center justify-center gap-3">
                     <Link
                       href={`/instructor/courses/edit/${row.id}`}
-                      className="inline-flex text-muted-foreground hover:text-foreground"
+                      className="inline-flex text-muted-foreground hover:text-foreground focus:outline-none focus:text-foreground transition-colors duration-200"
                     >
                       <Pencil className="h-5 w-5" />
                     </Link>
@@ -414,6 +495,181 @@ export default function Page() {
           })
         }}
       />
+
+      {/* Sale Management Dialog */}
+      <Dialog open={openSale} onOpenChange={setOpenSale}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {(saleTarget as any)?.saleInfo ? 'Chỉnh sửa sale' : 'Tạo sale mới'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Khóa học</Label>
+              <div className="p-2 bg-muted rounded-md text-sm">
+                {saleTarget?.name}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Loại giảm giá</Label>
+              <Select 
+                value={saleForm.saleType} 
+                onValueChange={(value: 'percent' | 'fixed') => 
+                  setSaleForm(prev => ({ ...prev, saleType: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percent">Giảm theo phần trăm (%)</SelectItem>
+                  <SelectItem value="fixed">Giảm số tiền cố định (VNĐ)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>
+                Giá trị giảm {saleForm.saleType === 'percent' ? '(%)' : '(VNĐ)'}
+              </Label>
+              <Input
+                type="number"
+                placeholder={saleForm.saleType === 'percent' ? 'Ví dụ: 20' : 'Ví dụ: 100000'}
+                value={saleForm.value}
+                onChange={(e) => setSaleForm(prev => ({ ...prev, value: e.target.value }))}
+                min="1"
+                max={saleForm.saleType === 'percent' ? '99' : undefined}
+              />
+              {saleForm.saleType === 'percent' && (
+                <p className="text-xs text-muted-foreground">
+                  Giảm tối đa 99%
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Ngày bắt đầu</Label>
+                <Input
+                  type="date"
+                  value={saleForm.startDate}
+                  onChange={(e) => setSaleForm(prev => ({ ...prev, startDate: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Ngày kết thúc</Label>
+                <Input
+                  type="date"
+                  value={saleForm.endDate}
+                  onChange={(e) => setSaleForm(prev => ({ ...prev, endDate: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {saleTarget && saleForm.value && (
+              <div className="p-3 bg-blue-50 rounded-md">
+                <div className="text-sm font-medium text-blue-900">Xem trước:</div>
+                <div className="text-xs text-blue-700 mt-1">
+                  Giá gốc: {Number(saleTarget.price).toLocaleString()} VNĐ
+                </div>
+                <div className="text-xs text-blue-700">
+                  Giá sau giảm: {(() => {
+                    const originalPrice = Number(saleTarget.price)
+                    const discountValue = Number(saleForm.value)
+                    const salePrice = saleForm.saleType === 'percent'
+                      ? originalPrice * (1 - discountValue / 100)
+                      : originalPrice - discountValue
+                    return Math.max(0, salePrice).toLocaleString()
+                  })()} VNĐ
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex justify-between">
+            <div>
+              {(saleTarget as any)?.saleInfo && (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={async () => {
+                    if (!saleTarget) return;
+                    
+                    try {
+                      const { instructorApi } = await import('@/services/instructorApi');
+                      
+                      await instructorApi.sales.deleteSale(saleTarget.id);
+                      
+                      notify({ 
+                        title: "Thành công", 
+                        description: "Sale đã được xóa thành công",
+                        variant: "success" 
+                      });
+                      setOpenSale(false);
+                      
+                    } catch (error) {
+                      console.error('Error deleting sale:', error);
+                      notify({ 
+                        title: "Lỗi", 
+                        description: "Không thể xóa sale. Vui lòng thử lại.",
+                        variant: "destructive" 
+                      });
+                    }
+                  }}
+                >
+                  Xóa sale
+                </Button>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setOpenSale(false)}>
+                Hủy
+              </Button>
+              <Button 
+                onClick={async () => {
+                  if (!saleTarget) return;
+                  
+                  try {
+                    const { instructorApi } = await import('@/services/instructorApi');
+                    
+                    await instructorApi.sales.createOrUpdateSale(saleTarget.id, {
+                      saleType: saleForm.saleType,
+                      value: Number(saleForm.value),
+                      startDate: saleForm.startDate,
+                      endDate: saleForm.endDate,
+                    });
+                    
+                    notify({ 
+                      title: "Thành công", 
+                      description: "Sale đã được lưu thành công",
+                      variant: "success" 
+                    });
+                    setOpenSale(false);
+                    
+                    // Refresh the courses list to show updated sale info
+                    // The useCourseList hook should automatically refetch
+                    
+                  } catch (error) {
+                    console.error('Error saving sale:', error);
+                    notify({ 
+                      title: "Lỗi", 
+                      description: "Không thể lưu sale. Vui lòng thử lại.",
+                      variant: "destructive" 
+                    });
+                  }
+                }}
+                disabled={!saleForm.value || !saleForm.startDate || !saleForm.endDate}
+              >
+                Lưu sale
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

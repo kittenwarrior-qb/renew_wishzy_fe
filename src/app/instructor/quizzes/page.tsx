@@ -87,7 +87,7 @@ const InstructorQuizzesPage = () => {
   };
 
   return (
-    <div className="relative max-w-[1500px]">
+    <div className="relative w-full">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-card text-card-foreground rounded-lg border p-4">
@@ -157,9 +157,9 @@ const InstructorQuizzesPage = () => {
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">📋 Tất cả trạng thái</SelectItem>
-                  <SelectItem value="public">🌐 Công khai</SelectItem>
-                  <SelectItem value="private">🔒 Riêng tư</SelectItem>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="public">Công khai</SelectItem>
+                  <SelectItem value="private">Riêng tư</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -173,7 +173,7 @@ const InstructorQuizzesPage = () => {
         </div>
       </div>
 
-      <div className="relative min-h-[300px]">
+      <div className="relative min-h-[300px] max-w-[1300px]">
         <LoadingOverlay show={isLoading} />
 
         {isError ? (

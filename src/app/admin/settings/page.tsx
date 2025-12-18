@@ -1,291 +1,225 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "sonner"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import Switch from "@/components/ui/switch"
-import { useAppStore } from "@/stores/useAppStore"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  useInstructorRevenuePercentage,
+  useUpdateSystemSetting,
+} from "@/hooks/useSystemSettings"
+import { SETTING_KEYS } from "@/services/system-settings"
 
 export default function Page() {
-  const [displayName, setDisplayName] = React.useState("")
-  const [supportEmail, setSupportEmail] = React.useState("support@wishzy.com")
-  const [platformName, setPlatformName] = React.useState("Wishzy Academy")
-  const [platformTagline, setPlatformTagline] = React.useState("Nền tảng học tập trực tuyến cho mọi người")
-  const [announcement, setAnnouncement] = React.useState("")
+  const { data: revenueData, isLoading, isError } = useInstructorRevenuePercentage()
+  const { mutate: updateSetting, isPending: isSaving } = useUpdateSystemSetting()
 
-  const [compactMode, setCompactMode] = React.useState(false)
+  // Local state for editing - default to 70% if setting doesn't exist
+  const [instructorShare, setInstructorShare] = React.useState<string>("70")
+  const [hasChanges, setHasChanges] = React.useState(false)
 
-  const [emailNotifications, setEmailNotifications] = React.useState(true)
-  const [systemNotifications, setSystemNotifications] = React.useState(true)
-  const [reportsNotifications, setReportsNotifications] = React.useState(false)
+  // Sync with server data, or keep default if not found
+  React.useEffect(() => {
+    if (revenueData?.value) {
+      setInstructorShare(revenueData.value)
+      setHasChanges(false)
+    }
+    // If error (404 - not found), keep default value of 70%
+  }, [revenueData?.value])
 
-  const maintenanceMode = useAppStore((state) => state.maintenanceMode)
-  const setMaintenanceMode = useAppStore((state) => state.setMaintenanceMode)
-  const [allowTeacherSignup, setAllowTeacherSignup] = React.useState(true)
+  const platformShare = 100 - parseInt(instructorShare || "70")
 
-  const theme = useAppStore((state) => state.theme)
-  const toggleTheme = useAppStore((state) => state.toggleTheme)
-  const isDarkMode = theme === "dark"
+  const handleValueChange = (value: string) => {
+    setInstructorShare(value)
+    setHasChanges(value !== revenueData?.value)
+  }
+
+  const handleSave = () => {
+    updateSetting(
+      {
+        key: SETTING_KEYS.INSTRUCTOR_REVENUE_PERCENTAGE,
+        payload: {
+          value: instructorShare,
+          description: "Tỉ lệ phần trăm doanh thu instructor nhận được",
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Đã lưu cài đặt", {
+            description: `Tỷ lệ chia sẻ: Giảng viên ${instructorShare}% - Nền tảng ${platformShare}%`,
+          })
+          setHasChanges(false)
+        },
+        onError: (error) => {
+          toast.error("Lưu thất bại", {
+            description: "Đã có lỗi xảy ra. Vui lòng thử lại.",
+          })
+          console.error("Failed to update setting:", error)
+        },
+      }
+    )
+  }
+
+  const handleReset = () => {
+    setInstructorShare("70")
+    setHasChanges("70" !== revenueData?.value)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-6 space-y-4">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-4 w-80" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex flex-col gap-2">
         <h1 className="text-xl font-semibold">Thiết lập hệ thống</h1>
         <p className="text-sm text-muted-foreground max-w-2xl">
-          Tuỳ chỉnh thông tin nền tảng, giao diện, thông báo và một số tuỳ chọn hệ thống cho trang quản trị.
+          Cấu hình phân chia doanh thu giữa nền tảng và giảng viên.
         </p>
       </div>
 
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="mb-4 h-9 text-[12px]">
-          <TabsTrigger value="general">Chung</TabsTrigger>
-          <TabsTrigger value="appearance">Giao diện</TabsTrigger>
-          <TabsTrigger value="notifications">Thông báo</TabsTrigger>
-          <TabsTrigger value="system">Hệ thống</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="general" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle className="text-sm font-semibold">Thông tin nền tảng</CardTitle>
-                <CardDescription>
-                  Các thông tin này sẽ hiển thị ở nhiều nơi trên hệ thống (tiêu đề trang, email hệ thống, v.v.).
-                </CardDescription>
+      <Card>
+        <CardHeader>
+          <div>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-sm font-semibold">Chia sẻ doanh thu</CardTitle>
+              {!revenueData && !isError && (
+                <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-2 py-0.5 rounded">
+                  Chưa cấu hình
+                </span>
+              )}
+            </div>
+            <CardDescription>
+              Thiết lập tỷ lệ phần trăm chia sẻ doanh thu giữa nền tảng và giảng viên cho mỗi khóa học được bán.
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Revenue Split Visualization */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <Label htmlFor="instructor-share" className="mb-2 block">Tỷ lệ giảng viên nhận</Label>
+                <Select value={instructorShare} onValueChange={handleValueChange}>
+                  <SelectTrigger id="instructor-share" className="w-full">
+                    <SelectValue placeholder="Chọn tỷ lệ" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="50">Giảng viên 50% - Nền tảng 50%</SelectItem>
+                    <SelectItem value="60">Giảng viên 60% - Nền tảng 40%</SelectItem>
+                    <SelectItem value="65">Giảng viên 65% - Nền tảng 35%</SelectItem>
+                    <SelectItem value="70">Giảng viên 70% - Nền tảng 30% (Mặc định)</SelectItem>
+                    <SelectItem value="75">Giảng viên 75% - Nền tảng 25%</SelectItem>
+                    <SelectItem value="80">Giảng viên 80% - Nền tảng 20%</SelectItem>
+                    <SelectItem value="85">Giảng viên 85% - Nền tảng 15%</SelectItem>
+                    <SelectItem value="90">Giảng viên 90% - Nền tảng 10%</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="platform-name">Tên nền tảng</Label>
-                  <Input
-                    id="platform-name"
-                    placeholder="VD: Wishzy Academy"
-                    value={platformName}
-                    onChange={(e) => setPlatformName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="platform-tagline">Mô tả ngắn</Label>
-                  <Input
-                    id="platform-tagline"
-                    placeholder="VD: Nền tảng học tập trực tuyến cho mọi người"
-                    value={platformTagline}
-                    onChange={(e) => setPlatformTagline(e.target.value)}
-                  />
-                </div>
-              </div>
+            </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="display-name">Tên hiển thị quản trị viên</Label>
-                  <Input
-                    id="display-name"
-                    placeholder="VD: Nguyễn Văn A"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                  />
+            {/* Visual Bar */}
+            <div className="space-y-2">
+              <div className="flex h-8 rounded-lg overflow-hidden border">
+                <div 
+                  className="bg-green-500 flex items-center justify-center text-xs font-medium text-white transition-all duration-300"
+                  style={{ width: `${instructorShare}%` }}
+                >
+                  {parseInt(instructorShare) >= 15 && `${instructorShare}%`}
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="support-email">Email hỗ trợ</Label>
-                  <Input
-                    id="support-email"
-                    type="email"
-                    placeholder="support@wishzy.com"
-                    value={supportEmail}
-                    onChange={(e) => setSupportEmail(e.target.value)}
-                  />
+                <div 
+                  className="bg-primary flex items-center justify-center text-xs font-medium text-primary-foreground transition-all duration-300"
+                  style={{ width: `${platformShare}%` }}
+                >
+                  {platformShare >= 15 && `${platformShare}%`}
                 </div>
               </div>
-
-              <Separator className="my-2" />
-
-              <div className="space-y-1.5">
-                <Label htmlFor="announcement">Thông báo nổi bật</Label>
-                <Textarea
-                  id="announcement"
-                  placeholder="Nhập thông báo chung cho toàn hệ thống (tuỳ chọn)."
-                  value={announcement}
-                  onChange={(e) => setAnnouncement(e.target.value)}
-                  rows={3}
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  Thông báo này có thể được hiển thị ở trang dashboard hoặc các khu vực quan trọng khác.
-                </p>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm">
-                  Huỷ
-                </Button>
-                <Button size="sm">
-                  Lưu thay đổi
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="appearance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">Giao diện dashboard</CardTitle>
-              <CardDescription>
-                Tuỳ chỉnh cảm giác sử dụng trang quản trị cho phù hợp với bạn.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Chế độ tối (dark mode)</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Sử dụng giao diện tối giúp giảm mỏi mắt khi làm việc lâu trên dashboard.
-                  </p>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-green-500"></div>
+                  <span>Giảng viên: {instructorShare}%</span>
                 </div>
-                <Switch
-                  checked={isDarkMode}
-                  onCheckedChange={(value) => {
-                    if (value && theme === "light") toggleTheme()
-                    if (!value && theme === "dark") toggleTheme()
-                  }}
-                  aria-label="Bật/tắt dark mode"
-                />
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-primary"></div>
+                  <span>Nền tảng: {platformShare}%</span>
+                </div>
               </div>
+            </div>
+          </div>
 
+          <Separator />
+
+          {/* Example Calculation */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium">Ví dụ tính toán</h4>
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Giá khóa học:</span>
+                <span className="font-medium">500.000 ₫</span>
+              </div>
               <Separator />
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Giao diện cô đọng (compact)</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Giảm khoảng cách giữa các phần tử để hiển thị được nhiều nội dung hơn trên màn hình.
-                  </p>
-                </div>
-                <Switch
-                  checked={compactMode}
-                  onCheckedChange={setCompactMode}
-                  aria-label="Bật/tắt compact mode"
-                />
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Giảng viên nhận ({instructorShare}%):</span>
+                <span className="font-medium text-green-600">{(500000 * parseInt(instructorShare) / 100).toLocaleString('vi-VN')} ₫</span>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">Thông báo</CardTitle>
-              <CardDescription>
-                Quản lý cách hệ thống gửi thông báo cho bạn.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Email thông báo</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Nhận email khi có sự kiện quan trọng (đơn hàng mới, báo cáo lỗi, v.v.).
-                  </p>
-                </div>
-                <Switch
-                  checked={emailNotifications}
-                  onCheckedChange={setEmailNotifications}
-                  aria-label="Bật/tắt email thông báo"
-                />
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Nền tảng nhận ({platformShare}%):</span>
+                <span className="font-medium text-primary">{(500000 * platformShare / 100).toLocaleString('vi-VN')} ₫</span>
               </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Tỷ lệ này áp dụng cho tất cả khóa học mới. Các khóa học đã tồn tại sẽ giữ nguyên tỷ lệ cũ.
+            </p>
+          </div>
 
-              <Separator />
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Thông báo trong hệ thống</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Hiển thị banner/thông báo trong dashboard khi có cập nhật mới.
-                  </p>
-                </div>
-                <Switch
-                  checked={systemNotifications}
-                  onCheckedChange={setSystemNotifications}
-                  aria-label="Bật/tắt thông báo trong hệ thống"
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Báo cáo định kỳ qua email</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Gửi báo cáo tổng quan doanh thu và người dùng theo chu kỳ (tuần/tháng).
-                  </p>
-                </div>
-                <Switch
-                  checked={reportsNotifications}
-                  onCheckedChange={setReportsNotifications}
-                  aria-label="Bật/tắt báo cáo định kỳ"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="system" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">Tuỳ chọn hệ thống</CardTitle>
-              <CardDescription>
-                Một số tuỳ chọn ảnh hưởng đến cách hệ thống vận hành.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Chế độ bảo trì</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Khi bật, học viên không thể truy cập khoá học. Chỉ admin mới truy cập được.
-                  </p>
-                </div>
-                <Switch
-                  checked={maintenanceMode}
-                  onCheckedChange={setMaintenanceMode}
-                  aria-label="Bật/tắt chế độ bảo trì"
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Cho phép giảng viên tự đăng ký</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Nếu tắt, chỉ admin mới có thể tạo tài khoản giảng viên mới.
-                  </p>
-                </div>
-                <Switch
-                  checked={allowTeacherSignup}
-                  onCheckedChange={setAllowTeacherSignup}
-                  aria-label="Bật/tắt giảng viên tự đăng ký"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm">
-                  Khôi phục mặc định
-                </Button>
-                <Button size="sm">
-                  Lưu cấu hình hệ thống
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleReset}
+              disabled={isSaving}
+            >
+              Khôi phục mặc định
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={handleSave}
+              disabled={!hasChanges || isSaving}
+            >
+              {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
