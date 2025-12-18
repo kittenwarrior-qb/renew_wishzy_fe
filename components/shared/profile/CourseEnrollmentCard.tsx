@@ -185,11 +185,11 @@ export const CourseEnrollmentCard = ({
 
                 {/* Current Lecture Info */}
                 {lectureOnlearning && (
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4">
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4 transition-all duration-300 hover:bg-primary/10 hover:border-primary/30 hover:shadow-md cursor-pointer">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1">
                         <p className="text-xs text-muted-foreground mb-1">Đang học</p>
-                        <p className="text-sm font-medium text-foreground line-clamp-1">
+                        <p className="text-sm font-medium text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                           {lectureName || 'Bài giảng hiện tại'}
                         </p>
                       </div>

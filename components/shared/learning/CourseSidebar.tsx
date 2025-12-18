@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { ChevronDown, ChevronRight, Play, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { enrollmentService } from '@/services/enrollment';
-import type { Course } from '@/types/learning';
+import { enrollmentService } from '@/src/services/enrollment';
+import type { Course } from '@/src/types/learning';
 
 interface CourseSidebarProps {
   course: Course;
@@ -24,19 +23,20 @@ export function CourseSidebar({
   completedLectureIds,
   onRefreshCompleted 
 }: CourseSidebarProps) {
-  const params = useParams();
-  const locale = params.locale as string;
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [finishedLectures, setFinishedLectures] = useState<string[]>([]);
   const [totalLectures, setTotalLectures] = useState(0);
 
-  // Fetch enrollment data for completed lectures
+  // Fetch enrollment data for completed lectures (only if not provided via props)
   useEffect(() => {
+    // If completedLectureIds is provided from parent, use that instead of fetching
+    if (completedLectureIds && completedLectureIds.length > 0) {
+      setFinishedLectures(completedLectureIds);
+      return;
+    }
+    
     const fetchEnrollment = async () => {
       try {
-        // Reset state when courseId changes
-        setFinishedLectures([]);
-        
         const enrollment = await enrollmentService.getEnrollmentByCourseId(courseId);
         if (enrollment?.attributes?.finishedLectures) {
           setFinishedLectures(enrollment.attributes.finishedLectures);
@@ -46,11 +46,12 @@ export function CourseSidebar({
       }
     };
     fetchEnrollment();
-  }, [courseId]);
+  }, [courseId, completedLectureIds]);
 
   // Update finishedLectures when completedLectureIds prop changes
+  // This takes priority over API data to ensure immediate UI updates
   useEffect(() => {
-    if (completedLectureIds && completedLectureIds.length > 0) {
+    if (completedLectureIds) {
       setFinishedLectures(completedLectureIds);
     }
   }, [completedLectureIds]);
@@ -87,7 +88,7 @@ export function CourseSidebar({
   };
 
   return (
-    <div className="w-full h-screen bg-card border-r flex flex-col sticky top-16">
+    <div className="w-full h-[calc(100vh-4rem)] bg-card border-r flex flex-col sticky top-16">
       {/* Header */}
       <div className="p-4 border-b shrink-0">
         <h2 className="font-semibold text-lg mb-2">{course.title}</h2>
@@ -105,8 +106,26 @@ export function CourseSidebar({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-thin">
-        {course.chapters.map((chapter) => (
+      <div className="flex-1 overflow-y-auto overflow-x-hidden"
+           style={{
+             scrollbarWidth: 'thin',
+             scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) transparent'
+           }}>
+        {(() => {
+          // Build flat list of all lectures across all chapters for sequential access check
+          const allLecturesFlat: Array<{ id: string; chapterId: string }> = [];
+          course.chapters.forEach(ch => {
+            const sortedLectures = [...ch.lectures].sort((a, b) => {
+              const orderA = a.orderIndex ?? a.order ?? 0;
+              const orderB = b.orderIndex ?? b.order ?? 0;
+              return orderA - orderB;
+            });
+            sortedLectures.forEach(lec => {
+              allLecturesFlat.push({ id: lec.id, chapterId: ch.id });
+            });
+          });
+          
+          return course.chapters.map((chapter) => (
           <div key={chapter.id} className="border-b">
             <Button
               variant="ghost"
@@ -137,19 +156,62 @@ export function CourseSidebar({
                     const orderB = b.orderIndex ?? b.order ?? 0;
                     return orderA - orderB;
                   })
-                  .map((lecture) => (
-                  <Link
-                    key={lecture.id}
-                    href={`/${locale}/learning/${courseId}/${lecture.id}`}
-                    className={cn(
-                      "block px-4 py-3 ml-6 mr-2 rounded-lg transition-colors",
-                      currentLectureId === lecture.id
-                        ? "bg-primary/10 border border-primary/20"
-                        : "hover:bg-muted/50"
-                    )}
-                  >
+                  .map((lecture) => {
+                    // Find this lecture's position in the flat list
+                    const flatIndex = allLecturesFlat.findIndex(l => l.id === lecture.id);
+                    
+                    // First lecture overall is always accessible
+                    // Other lectures need the previous lecture (in flat list) to be completed
+                    const previousLectureInFlat = flatIndex > 0 ? allLecturesFlat[flatIndex - 1] : null;
+                    const canAccess = flatIndex === 0 || 
+                      !previousLectureInFlat || 
+                      finishedLectures.includes(previousLectureInFlat.id);
+                    
+                    const isLocked = !canAccess && !finishedLectures.includes(lecture.id);
+                    
+                    return isLocked ? (
+                      <div
+                        key={lecture.id}
+                        className={cn(
+                          "block px-4 py-3 ml-6 mr-2 rounded-lg transition-colors cursor-not-allowed",
+                          "bg-muted/30 border border-dashed border-muted-foreground/20"
+                        )}
+                        title="Hoàn thành bài học trước để mở khóa"
+                      >
+                        <div className="flex items-center gap-3 opacity-60">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-muted">
+                            <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0 flex items-start gap-2">
+                            <span className="text-sm shrink-0 w-6 text-left tabular-nums font-medium text-muted-foreground">
+                              {lecture.order}.
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm truncate font-medium text-muted-foreground">
+                                {lecture.title}
+                              </div>
+                              <div className="text-xs text-muted-foreground/70 mt-0.5">
+                                🔒 Khóa
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <Link
+                        key={lecture.id}
+                        href={`/learning/${courseId}/${lecture.id}`}
+                        className={cn(
+                          "block px-4 py-3 ml-6 mr-2 rounded-lg transition-colors",
+                          currentLectureId === lecture.id
+                            ? "bg-primary/10 border border-primary/20"
+                            : "hover:bg-muted/50"
+                        )}
+                      >
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0">
                         {finishedLectures.includes(lecture.id) ? (
                           <CheckCircle className="w-4 h-4 text-green-500" />
                         ) : (
@@ -158,7 +220,7 @@ export function CourseSidebar({
                       </div>
                       <div className="flex-1 min-w-0 flex items-start gap-2">
                         <span className={cn(
-                          "text-sm flex-shrink-0 w-6 text-left tabular-nums font-medium",
+                          "text-sm shrink-0 w-6 text-left tabular-nums font-medium",
                           currentLectureId === lecture.id ? "text-primary" : "text-foreground"
                         )}>
                           {lecture.order}.
@@ -174,11 +236,13 @@ export function CourseSidebar({
                       </div>
                     </div>
                   </Link>
-                  ))}
+                    );
+                  })}
               </div>
             )}
           </div>
-        ))}
+          ));
+        })()}
       </div>
     </div>
   );

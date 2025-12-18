@@ -4,17 +4,20 @@ import { useRef, useEffect, useState } from 'react';
 import videojs from 'video.js';
 import '@videojs/http-streaming';
 import 'video.js/dist/video-js.css';
+import '@/styles/video-player.css';
 import { Button } from '@/components/ui/button';
 import { SkipBack, SkipForward, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { 
   LectureProgress, 
   UpdateLectureProgressDto,
   VideoPlayerOptions 
-} from '@/types/learning';
-import { enrollmentsApi } from '@/services/enrollments';
-import { getVideoSourceInfo } from '@/utils/videoUrlHelper';
+} from '@/src/types/learning';
+import { enrollmentsApi } from '@/src/services/enrollments';
+import { getVideoSourceInfo } from '@/src/utils/videoUrlHelper';
 
 const SAVE_INTERVAL = 15000;
+const ALLOW_SEEKING = process.env.NEXT_PUBLIC_ALLOW_VIDEO_SEEKING === 'true';
 
 interface VideoPlayerProps {
   enrollmentId: string;
@@ -52,6 +55,9 @@ export function VideoPlayer({
   const [isCompleted, setIsCompleted] = useState(false);
   const isSavingRef = useRef(false);
   const hasTriggeredCompletionRef = useRef(false);
+  const maxWatchedTimeRef = useRef<number>(0); // Track furthest point watched
+  const lastKnownTimeRef = useRef<number>(0); // Track last known position before seeking
+  const isSeekingRef = useRef(false); // Track if currently seeking
 
   const saveProgressToAPI = async (progress: UpdateLectureProgressDto) => {
     try {
@@ -126,7 +132,7 @@ export function VideoPlayer({
   useEffect(() => {
     setIsMounted(true);
 
-    // Check if lecture is already completed
+    // Check if lecture is already completed and load max watched time
     const checkCompletion = async () => {
       try {
         const enrollment = await enrollmentsApi.getEnrollment(enrollmentId);
@@ -134,6 +140,12 @@ export function VideoPlayer({
         if (finishedLectures.includes(lectureId)) {
           setIsCompleted(true);
           hasTriggeredCompletionRef.current = true;
+        }
+        
+        // Load max watched time from saved progress
+        const lectureOnlearning = enrollment.attributes?.lectureOnlearning;
+        if (lectureOnlearning && String(lectureOnlearning.lectureId) === String(lectureId)) {
+          maxWatchedTimeRef.current = lectureOnlearning.currentTime ?? 0;
         }
       } catch (error) {
         // Ignore error
@@ -154,36 +166,25 @@ export function VideoPlayer({
 
     const handleSeekToTime = (event: CustomEvent) => {
       const { seconds } = event.detail;
-      console.log('VideoPlayer received seekToTime event:', seconds);
-      console.log('Player ref exists:', !!playerRef.current);
-      console.log('Player disposed:', playerRef.current?.isDisposed());
       
       if (playerRef.current && !playerRef.current.isDisposed()) {
         try {
           playerRef.current.currentTime(seconds);
           playerRef.current.play();
-          console.log('Video seeked to:', seconds, 'and playing');
         } catch (error) {
           console.error('Error seeking video:', error);
         }
-      } else {
-        console.warn('Player not ready for seeking');
       }
     };
 
     const handleRequestCurrentTime = () => {
-      console.log('VideoPlayer received requestCurrentTime event');
-      console.log('Player ref exists:', !!playerRef.current);
-      
       if (playerRef.current && !playerRef.current.isDisposed()) {
         const currentTime = playerRef.current.currentTime() || 0;
-        console.log('Sending current time:', currentTime);
         const event = new CustomEvent('currentTimeResponse', { 
           detail: { currentTime } 
         });
         window.dispatchEvent(event);
       } else {
-        console.warn('Player not ready, sending default time');
         const event = new CustomEvent('currentTimeResponse', { 
           detail: { currentTime: 0 } 
         });
@@ -220,9 +221,24 @@ export function VideoPlayer({
     lastProgressRef.current = null;
     setIsCompleted(false);
 
+    // Validate video URL first
+    if (!videoUrl || videoUrl.trim() === '') {
+      // This is expected for lectures without video - show friendly message
+      setVideoError('Bài giảng này chưa có video. Vui lòng liên hệ giảng viên để được hỗ trợ.');
+      setIsLoading(false);
+      return;
+    }
+
     // Get video source information
     const videoSource = getVideoSourceInfo(videoUrl);
-    console.log('Video source info:', videoSource);
+
+    // Validate video source
+    if (!videoSource.url || videoSource.type === 'unknown') {
+      console.error('Invalid video URL format:', videoUrl);
+      setVideoError('Định dạng URL video không hợp lệ. Vui lòng kiểm tra lại.');
+      setIsLoading(false);
+      return;
+    }
 
     // Add small delay to ensure DOM is fully ready
     const initTimeout = setTimeout(() => {
@@ -253,57 +269,65 @@ export function VideoPlayer({
         },
       };
 
-      const player = videojs(videoRef.current, options);
+      let player: any;
+      try {
+        player = videojs(videoRef.current, options);
+        playerRef.current = player;
 
-      playerRef.current = player;
+        // Set source with proper type
+        player.src({
+          src: videoSource.url,
+          type: videoSource.mimeType,
+        });
 
-      // Set source with proper type
-      player.src({
-        src: videoSource.url,
-        type: videoSource.mimeType,
-      });
-
-      // Error handling for streaming issues
-      player.on('error', () => {
+        // Error handling for streaming issues
+        player.on('error', () => {
         const error = player.error();
         console.error('Video.js error:', error);
+        console.error('Video URL:', videoUrl);
+        console.error('Processed source:', videoSource);
         setIsLoading(false);
         
         if (error) {
-          let errorMessage = 'Failed to load video';
+          let errorMessage = 'Không thể tải video';
           
           switch (error.code) {
             case 1:
-              errorMessage = 'Video loading aborted';
+              errorMessage = 'Tải video bị hủy';
               break;
             case 2:
-              errorMessage = 'Network error - please check your connection';
+              errorMessage = 'Lỗi mạng - vui lòng kiểm tra kết nối';
               break;
             case 3:
-              errorMessage = 'Video format not supported';
+              errorMessage = 'Định dạng video không được hỗ trợ';
               break;
             case 4:
-              errorMessage = 'Video source not found or CORS blocked';
+              errorMessage = 'Không tìm thấy video hoặc bị chặn CORS. Vui lòng kiểm tra URL video.';
               break;
             default:
-              errorMessage = `Video error (code: ${error.code})`;
+              errorMessage = `Lỗi video (mã: ${error.code})`;
           }
           
           setVideoError(errorMessage);
           
           // Try to reload for network errors
-          if (error.code === 2 || error.code === 4) {
-            console.log('Network error detected, attempting to reload in 3 seconds...');
+          if (error.code === 2) {
             setTimeout(() => {
               if (playerRef.current && !playerRef.current.isDisposed()) {
                 setVideoError(null);
                 setIsLoading(true);
-                player.load();
+                playerRef.current.load();
               }
             }, 3000);
           }
         }
-      });
+        });
+      } catch (error) {
+        console.error('Error initializing video player:', error);
+        setVideoError('Không thể khởi tạo trình phát video');
+        setIsLoading(false);
+        return;
+      }
 
       // Load and apply saved progress
       let progressLoaded = false;
@@ -319,6 +343,7 @@ export function VideoPlayer({
           const lectureOnlearning = enrollment.attributes?.lectureOnlearning;
           if (lectureOnlearning && String(lectureOnlearning.lectureId) === String(lectureId)) {
             savedTimeToSeek = lectureOnlearning.currentTime ?? 0;
+            maxWatchedTimeRef.current = savedTimeToSeek; // Set initial max watched time
             const volume = (lectureOnlearning.volume ?? 100) / 100;
             
             player.volume(volume);
@@ -371,14 +396,53 @@ export function VideoPlayer({
         }, 300);
       });
 
+      const handleSeeking = () => {
+        // Skip seeking control if:
+        // 1. ALLOW_SEEKING is true (env variable)
+        // 2. Lecture is already completed
+        if (ALLOW_SEEKING || isCompleted) {
+          return;
+        }
+
+        const targetTime = player.currentTime() || 0;
+        const maxWatched = maxWatchedTimeRef.current;
+
+        // Check if user is trying to seek forward beyond watched content
+        if (targetTime > maxWatched + 2) {
+          isSeekingRef.current = true; // Prevent maxWatched update during forced seek
+          player.currentTime(maxWatched);
+          player.pause(); // Pause video when blocking seek
+          toast.warning('Bạn cần xem hết video mới có thể tua tới', {
+            duration: 2000,
+          });
+        }
+      };
+
+      const handleSeeked = () => {
+        // Reset seeking flag after a short delay to allow position to settle
+        setTimeout(() => {
+          isSeekingRef.current = false;
+        }, 100);
+      };
+
       const handleTimeUpdate = () => {
         const currentTime = player.currentTime() || 0;
         const duration = player.duration() || 0;
         
+        // Only update max watched time if:
+        // 1. Not currently seeking (to prevent updates during forced seek back)
+        // 2. Current time is greater than max watched
+        // 3. Video is playing (not paused)
+        if (!isSeekingRef.current && currentTime > maxWatchedTimeRef.current && !player.paused()) {
+          maxWatchedTimeRef.current = currentTime;
+        }
+        
+        // Check completion based on MAX WATCHED time, not current time
+        // This prevents completion when user seeks to 90%+ but hasn't actually watched it
         if (duration > 0 && !isNaN(duration)) {
-          const watchedPercentage = (currentTime / duration) * 100;
+          const maxWatchedPercentage = (maxWatchedTimeRef.current / duration) * 100;
           
-          if (watchedPercentage >= 90 && !hasTriggeredCompletionRef.current) {
+          if (maxWatchedPercentage >= 90 && !hasTriggeredCompletionRef.current) {
             hasTriggeredCompletionRef.current = true;
             setIsCompleted(true);
             saveProgress(true).then(() => {
@@ -398,6 +462,8 @@ export function VideoPlayer({
         saveProgress();
       });
       player.on('ended', handleEnded);
+      player.on('seeking', handleSeeking);
+      player.on('seeked', handleSeeked);
       player.on('timeupdate', handleTimeUpdate);
 
       saveIntervalRef.current = setInterval(() => {
@@ -441,7 +507,7 @@ export function VideoPlayer({
         <div className="relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center shadow-2xl">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="w-12 h-12 text-white animate-spin" />
-            <p className="text-white/80 text-sm font-medium">Initializing player...</p>
+            <p className="text-white/80 text-sm font-medium">Đang khởi tạo trình phát...</p>
           </div>
         </div>
       </div>
@@ -460,7 +526,6 @@ export function VideoPlayer({
             ref={videoRef}
             className="video-js vjs-big-play-centered vjs-theme-fantasy"
             playsInline
-            crossOrigin="anonymous"
           />
         </div>
 
@@ -471,36 +536,70 @@ export function VideoPlayer({
                 <Loader2 className="w-12 h-12 text-white animate-spin" />
                 <div className="absolute inset-0 w-12 h-12 rounded-full bg-white/10 blur-xl animate-pulse" />
               </div>
-              <p className="text-white/90 text-sm font-medium">Loading video...</p>
+              <p className="text-white/90 text-sm font-medium">Đang tải video...</p>
             </div>
           </div>
         )}
 
         {videoError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-20">
-            <div className="flex flex-col items-center gap-4 p-4 max-w-md text-center">
+            <div className="flex flex-col items-center gap-4 p-6 max-w-lg text-center">
               <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
                 <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <div>
-                <h3 className="text-white text-lg font-semibold mb-2">Video Error</h3>
-                <p className="text-white/80 text-sm">{videoError}</p>
+              <div className="w-full">
+                <h3 className="text-white text-lg font-semibold mb-2">Lỗi Video</h3>
+                <p className="text-white/80 text-sm mb-3">{videoError}</p>
+                {videoUrl && videoUrl.trim() !== '' && (
+                  <p className="text-white/60 text-xs mb-2">
+                    Nếu vấn đề vẫn tiếp diễn, vui lòng liên hệ giảng viên hoặc hỗ trợ kỹ thuật.
+                  </p>
+                )}
+                {process.env.NODE_ENV === 'development' && videoUrl && (
+                  <details className="text-left mt-3">
+                    <summary className="text-white/60 text-xs cursor-pointer hover:text-white/80">
+                      Thông tin debug
+                    </summary>
+                    <div className="mt-2 p-3 bg-black/40 rounded text-white/70 text-xs break-all">
+                      <div className="mb-2">
+                        <strong>URL gốc:</strong>
+                        <div className="mt-1 font-mono">{videoUrl || '(empty)'}</div>
+                      </div>
+                      {videoUrl && videoUrl.trim() !== '' && (
+                        <>
+                          <div className="mb-2">
+                            <strong>URL đã xử lý:</strong>
+                            <div className="mt-1 font-mono">{getVideoSourceInfo(videoUrl).url || '(empty)'}</div>
+                          </div>
+                          <div className="mb-2">
+                            <strong>Loại:</strong> <span className="font-mono">{getVideoSourceInfo(videoUrl).type}</span>
+                          </div>
+                          <div>
+                            <strong>MIME Type:</strong> <span className="font-mono">{getVideoSourceInfo(videoUrl).mimeType}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </details>
+                )}
               </div>
-              <Button
-                onClick={() => {
-                  setVideoError(null);
-                  setIsLoading(true);
-                  if (playerRef.current && !playerRef.current.isDisposed()) {
-                    playerRef.current.load();
-                  }
-                }}
-                variant="outline"
-                className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-              >
-                Try Again
-              </Button>
+              {videoUrl && videoUrl.trim() !== '' && (
+                <Button
+                  onClick={() => {
+                    setVideoError(null);
+                    setIsLoading(true);
+                    if (playerRef.current && !playerRef.current.isDisposed()) {
+                      playerRef.current.load();
+                    }
+                  }}
+                  variant="outline"
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                >
+                  Thử lại
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -514,7 +613,7 @@ export function VideoPlayer({
           className="gap-2 hover:bg-accent hover:text-accent-foreground"
         >
           <SkipBack className="w-4 h-4" />
-          Previous Lecture
+          Bài trước
         </Button>
 
         <Button
@@ -523,7 +622,7 @@ export function VideoPlayer({
           disabled={!hasNext}
           className="gap-2 hover:bg-accent hover:text-accent-foreground"
         >
-          Next Lecture
+          Bài tiếp theo
           <SkipForward className="w-4 h-4" />
         </Button>
       </div>

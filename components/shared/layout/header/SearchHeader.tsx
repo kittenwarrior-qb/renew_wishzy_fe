@@ -23,12 +23,7 @@ const SearchHeader = ({ onExpand, isMobile = false }: SearchHeaderProps) => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      // Get current locale from URL path
-      const pathSegments = window.location.pathname.split('/');
-      const locale = pathSegments[1] === 'vi' || pathSegments[1] === 'en' ? pathSegments[1] : 'vi';
-      
-      // Navigate to search page with query
-      router.push(`/${locale}/search?search=${encodeURIComponent(query.trim())}`);
+      router.push(`/search?search=${encodeURIComponent(query.trim())}`);
       setShowDropdown(false);
     }
   };

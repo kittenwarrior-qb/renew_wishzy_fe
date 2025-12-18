@@ -77,7 +77,7 @@ const PriceInput: React.FC<{
           onChange={(e) => {
             const raw = e.target.value.replace(/[^0-9]/g, "");
             const num = raw ? parseInt(raw, 10) : 0;
-            setDisplayValue(e.target.value);
+            setDisplayValue(raw); // Chỉ hiển thị số, không hiển thị ký tự khác
             onChange(num);
           }}
           onFocus={() => setIsFocused(true)}
@@ -505,6 +505,21 @@ export function CourseForm({
                       {errors.level}
                     </p>
                   ) : null}
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Trạng thái
+                  </label>
+                  <div className="flex items-center gap-3 h-9">
+                    <Switch
+                      checked={value.status}
+                      onCheckedChange={(checked) => setField("status", checked)}
+                      disabled={loading}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {value.status ? "Hoạt động" : "Không hoạt động"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

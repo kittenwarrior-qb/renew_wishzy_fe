@@ -1,10 +1,21 @@
 import api from "./api"
-import type { InstructorStatsResponse, RevenueApiResponse, RevenueMode, HotCourse } from "@/types/revenue"
+import type { 
+  InstructorStatsResponse, 
+  RevenueApiResponse, 
+  RevenueMode, 
+  HotCourse,
+  TopStudentsResponse,
+  TopInstructorsResponse,
+  TopStudentsSortBy,
+  TopInstructorsSortBy
+} from "@/types/revenue"
 
 export const statService = {
   async getInstructorStats(): Promise<InstructorStatsResponse> {
-    const response = await api.get("/stat/instructor")
-    return response.data?.data ?? response.data
+    const response = await api.get<{ success: boolean; data: InstructorStatsResponse; message: string }>("/stat/instructor")
+    // BE có TransformInterceptor wrap response: { success, data: InstructorStatsResponse, message, url }
+    // Vậy response.data.data sẽ là InstructorStatsResponse
+    return response.data.data
   },
   async getRevenue(params: { mode: RevenueMode; startDate?: string; endDate?: string }): Promise<RevenueApiResponse> {
     const response = await api.get("/stat/revenue", {
@@ -22,6 +33,22 @@ export const statService = {
   }): Promise<{ data: HotCourse[]; total: number }> {
     const response = await api.get("/stat/hot-courses", { params });
     return response.data;
+  },
+  
+  async getTopStudents(params?: {
+    limit?: number;
+    sortBy?: TopStudentsSortBy;
+  }): Promise<TopStudentsResponse> {
+    const response = await api.get("/stat/top-students", { params });
+    return response.data?.data ?? response.data;
+  },
+
+  async getTopInstructors(params?: {
+    limit?: number;
+    sortBy?: TopInstructorsSortBy;
+  }): Promise<TopInstructorsResponse> {
+    const response = await api.get("/stat/top-instructors", { params });
+    return response.data?.data ?? response.data;
   },
 }
 

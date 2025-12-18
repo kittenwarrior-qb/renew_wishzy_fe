@@ -280,6 +280,44 @@ export const ProfileTabContent = () => {
                 </div>
             </div>
 
+            {/* Yêu cầu trở thành giảng viên - Chỉ hiển thị cho role=user */}
+            {profile?.role === 'user' && (
+                <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-lg border border-primary/20 p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-foreground mb-2">Trở thành Giảng viên</h3>
+                            {profile?.isInstructorActive ? (
+                                // Đang chờ xác nhận
+                                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-400 px-4 py-3 rounded">
+                                    <div className="flex items-center gap-2">
+                                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span className="font-medium">Đang chờ xác nhận</span>
+                                    </div>
+                                    <p className="text-sm mt-1">Yêu cầu của bạn đã được gửi. Chúng tôi sẽ xem xét và phản hồi sớm nhất có thể.</p>
+                                </div>
+                            ) : (
+                                // Chưa gửi yêu cầu
+                                <>
+                                    <p className="text-muted-foreground mb-4">
+                                        Bạn có muốn chia sẻ kiến thức và kinh nghiệm của mình? Đăng ký trở thành giảng viên trên Wishzy để tạo và bán các khóa học của riêng bạn.
+                                    </p>
+                                    <InstructorRequestButton />
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Thông tin chi tiết */}
             <div className="bg-card rounded-lg border border-border p-6">
                 <h3 className="text-xl font-semibold mb-6">Thông tin chi tiết</h3>
@@ -397,8 +435,60 @@ export const ProfileTabContent = () => {
                             {profile?.passwordModified ? 'Có' : 'Chưa'}
                         </p>
                     </div>
-                </div>
             </div>
+            </div>
+        </div>
+    );
+};
+
+// Component con để xử lý yêu cầu trở thành giảng viên
+const InstructorRequestButton = () => {
+    const queryClient = useQueryClient();
+    
+    const requestMutation = useMutationHook(
+        async () => {
+            const api = (await import('@/src/services/api')).default;
+            return api.post('/users/request-instructor');
+        },
+        {
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: ['profile'] });
+            },
+        }
+    );
+
+    return (
+        <div className="space-y-3">
+            {requestMutation.isSuccess ? (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-400 px-4 py-3 rounded">
+                    <div className="font-medium">✓ Yêu cầu đã được gửi!</div>
+                    <p className="text-sm mt-1">Chúng tôi sẽ xem xét và phản hồi sớm nhất có thể.</p>
+                </div>
+            ) : requestMutation.isError ? (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-400 px-4 py-3 rounded">
+                    Có lỗi xảy ra. Vui lòng thử lại sau.
+                </div>
+            ) : null}
+            
+            {!requestMutation.isSuccess && (
+                <Button
+                    onClick={() => requestMutation.mutate(undefined)}
+                    disabled={requestMutation.isPending}
+                    className="bg-primary hover:bg-primary/90"
+                >
+                    {requestMutation.isPending ? (
+                        <>
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Đang gửi...
+                        </>
+                    ) : (
+                        'Gửi yêu cầu trở thành Giảng viên'
+                    )}
+                </Button>
+            )}
         </div>
     );
 };

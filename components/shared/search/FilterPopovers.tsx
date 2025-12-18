@@ -15,9 +15,11 @@ interface FilterPopoversProps {
   selectedRating: string;
   selectedLevel: string;
   selectedPrice: string;
+  selectedSort?: string;
   onRatingChange: (rating: string) => void;
   onLevelChange: (level: string) => void;
   onPriceChange: (price: string) => void;
+  onSortChange?: (sort: string) => void;
   minPrice?: string;
   maxPrice?: string;
   onMinPriceChange?: (value: string) => void;
@@ -28,9 +30,11 @@ export const FilterPopovers = ({
   selectedRating,
   selectedLevel,
   selectedPrice,
+  selectedSort = '',
   onRatingChange,
   onLevelChange,
   onPriceChange,
+  onSortChange,
   minPrice = '',
   maxPrice = '',
   onMinPriceChange,
@@ -50,31 +54,35 @@ export const FilterPopovers = ({
             <h4 className="font-medium">Đánh giá</h4>
             <RadioGroup value={selectedRating} onValueChange={onRatingChange}>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="4.5" id="r1" />
-                <Label htmlFor="r1" className="flex items-center">
-                  <span className="flex text-yellow-400">★★★★★</span>
-                  <span className="ml-1">4.5 & up</span>
-                </Label>
+                <RadioGroupItem value="" id="r0" />
+                <Label htmlFor="r0">Tất cả</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="4.0" id="r2" />
-                <Label htmlFor="r2" className="flex items-center">
+                <RadioGroupItem value="4" id="r1" />
+                <Label htmlFor="r1" className="flex items-center">
                   <span className="flex text-yellow-400">★★★★<span className="text-gray-400">★</span></span>
                   <span className="ml-1">4.0 & up</span>
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="3.5" id="r3" />
-                <Label htmlFor="r3" className="flex items-center">
-                  <span className="flex text-yellow-400">★★★★<span className="text-gray-400">★</span></span>
-                  <span className="ml-1">3.5 & up</span>
+                <RadioGroupItem value="3" id="r2" />
+                <Label htmlFor="r2" className="flex items-center">
+                  <span className="flex text-yellow-400">★★★<span className="text-gray-400">★★</span></span>
+                  <span className="ml-1">3.0 & up</span>
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="3.0" id="r4" />
+                <RadioGroupItem value="2" id="r3" />
+                <Label htmlFor="r3" className="flex items-center">
+                  <span className="flex text-yellow-400">★★<span className="text-gray-400">★★★</span></span>
+                  <span className="ml-1">2.0 & up</span>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="1" id="r4" />
                 <Label htmlFor="r4" className="flex items-center">
-                  <span className="flex text-yellow-400">★★★<span className="text-gray-400">★★</span></span>
-                  <span className="ml-1">3.0 & up</span>
+                  <span className="flex text-yellow-400">★<span className="text-gray-400">★★★★</span></span>
+                  <span className="ml-1">1.0 & up</span>
                 </Label>
               </div>
             </RadioGroup>
@@ -117,7 +125,7 @@ export const FilterPopovers = ({
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="rounded-full">
-            Giá
+            {selectedPrice === 'free' ? 'Miễn phí' : selectedPrice === 'paid' ? 'Trả phí' : selectedPrice === 'custom' ? 'Tùy chỉnh' : 'Giá'}
             <ChevronDown className="ml-1 h-4 w-4" />
           </Button>
         </PopoverTrigger>
@@ -177,6 +185,42 @@ export const FilterPopovers = ({
                 </div>
               </div>
             )}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="rounded-full">
+            {selectedSort === 'newest' ? 'Mới nhất' : selectedSort === 'popular' ? 'Bán chạy' : selectedSort === 'price-asc' ? 'Giá thấp' : selectedSort === 'price-desc' ? 'Giá cao' : 'Sắp xếp'}
+            <ChevronDown className="ml-1 h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-3" align="start">
+          <div className="space-y-2">
+            <h4 className="font-medium">Sắp xếp theo</h4>
+            <RadioGroup value={selectedSort} onValueChange={onSortChange}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="" id="s0" />
+                <Label htmlFor="s0">Mặc định</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="newest" id="s1" />
+                <Label htmlFor="s1">Mới nhất</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="popular" id="s2" />
+                <Label htmlFor="s2">Bán chạy</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="price-asc" id="s3" />
+                <Label htmlFor="s3">Giá thấp đến cao</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="price-desc" id="s4" />
+                <Label htmlFor="s4">Giá cao đến thấp</Label>
+              </div>
+            </RadioGroup>
           </div>
         </PopoverContent>
       </Popover>

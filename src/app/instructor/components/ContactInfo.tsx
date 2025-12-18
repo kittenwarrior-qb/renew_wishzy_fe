@@ -1,0 +1,59 @@
+"use client";
+
+import { Mail, Phone, Calendar } from "lucide-react";
+import type { Student } from "@/types/user";
+
+interface ContactInfoProps {
+  student: Student;
+}
+
+export const ContactInfo = ({ student }: ContactInfoProps) => {
+  const joinDateValue = student.joinDate || (student as any).createdAt
+  
+  return (
+    <div className="space-y-3">
+      <h4 className="font-semibold text-lg flex items-center gap-2">
+        <Mail className="h-5 w-5 text-primary" />
+        Contact Information
+      </h4>
+      <div className="space-y-3 pl-7">
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+          <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div>
+            <p className="text-xs text-muted-foreground mb-0.5">
+              Email
+            </p>
+            <p className="text-sm font-medium">{student.email}</p>
+          </div>
+
+        </div>
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+          <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div>
+            <p className="text-xs text-muted-foreground mb-0.5">
+              Phone
+            </p>
+            <p className="text-sm font-medium">{student.phone || 'Not provided'}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+          <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div>
+            <p className="text-xs text-muted-foreground mb-0.5">
+              Join Date
+            </p>
+            <p className="text-sm font-medium">
+              {joinDateValue ? new Date(joinDateValue).toLocaleDateString("vi-VN", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }) : 'N/A'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+

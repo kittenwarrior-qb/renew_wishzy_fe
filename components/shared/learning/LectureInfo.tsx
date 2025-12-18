@@ -15,9 +15,12 @@ import {
   Star
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Lecture, Chapter } from '@/types/learning';
-import { lectureService } from '@/services/lecture';
+import type { Lecture, Chapter } from '@/src/types/learning';
+import { lectureService } from '@/src/services/lecture';
+import { lectureNoteService, LectureNote } from '@/src/services/lecture-note';
 import CourseComment from '@/components/shared/course/CourseComment';
+import { Trash2, Edit2 } from 'lucide-react';
+import { LectureDocumentsView } from '@/components/shared/learning/LectureDocumentsView';
 
 interface Instructor {
   id: string;
@@ -40,23 +43,39 @@ interface LectureInfoProps {
   instructor?: Instructor;
 }
 
-interface Note {
-  timestamp: string;
-  content: string;
-}
+
 
 export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnrolled = false, instructor }: LectureInfoProps) {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [description, setDescription] = useState<string>(lecture.description || '');
   const [isLoadingDescription, setIsLoadingDescription] = useState(false);
-  const [notes] = useState<Note[]>([
-    { timestamp: '0:10', content: 'abc' }
-  ]);
+  const [notes, setNotes] = useState<LectureNote[]>([]);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   const [showAddNote, setShowAddNote] = useState(false);
-  const [currentTimestamp, setCurrentTimestamp] = useState('0:00');
+  const [currentTimestampSeconds, setCurrentTimestampSeconds] = useState(0);
   const [noteContent, setNoteContent] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
 
   const MAX_DESCRIPTION_LENGTH = 200;
+
+  const fetchNotes = async () => {
+    if (!lecture.id) {
+      return;
+    }
+    
+    setIsLoadingNotes(true);
+    try {
+      const response = await lectureNoteService.listByLecture(lecture.id);
+      setNotes(response.items || []);
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+      // If not enrolled, API will return 401/403, just set empty notes
+      setNotes([]);
+    } finally {
+      setIsLoadingNotes(false);
+    }
+  };
 
   useEffect(() => {
     const fetchLectureDetails = async () => {
@@ -76,6 +95,7 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
     };
 
     fetchLectureDetails();
+    fetchNotes();
   }, [lecture.id]);
 
   const formatDuration = (seconds: number) => {
@@ -88,34 +108,20 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
     ? description.slice(0, MAX_DESCRIPTION_LENGTH) + '...'
     : description;
 
-  const parseTimestamp = (timestamp: string): number => {
-    const parts = timestamp.split(':').map(Number);
-    if (parts.length === 2) {
-      return parts[0] * 60 + parts[1];
-    } else if (parts.length === 3) {
-      return parts[0] * 3600 + parts[1] * 60 + parts[2];
-    }
-    return 0;
+  const formatTimestamp = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleNoteClick = (timestamp: string) => {
-    const seconds = parseTimestamp(timestamp);
-    onSeekToTime?.(seconds);
-  };
-
-  const getCurrentVideoTime = (): string => {
-    const event = new CustomEvent('requestCurrentTime');
-    window.dispatchEvent(event);
-    
-    return currentTimestamp;
+  const handleNoteClick = (timestampSeconds: number) => {
+    onSeekToTime?.(timestampSeconds);
   };
 
   const handleAddNoteClick = () => {
     const handleTimeResponse = (event: CustomEvent) => {
       const { currentTime } = event.detail;
-      const minutes = Math.floor(currentTime / 60);
-      const seconds = Math.floor(currentTime % 60);
-      setCurrentTimestamp(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      setCurrentTimestampSeconds(Math.floor(currentTime));
       window.removeEventListener('currentTimeResponse', handleTimeResponse as EventListener);
     };
 
@@ -128,16 +134,69 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
     setShowAddNote(true);
   };
 
-  const handleSaveNote = () => {
-    if (noteContent.trim()) {
+  const handleSaveNote = async () => {
+    if (!noteContent.trim() || !lecture.id) return;
+    
+    try {
+      await lectureNoteService.create({
+        lectureId: lecture.id,
+        content: noteContent.trim(),
+        timestampSeconds: currentTimestampSeconds,
+      });
       setNoteContent('');
       setShowAddNote(false);
+      // Fetch notes directly without isEnrolled check since user just created a note
+      setIsLoadingNotes(true);
+      try {
+        const response = await lectureNoteService.listByLecture(lecture.id);
+        setNotes(response.items || []);
+      } finally {
+        setIsLoadingNotes(false);
+      }
+    } catch (error) {
+      console.error('Failed to save note:', error);
     }
   };
 
   const handleCancelNote = () => {
     setNoteContent('');
     setShowAddNote(false);
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await lectureNoteService.delete(noteId);
+      // Refresh notes list
+      const response = await lectureNoteService.listByLecture(lecture.id);
+      setNotes(response.items || []);
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+    }
+  };
+
+  const handleEditNote = (note: LectureNote) => {
+    setEditingNoteId(note.id);
+    setEditingContent(note.content);
+  };
+
+  const handleUpdateNote = async (noteId: string) => {
+    if (!editingContent.trim()) return;
+    
+    try {
+      await lectureNoteService.update(noteId, { content: editingContent.trim() });
+      setEditingNoteId(null);
+      setEditingContent('');
+      // Refresh notes list
+      const response = await lectureNoteService.listByLecture(lecture.id);
+      setNotes(response.items || []);
+    } catch (error) {
+      console.error('Failed to update note:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingNoteId(null);
+    setEditingContent('');
   };
 
   return (
@@ -218,7 +277,7 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
             <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                  {currentTimestamp}
+                  {formatTimestamp(currentTimestampSeconds)}
                 </Badge>
                 <span className="text-sm text-muted-foreground">Thời điểm hiện tại</span>
               </div>
@@ -226,7 +285,7 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
                 value={noteContent}
                 onChange={(e) => setNoteContent(e.target.value)}
                 placeholder="Nhập ghi chú của bạn..."
-                className="w-full min-h-[80px] p-3 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                className="w-full min-h-20 p-3 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 autoFocus
               />
               <div className="flex gap-2 justify-end">
@@ -240,18 +299,54 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
             </div>
           )}
 
-          {notes.length > 0 ? (
+          {isLoadingNotes ? (
+            <p className="text-sm text-muted-foreground">Đang tải ghi chú...</p>
+          ) : notes.length > 0 ? (
             <div className="space-y-3">
-              {notes.map((note, index) => (
+              {notes.map((note) => (
                 <div 
-                  key={index} 
-                  className="flex gap-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer border border-gray-200 dark:border-gray-700"
-                  onClick={() => handleNoteClick(note.timestamp)}
+                  key={note.id} 
+                  className="flex gap-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
                 >
-                  <Badge variant="secondary" className="h-fit bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    {note.timestamp}
+                  <Badge 
+                    variant="secondary" 
+                    className="h-fit bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => handleNoteClick(note.timestampSeconds)}
+                  >
+                    {formatTimestamp(note.timestampSeconds)}
                   </Badge>
-                  <p className="text-sm flex-1">{note.content}</p>
+                  {editingNoteId === note.id ? (
+                    <div className="flex-1 space-y-2">
+                      <textarea
+                        value={editingContent}
+                        onChange={(e) => setEditingContent(e.target.value)}
+                        className="w-full min-h-16 p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                        autoFocus
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+                          Hủy
+                        </Button>
+                        <Button size="sm" onClick={() => handleUpdateNote(note.id)} disabled={!editingContent.trim()}>
+                          Lưu
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm flex-1 cursor-pointer" onClick={() => handleNoteClick(note.timestampSeconds)}>
+                        {note.content}
+                      </p>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleEditNote(note)}>
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDeleteNote(note.id)}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -262,6 +357,9 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
           )}
         </CardContent>
       </Card>
+
+      {/* Lecture Documents */}
+      <LectureDocumentsView lectureId={lecture.id} />
 
       {/* Course Comments Section */}
       {courseId && (

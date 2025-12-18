@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -15,13 +14,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useLogin } from "./useAuth";
-import { useTranslations } from "@/providers/TranslationProvider";
 import type { LoginCredentials } from "@/types/auth";
 import { LittleBoyAnimation } from "@/components/animations/LittleBoyAnimation";
 import { GoogleLoginButton } from "./GoogleLoginButton";
 
 export const LoginForm = () => {
-  const t = useTranslations();
   const [formData, setFormData] = useState<LoginCredentials>({
     email: "",
     password: "",
@@ -35,13 +32,23 @@ export const LoginForm = () => {
     const newErrors: Partial<LoginCredentials> = {};
 
     if (!formData.email) {
-      newErrors.email = t("auth.emailRequired");
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = t("auth.emailInvalid");
+      newErrors.email = "Vui lòng nhập email";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Email không hợp lệ";
     }
 
     if (!formData.password) {
-      newErrors.password = t("auth.passwordRequired");
+      newErrors.password = "Vui lòng nhập mật khẩu";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Mật khẩu phải có ít nhất 8 ký tự";
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ hoa";
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ thường";
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ số";
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 ký tự đặc biệt";
     }
 
     setErrors(newErrors);
@@ -69,49 +76,48 @@ export const LoginForm = () => {
           <form onSubmit={handleSubmit} className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">{t("auth.loginTitle")}</h1>
+                <h1 className="text-2xl font-bold">Đăng nhập</h1>
                 <p className="text-muted-foreground text-balance">
-                  {t("auth.loginSubtitle")}
+                  Nhập thông tin để đăng nhập vào tài khoản
                 </p>
               </div>
 
               <Field>
-                <FieldLabel htmlFor="email">{t("auth.email")}</FieldLabel>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
                   type="email"
-                  placeholder={t("auth.emailPlaceholder")}
+                  placeholder="email@example.com"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="border-input"
+                  className={`border-input ${errors.email ? 'border-destructive' : ''}`}
                   autoComplete="off"
-                  required
                 />
                 {errors.email && (
-                  <FieldDescription className="text-destructive">
+                  <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
                     {errors.email}
-                  </FieldDescription>
+                  </p>
                 )}
               </Field>
 
               <Field>
                 <div className="flex items-center">
-                  <FieldLabel htmlFor="password">
-                    {t("auth.password")}
-                  </FieldLabel>
+                  <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
                 </div>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder={t("auth.passwordPlaceholder")}
+                    placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) =>
                       handleInputChange("password", e.target.value)
                     }
-                    className="pr-10 border-input"
+                    className={`pr-10 border-input ${errors.password ? 'border-destructive' : ''}`}
                     autoComplete="off"
-                    required
                   />
                   <Button
                     type="button"
@@ -127,17 +133,20 @@ export const LoginForm = () => {
                     )}
                   </Button>
                 </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                    {errors.password}
+                  </p>
+                )}
                 <Link
                   href="/auth/forgot-password"
                   className="ml-auto text-sm underline"
                 >
-                  {t("auth.forgotPassword")}
+                  Quên mật khẩu?
                 </Link>
-                {errors.password && (
-                  <FieldDescription className="text-destructive">
-                    {errors.password}
-                  </FieldDescription>
-                )}
               </Field>
 
               <Field>
@@ -149,16 +158,16 @@ export const LoginForm = () => {
                   {loginMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t("auth.loggingIn")}
+                      Đang đăng nhập...
                     </>
                   ) : (
-                    t("auth.login")
+                    "Đăng nhập"
                   )}
                 </Button>
               </Field>
 
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                {t("auth.orContinueWith")}
+                Hoặc tiếp tục với
               </FieldSeparator>
 
               <Field className="grid grid-cols-3 gap-4">
@@ -173,9 +182,9 @@ export const LoginForm = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="sr-only">{t("auth.loginWithApple")}</span>
+                  <span className="sr-only">Đăng nhập với Apple</span>
                 </Button>
-                <GoogleLoginButton text={t("auth.loginWithGoogle")} />
+                <GoogleLoginButton text="Đăng nhập với Google" />
                 <Button variant="outline" type="button">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -187,14 +196,14 @@ export const LoginForm = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="sr-only">{t("auth.loginWithMeta")}</span>
+                  <span className="sr-only">Đăng nhập với Meta</span>
                 </Button>
               </Field>
 
               <FieldDescription className="text-center">
-                {t("auth.dontHaveAccount")}{" "}
+                Chưa có tài khoản?{" "}
                 <Link href="/auth/register" className="underline">
-                  {t("auth.register")}
+                  Đăng ký
                 </Link>
               </FieldDescription>
             </FieldGroup>
@@ -210,13 +219,13 @@ export const LoginForm = () => {
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        {t("auth.byContinuing")}{" "}
+        Bằng việc tiếp tục, bạn đồng ý với{" "}
         <Link href="/terms" className="underline">
-          {t("auth.termsOfService")}
+          Điều khoản dịch vụ
         </Link>{" "}
-        {t("auth.and")}{" "}
+        và{" "}
         <Link href="/privacy" className="underline">
-          {t("auth.privacyPolicy")}
+          Chính sách bảo mật
         </Link>
         .
       </FieldDescription>

@@ -10,13 +10,10 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from '@/components/ui/input';
 import { Loader2, CheckCircle, XCircle, Mail } from 'lucide-react';
 import { useVerifyEmail, useResendVerification } from './useAuth';
-import { useTranslations } from '@/providers/TranslationProvider';
-import { cn } from '@/lib/utils';
 
 const LoadingState = () => (
   <div className="flex flex-col gap-6 w-full max-w-sm mx-auto">
@@ -27,8 +24,8 @@ const LoadingState = () => (
             <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
-            <h1 className="text-2xl font-bold">Loading</h1>
-            <p className="text-muted-foreground text-balance">Please wait...</p>
+            <h1 className="text-2xl font-bold">Đang tải</h1>
+            <p className="text-muted-foreground text-balance">Vui lòng chờ...</p>
           </div>
         </div>
       </CardContent>
@@ -36,9 +33,7 @@ const LoadingState = () => (
   </div>
 );
 
-// Main component that uses useSearchParams
 export const VerifyEmailContent = () => {
-  const t = useTranslations();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   
@@ -51,7 +46,6 @@ export const VerifyEmailContent = () => {
   const verifyEmailMutation = useVerifyEmail();
   const resendVerificationMutation = useResendVerification();
 
-  // Update status when token becomes available
   useEffect(() => {
     if (token && verificationStatus === 'manual') {
       setVerificationStatus('pending');
@@ -74,11 +68,11 @@ export const VerifyEmailContent = () => {
   const handleResendVerification = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError(t('auth.emailRequired'));
+      setError('Vui lòng nhập email');
       return;
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError(t('auth.emailInvalid'));
+      setError('Email không hợp lệ');
       return;
     }
     setError('');
@@ -104,21 +98,21 @@ export const VerifyEmailContent = () => {
                     <CheckCircle className="w-8 h-8 text-white" />
                   </div>
                   <h1 className="text-2xl font-bold text-green-600">
-                    {t('auth.emailVerifiedTitle')}
+                    Xác thực thành công
                   </h1>
                   <p className="text-muted-foreground text-balance">
-                    {t('auth.accountActivatedMessage')}
+                    Tài khoản của bạn đã được kích hoạt
                   </p>
                 </div>
                 
                 <FieldDescription className="text-center">
-                  {t('auth.canLoginMessage')}
+                  Bạn có thể đăng nhập ngay bây giờ
                 </FieldDescription>
                 
                 <Field>
                   <Link href="/auth/login">
                     <Button className="w-full">
-                      {t('auth.loginNow')}
+                      Đăng nhập ngay
                     </Button>
                   </Link>
                 </Field>
@@ -130,7 +124,6 @@ export const VerifyEmailContent = () => {
     );
   }
 
-  // Error state
   if (verificationStatus === 'error') {
     return (
       <div className="flex flex-col gap-6 w-full max-w-sm mx-auto">
@@ -143,23 +136,23 @@ export const VerifyEmailContent = () => {
                     <XCircle className="w-8 h-8 text-destructive-foreground" />
                   </div>
                   <h1 className="text-2xl font-bold text-destructive">
-                    {t('auth.verificationFailedTitle')}
+                    Xác thực thất bại
                   </h1>
                   <p className="text-muted-foreground text-balance">
-                    {t('auth.verificationLinkExpired')}
+                    Link xác thực đã hết hạn hoặc không hợp lệ
                   </p>
                 </div>
                 
                 <FieldDescription className="text-center">
-                  {t('auth.tokenExpiredMessage')}
+                  Nhập email để nhận link xác thực mới
                 </FieldDescription>
                 
                 <Field>
-                  <FieldLabel htmlFor="email">{t('auth.yourEmail')}</FieldLabel>
+                  <FieldLabel htmlFor="email">Email của bạn</FieldLabel>
                   <Input
                     id="email"
                     type="email"
-                    placeholder={t('auth.emailPlaceholder')}
+                    placeholder="email@example.com"
                     value={email}
                     onChange={(e) => handleInputChange(e.target.value)}
                     className="border-input"
@@ -181,17 +174,17 @@ export const VerifyEmailContent = () => {
                     {resendVerificationMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {t('auth.sending')}
+                        Đang gửi...
                       </>
                     ) : (
-                      t('auth.resendVerificationEmail')
+                      'Gửi lại email xác thực'
                     )}
                   </Button>
                 </Field>
                 
                 <FieldDescription className="text-center">
                   <Link href="/auth/login" className="underline">
-                    {t('auth.backToLogin')}
+                    Quay lại đăng nhập
                   </Link>
                 </FieldDescription>
               </FieldGroup>
@@ -202,7 +195,6 @@ export const VerifyEmailContent = () => {
     );
   }
 
-  // Loading state
   if (verificationStatus === 'pending') {
     return (
       <div className="flex flex-col gap-6 w-full max-w-sm mx-auto">
@@ -215,10 +207,10 @@ export const VerifyEmailContent = () => {
                     <Loader2 className="w-8 h-8 text-primary-foreground animate-spin" />
                   </div>
                   <h1 className="text-2xl font-bold">
-                    {t('auth.verifyingEmail')}
+                    Đang xác thực email
                   </h1>
                   <p className="text-muted-foreground text-balance">
-                    {t('auth.pleaseWait')}
+                    Vui lòng chờ...
                   </p>
                 </div>
               </FieldGroup>
@@ -229,7 +221,6 @@ export const VerifyEmailContent = () => {
     );
   }
 
-  // Manual verification form
   return (
     <div className="flex flex-col gap-6 w-full max-w-sm mx-auto">
       <Card className="overflow-hidden p-0">
@@ -241,27 +232,27 @@ export const VerifyEmailContent = () => {
                   <Mail className="w-8 h-8 text-secondary-foreground" />
                 </div>
                 <h1 className="text-2xl font-bold">
-                  {t('auth.manualVerification')}
+                  Xác thực email
                 </h1>
                 <p className="text-muted-foreground text-balance">
-                  {t('auth.enterEmailForVerification')}
+                  Nhập email để nhận link xác thực
                 </p>
               </div>
               
               <FieldDescription className="text-center">
-                {t('auth.verificationEmailSent')}
+                Email xác thực đã được gửi đến hộp thư của bạn
               </FieldDescription>
               
               <FieldDescription className="text-center">
-                {t('auth.checkSpamFolder')}
+                Vui lòng kiểm tra cả thư mục spam
               </FieldDescription>
               
               <Field>
-                <FieldLabel htmlFor="email">{t('auth.yourEmail')}</FieldLabel>
+                <FieldLabel htmlFor="email">Email của bạn</FieldLabel>
                 <Input
                   id="email"
                   type="email"
-                  placeholder={t('auth.emailPlaceholder')}
+                  placeholder="email@example.com"
                   value={email}
                   onChange={(e) => handleInputChange(e.target.value)}
                   className="border-input"
@@ -283,17 +274,17 @@ export const VerifyEmailContent = () => {
                   {resendVerificationMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('auth.sending')}
+                      Đang gửi...
                     </>
                   ) : (
-                    t('auth.resendVerificationEmail')
+                    'Gửi lại email xác thực'
                   )}
                 </Button>
               </Field>
               
               <FieldDescription className="text-center">
                 <Link href="/auth/login" className="underline">
-                  {t('auth.backToLogin')}
+                  Quay lại đăng nhập
                 </Link>
               </FieldDescription>
             </FieldGroup>

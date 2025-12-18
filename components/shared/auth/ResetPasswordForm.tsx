@@ -15,11 +15,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useResetPassword } from './useAuth';
-import { useTranslations } from '@/providers/TranslationProvider';
 import type { ResetPasswordData } from '@/types/auth';
 
 export const ResetPasswordForm = () => {
-  const t = useTranslations();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   
@@ -30,7 +28,7 @@ export const ResetPasswordForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Partial<ResetPasswordData>>({});
-  const tokenError = !token ? t('auth.resetTokenError') : '';
+  const tokenError = !token ? 'Link không hợp lệ' : '';
 
   const resetPasswordMutation = useResetPassword();
 
@@ -38,15 +36,23 @@ export const ResetPasswordForm = () => {
     const newErrors: Partial<ResetPasswordData> = {};
 
     if (!formData.password) {
-      newErrors.password = t('auth.passwordRequired');
-    } else if (formData.password.length < 6) {
-      newErrors.password = t('auth.passwordMinLength');
+      newErrors.password = 'Vui lòng nhập mật khẩu';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự';
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 1 chữ hoa';
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 1 chữ thường';
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 1 chữ số';
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt';
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = t('auth.confirmPasswordRequired');
+      newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t('auth.passwordsDoNotMatch');
+      newErrors.confirmPassword = 'Mật khẩu không khớp';
     }
 
     setErrors(newErrors);
@@ -70,7 +76,6 @@ export const ResetPasswordForm = () => {
     }
   };
 
-  // Token error state
   if (tokenError) {
     return (
       <div className="flex flex-col gap-6 w-full max-w-sm mx-auto">
@@ -79,23 +84,23 @@ export const ResetPasswordForm = () => {
             <div className="p-6 md:p-8">
               <FieldGroup>
                 <div className="flex flex-col items-center gap-2 text-center">
-                  <h1 className="text-2xl font-bold text-destructive">{t('auth.resetTokenError')}</h1>
+                  <h1 className="text-2xl font-bold text-destructive">Link không hợp lệ</h1>
                   <p className="text-muted-foreground text-balance">
-                    {t('auth.resetTokenErrorMessage')}
+                    Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn
                   </p>
                 </div>
                 
                 <Field>
                   <Link href="/auth/forgot-password">
                     <Button className="w-full">
-                      {t('auth.requestNewResetLink')}
+                      Yêu cầu link mới
                     </Button>
                   </Link>
                 </Field>
                 
                 <FieldDescription className="text-center">
                   <Link href="/auth/login" className="inline-flex items-center gap-2 underline">
-                    {t('auth.backToLogin')}
+                    Quay lại đăng nhập
                   </Link>
                 </FieldDescription>
               </FieldGroup>
@@ -113,23 +118,22 @@ export const ResetPasswordForm = () => {
           <form onSubmit={handleSubmit} className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">{t('auth.resetPasswordTitle')}</h1>
+                <h1 className="text-2xl font-bold">Đặt lại mật khẩu</h1>
                 <p className="text-muted-foreground text-balance">
-                  {t('auth.resetPasswordSubtitle')}
+                  Nhập mật khẩu mới cho tài khoản của bạn
                 </p>
               </div>
               
               <Field>
-                <FieldLabel htmlFor="password">{t('auth.newPassword')}</FieldLabel>
+                <FieldLabel htmlFor="password">Mật khẩu mới</FieldLabel>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder={t('auth.passwordPlaceholder')}
+                    placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     className={cn('pr-10', errors.password && 'border-destructive')}
-                    required
                   />
                   <Button
                     type="button"
@@ -153,16 +157,15 @@ export const ResetPasswordForm = () => {
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="confirmPassword">{t('auth.confirmNewPassword')}</FieldLabel>
+                <FieldLabel htmlFor="confirmPassword">Xác nhận mật khẩu mới</FieldLabel>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder={t('auth.confirmNewPassword')}
+                    placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                     className={cn('pr-10', errors.confirmPassword && 'border-destructive')}
-                    required
                   />
                   <Button
                     type="button"
@@ -194,10 +197,10 @@ export const ResetPasswordForm = () => {
                   {resetPasswordMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('auth.resettingPassword')}
+                      Đang đặt lại...
                     </>
                   ) : (
-                    t('auth.resetPassword')
+                    'Đặt lại mật khẩu'
                   )}
                 </Button>
               </Field>
@@ -205,7 +208,7 @@ export const ResetPasswordForm = () => {
               <FieldDescription className="text-center">
                 <Link href="/auth/login" className="inline-flex items-center gap-2 underline">
                   <ArrowLeft className="w-4 h-4" />
-                  {t('auth.backToLogin')}
+                  Quay lại đăng nhập
                 </Link>
               </FieldDescription>
             </FieldGroup>

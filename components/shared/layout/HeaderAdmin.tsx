@@ -1,7 +1,7 @@
-"use client";
 import React from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, LogOut, User } from "lucide-react";
+import { Search, LogOut, User, Heart, BookOpen, Home, LayoutDashboard, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore";
@@ -19,6 +19,7 @@ import { useAppStore } from "@/stores/useAppStore";
 import { useQueryHook } from "@/src/hooks/useQueryHook";
 import { courseService } from "@/src/services/course";
 import { CourseItemType } from "@/src/types/course/course-item.types";
+import { ThemeSwitcherDropdownItem } from "../common/ThemeSwitcherDropdownItem";
 
 export default function HeaderAdmin() {
   const pathname = usePathname() || "";
@@ -35,6 +36,10 @@ export default function HeaderAdmin() {
     if (user?.email) return user.email[0]?.toUpperCase() ?? "U";
     return "U";
   }, [user]);
+
+  // Determine current section (admin or instructor)
+  const isAdminSection = pathname.includes('/admin');
+  const isInstructorSection = pathname.includes('/instructor');
 
   // Extract course ID from pathname if in instructor/course/[id]
   // Handle both with and without locale prefix
@@ -53,9 +58,9 @@ export default function HeaderAdmin() {
   return (
     <header className="sticky top-0 z-20 h-14 border-b bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center gap-3 px-3 md:px-6">
       <SidebarTrigger className="mr-2 md:hidden" />
-      <div className="hidden md:block text-base font-semibold text-foreground">
+      {/* <div className="hidden md:block text-base font-semibold text-foreground">
         <HeaderTitle pathname={pathname} courseName={course?.name} />
-      </div>
+      </div> */}
       <div className="ml-auto flex items-center gap-2">
         {primaryAction ? (
           <Button
@@ -80,25 +85,69 @@ export default function HeaderAdmin() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-60">
-            <DropdownMenuLabel className="text-base">
-              Tài khoản
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium">{user?.fullName || 'User'}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
+              </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div className="px-2 pb-2">
-              <div className="text-sm font-medium">
-                {user?.fullName ?? "Người dùng"}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {user?.email ?? "user@example.com"}
-              </div>
-            </div>
-            <DropdownMenuItem>
-              <User className="mr-2 size-4" />
-              <span>Hồ sơ</span>
+            
+            {/* Navigation links */}
+            <DropdownMenuItem asChild>
+              <Link href="/" className="cursor-pointer flex items-center">
+                <Home className="mr-2 h-4 w-4" />
+                <span>Trang chủ</span>
+              </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/profile?tab=wishlist" className="cursor-pointer flex items-center">
+                <Heart className="mr-2 h-4 w-4" />
+                <span>Khoá học yêu thích</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/profile?tab=my-learning" className="cursor-pointer flex items-center">
+                <BookOpen className="mr-2 h-4 w-4" />
+                <span>Khoá học của tôi</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/profile?tab=profile" className="cursor-pointer flex items-center">
+                <User className="mr-2 h-4 w-4" />
+                <span>Hồ sơ</span>
+              </Link>
+            </DropdownMenuItem>
+            
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
-              <LogOut className="mr-2 size-4" />
+            
+            {/* Role-based dashboard switching */}
+            {user?.role === 'admin' && (
+              <DropdownMenuItem asChild>
+                <Link href="/admin" className="cursor-pointer flex items-center">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  <span>Quản trị viên</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {user?.role === 'instructor' && (
+              <DropdownMenuItem asChild>
+                <Link href="/instructor" className="cursor-pointer flex items-center">
+                  <GraduationCap className="mr-2 h-4 w-4" />
+                  <span>Giảng viên</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+            
+            <DropdownMenuSeparator />
+            <ThemeSwitcherDropdownItem />
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem 
+              onClick={logout}
+              className="cursor-pointer text-destructive focus:text-destructive"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
               <span>Đăng xuất</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -110,22 +159,22 @@ export default function HeaderAdmin() {
 
 function mapAdminPathToLabel(subpath: string): string {
   const map: Record<string, string> = {
-    "categories/create": "Tạo danh mục",
-    categories: "Danh mục",
-    "categories/trash": "Danh mục / Thùng rác",
-    "users/students": "Học sinh",
-    "users/teachers": "Giảng viên",
-    "users/admins": "Quản trị viên",
-    exams: "Bài kiểm tra",
-    "communication/reviews": "Đánh giá",
-    "communication/comments": "Bình luận",
-    posts: "Danh sách bài viết",
-    "posts/categories": "Danh mục bài viết",
-    "posts/comments": "Bình luận bài viết",
-    orders: "Lịch sử thanh toán",
-    banners: "Banner",
-    vouchers: "Voucher",
-    settings: "Thiết lập",
+    // "categories/create": "Tạo danh mục",
+    // categories: "Danh mục",
+    // "categories/trash": "Danh mục / Thùng rác",
+    // "users/students": "Học sinh",
+    // "users/teachers": "Giảng viên",
+    // "users/admins": "Quản trị viên",
+    // exams: "Bài kiểm tra",
+    // "communication/reviews": "Đánh giá",
+    // "communication/comments": "Bình luận",
+    // posts: "Danh sách bài viết",
+    // "posts/categories": "Danh mục bài viết",
+    // "posts/comments": "Bình luận bài viết",
+    // orders: "Lịch sử thanh toán",
+    // banners: "Banner",
+    // vouchers: "Voucher",
+    // settings: "Thiết lập",
   };
   const keys = Object.keys(map).sort((a, b) => b.length - a.length);
   for (const k of keys) if (subpath.startsWith(k)) return map[k];

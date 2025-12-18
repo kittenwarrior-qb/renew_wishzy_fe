@@ -5,6 +5,9 @@ import { CourseItemType } from "@/src/types/course/course-item.types";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { formatDuration } from "@/lib/format-duration";
+import { useAppStore } from "@/src/stores/useAppStore";
+import { enrollmentService } from "@/src/services/enrollment";
+import { useQueryHook } from "@/src/hooks/useQueryHook";
 
 interface BestSellerCourseCardProps {
   course: CourseItemType;
@@ -12,6 +15,21 @@ interface BestSellerCourseCardProps {
 
 const BestSellerCourseCard = ({ course }: BestSellerCourseCardProps) => {
   const router = useRouter();
+  const { user } = useAppStore();
+
+  // Check if user is enrolled in this course
+  const { data: enrollments } = useQueryHook(
+    ['my-enrollments'],
+    () => enrollmentService.getMyLearning(),
+    {
+      enabled: !!user,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    }
+  );
+
+  const isEnrolled = enrollments?.some(
+    (enrollment: any) => enrollment.courseId === course.id
+  );
 
   const originalPrice = course?.price ? Number(course.price) : 500000;
   
@@ -81,9 +99,13 @@ const BestSellerCourseCard = ({ course }: BestSellerCourseCardProps) => {
           </div>
 
           <div className="mt-4">
-            {hasSale ? (
+            {isEnrolled ? (
+              <p className="text-2xl font-bold text-primary-dark">
+                Đã đăng ký
+              </p>
+            ) : hasSale ? (
               <div className="flex items-center gap-3">
-                <p className="text-2xl font-bold">
+                <p className="text-xl font-medium text-primary-dark">
                   {formatPrice(displayPrice)}
                 </p>
                 <p className="text-lg text-muted-foreground line-through">
@@ -91,8 +113,8 @@ const BestSellerCourseCard = ({ course }: BestSellerCourseCardProps) => {
                 </p>
               </div>
             ) : (
-              <p className="text-2xl font-bold">
-                {formatPrice(displayPrice)}
+              <p className="text-xl font-medium text-primary-dark">
+                {displayPrice === 0 ? 'Miễn phí' : formatPrice(displayPrice)}
               </p>
             )}
           </div>

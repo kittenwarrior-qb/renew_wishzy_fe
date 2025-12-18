@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -15,13 +14,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useRegister } from "./useAuth";
-import { useTranslations } from "@/providers/TranslationProvider";
 import type { RegisterData } from "@/types/auth";
 import { LittleBoyAnimation } from "@/components/animations/LittleBoyAnimation";
 import { GoogleLoginButton } from "./GoogleLoginButton";
 
 export const RegisterForm = () => {
-  const t = useTranslations();
   const [formData, setFormData] = useState<RegisterData>({
     email: "",
     password: "",
@@ -38,25 +35,33 @@ export const RegisterForm = () => {
     const newErrors: Partial<RegisterData> = {};
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = t("auth.fullNameRequired");
+      newErrors.fullName = "Vui lòng nhập họ tên";
     }
 
     if (!formData.email) {
-      newErrors.email = t("auth.emailRequired");
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = t("auth.emailInvalid");
+      newErrors.email = "Vui lòng nhập email";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Email không hợp lệ";
     }
 
     if (!formData.password) {
-      newErrors.password = t("auth.passwordRequired");
-    } else if (formData.password.length < 1) {
-      newErrors.password = t("auth.passwordMinLength");
+      newErrors.password = "Vui lòng nhập mật khẩu";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Mật khẩu phải có ít nhất 8 ký tự";
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ hoa";
+    } else if (!/[a-z]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ thường";
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 chữ số";
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = "Mật khẩu phải có ít nhất 1 ký tự đặc biệt";
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = t("auth.confirmPasswordRequired");
+      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t("auth.passwordsDoNotMatch");
+      newErrors.confirmPassword = "Mật khẩu không khớp";
     }
 
     setErrors(newErrors);
@@ -73,19 +78,18 @@ export const RegisterForm = () => {
             error?.message?.includes("timeout")
           ) {
             setErrors({
-              email: t("auth.registrationTimeoutMessage"),
+              email: "Đăng ký có thể đã thành công. Vui lòng thử đăng nhập.",
             });
           } else if (
             error?.response?.status === 409 ||
             error?.message?.includes("already exists")
           ) {
             setErrors({
-              email: t("auth.emailAlreadyExists"),
+              email: "Email đã được sử dụng",
             });
           } else {
-            // Other errors
             setErrors({
-              email: error?.message || t("auth.registrationError"),
+              email: error?.message || "Đã xảy ra lỗi khi đăng ký",
             });
           }
         },
@@ -107,27 +111,24 @@ export const RegisterForm = () => {
           <form onSubmit={handleSubmit} className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">
-                  {t("auth.registerTitle")}
-                </h1>
+                <h1 className="text-2xl font-bold">Đăng ký</h1>
                 <p className="text-muted-foreground text-balance">
-                  {t("auth.registerSubtitle")}
+                  Tạo tài khoản mới để bắt đầu
                 </p>
               </div>
 
               <Field>
-                <FieldLabel htmlFor="fullName">{t("auth.fullName")}</FieldLabel>
+                <FieldLabel htmlFor="fullName">Họ và tên</FieldLabel>
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder={t("auth.fullNamePlaceholder")}
+                  placeholder="Nguyễn Văn A"
                   value={formData.fullName}
                   onChange={(e) =>
                     handleInputChange("fullName", e.target.value)
                   }
-                  className="border-input"
+                  className={`border-input ${errors.fullName ? 'border-destructive' : ''}`}
                   autoComplete="off"
-                  required
                 />
                 {errors.fullName && (
                   <FieldDescription className="text-destructive">
@@ -137,16 +138,15 @@ export const RegisterForm = () => {
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="email">{t("auth.email")}</FieldLabel>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
                   type="email"
-                  placeholder={t("auth.emailPlaceholder")}
+                  placeholder="email@example.com"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="border-input"
+                  className={`border-input ${errors.email ? 'border-destructive' : ''}`}
                   autoComplete="off"
-                  required
                 />
                 {errors.email && (
                   <FieldDescription className="text-destructive">
@@ -156,19 +156,18 @@ export const RegisterForm = () => {
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="password">{t("auth.password")}</FieldLabel>
+                <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder={t("auth.passwordPlaceholder")}
+                    placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) =>
                       handleInputChange("password", e.target.value)
                     }
-                    className="pr-10 border-input"
+                    className={`pr-10 border-input ${errors.password ? 'border-destructive' : ''}`}
                     autoComplete="off"
-                    required
                   />
                   <Button
                     type="button"
@@ -193,20 +192,19 @@ export const RegisterForm = () => {
 
               <Field>
                 <FieldLabel htmlFor="confirmPassword">
-                  {t("auth.confirmPassword")}
+                  Xác nhận mật khẩu
                 </FieldLabel>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder={t("auth.confirmPasswordPlaceholder")}
+                    placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={(e) =>
                       handleInputChange("confirmPassword", e.target.value)
                     }
-                    className="pr-10 border-input"
+                    className={`pr-10 border-input ${errors.confirmPassword ? 'border-destructive' : ''}`}
                     autoComplete="off"
-                    required
                   />
                   <Button
                     type="button"
@@ -238,16 +236,16 @@ export const RegisterForm = () => {
                   {registerMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t("auth.registering")}
+                      Đang đăng ký...
                     </>
                   ) : (
-                    t("auth.register")
+                    "Đăng ký"
                   )}
                 </Button>
               </Field>
 
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                {t("auth.orContinueWith")}
+                Hoặc tiếp tục với
               </FieldSeparator>
 
               <Field className="grid grid-cols-3 gap-4">
@@ -262,9 +260,9 @@ export const RegisterForm = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="sr-only">{t("auth.loginWithApple")}</span>
+                  <span className="sr-only">Đăng nhập với Apple</span>
                 </Button>
-                <GoogleLoginButton text={t("auth.loginWithGoogle")} />
+                <GoogleLoginButton text="Đăng nhập với Google" />
                 <Button variant="outline" type="button">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -276,29 +274,28 @@ export const RegisterForm = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span className="sr-only">{t("auth.loginWithMeta")}</span>
+                  <span className="sr-only">Đăng nhập với Meta</span>
                 </Button>
               </Field>
 
-              {/* Show helpful message if there's a timeout/duplicate error */}
               {(errors.email?.includes("timeout") ||
-                errors.email?.includes("already")) && (
+                errors.email?.includes("đã được sử dụng")) && (
                 <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
                   <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
-                    {t("auth.registrationMayHaveSucceeded")}
+                    Đăng ký có thể đã thành công
                   </p>
                   <Link href="/auth/login">
                     <Button variant="outline" size="sm" className="w-full">
-                      {t("auth.tryLogin")}
+                      Thử đăng nhập
                     </Button>
                   </Link>
                 </div>
               )}
 
               <FieldDescription className="text-center">
-                {t("auth.alreadyHaveAccount")}{" "}
+                Đã có tài khoản?{" "}
                 <Link href="/auth/login" className="underline">
-                  {t("auth.login")}
+                  Đăng nhập
                 </Link>
               </FieldDescription>
             </FieldGroup>
@@ -314,13 +311,13 @@ export const RegisterForm = () => {
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        {t("auth.byContinuing")}{" "}
+        Bằng việc tiếp tục, bạn đồng ý với{" "}
         <Link href="/terms" className="underline">
-          {t("auth.termsOfService")}
+          Điều khoản dịch vụ
         </Link>{" "}
-        {t("auth.and")}{" "}
+        và{" "}
         <Link href="/privacy" className="underline">
-          {t("auth.privacyPolicy")}
+          Chính sách bảo mật
         </Link>
         .
       </FieldDescription>

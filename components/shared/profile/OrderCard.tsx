@@ -17,7 +17,7 @@ interface OrderDetail {
 }
 
 interface Order {
-    id: string;
+    id: string | number;
     totalPrice: number | string;
     status: string;
     paymentMethod: string;
@@ -59,7 +59,7 @@ export const OrderCard = ({ order }: OrderCardProps) => {
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="text-xs sm:text-sm text-muted-foreground">Mã đơn:</span>
                             <span className="font-mono text-xs sm:text-sm font-medium">
-                                #{order.id.slice(0, 8).toUpperCase()}
+                                #{String(order.id).slice(0, 8).toUpperCase()}
                             </span>
                         </div>
                         <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">

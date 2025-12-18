@@ -1,52 +1,99 @@
-import React from "react";
-import { QuizCard } from "@/components/quiz/quiz-card";
+"use client";
 
-const fakeQuizzes = [
-  {
-    id: "0a71ec6a-9774-4a36-ac19-410d01a3c032",
-    title: "Kiểm tra kiến thức JavaScript cơ bản",
-    description: "Bài kiểm tra về các khái niệm cơ bản trong JavaScript như biến, hàm, vòng lặp và điều kiện.",
-    questionCount: 10,
-    timeLimit: 15,
-  },
-  {
-    id: "0a71ec6a-9774-4a36-ac19-410d01a3c032",
-    title: "React Hooks và State Management",
-    description: "Đánh giá hiểu biết về React Hooks, useState, useEffect và quản lý state trong ứng dụng React.",
-    questionCount: 15,
-    timeLimit: 20,
-  },
-  {
-    id: "0a71ec6a-9774-4a36-ac19-410d01a3c032",
-    title: "TypeScript Advanced",
-    description: "Kiểm tra kiến thức nâng cao về TypeScript: Generics, Utility Types, và Type Guards.",
-    questionCount: 12,
-    timeLimit: 25,
-  },
-  {
-    id: "0a71ec6a-9774-4a36-ac19-410d01a3c032",
-    title: "CSS và Responsive Design",
-    description: "Bài test về CSS Flexbox, Grid, và các kỹ thuật tạo giao diện responsive.",
-    questionCount: 8,
-    timeLimit: 10,
-  },
-  {
-    id: "0a71ec6a-9774-4a36-ac19-410d01a3c032",
-    title: "Node.js và Express",
-    description: "Kiểm tra kiến thức về backend với Node.js, Express framework và RESTful API.",
-    questionCount: 20,
-    timeLimit: 30,
-  },
-  {
-    id: "0a71ec6a-9774-4a36-ac19-410d01a3c032",
-    title: "Database và SQL",
-    description: "Đánh giá kỹ năng làm việc với database, viết query SQL và tối ưu hóa truy vấn.",
-    questionCount: 18,
-    timeLimit: 25,
-  },
-];
+import React, { useState, useEffect } from "react";
+import { QuizCard } from "@/components/quiz/quiz-card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getQuizzes, getMyQuizAttempts, type QuizAttempt } from "@/services/quiz";
+
+interface QuizItem {
+  id: string;
+  title: string;
+  description: string;
+  questionCount: number;
+  timeLimit: number;
+  status: "not-started" | "in-progress" | "completed";
+  score?: number;
+  attemptId?: string;
+}
 
 export const QuizSection: React.FC = () => {
+  const [quizzes, setQuizzes] = useState<QuizItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchQuizzes();
+  }, []);
+
+  const fetchQuizzes = async () => {
+    try {
+      setLoading(true);
+      const response = await getQuizzes(1, 6); // Lấy 6 quiz cho trang chủ
+      
+      // Lấy attempts (có thể fail nếu chưa đăng nhập)
+      let attemptsData: QuizAttempt[] = [];
+      try {
+        attemptsData = await getMyQuizAttempts();
+      } catch (error) {
+        console.log("User not logged in or no attempts found");
+      }
+
+      // Tạo map attempts theo quizId
+      const attemptsMap = new Map<string, QuizAttempt>();
+      if (Array.isArray(attemptsData)) {
+        attemptsData.forEach((attempt) => {
+          const existing = attemptsMap.get(attempt.quizId);
+          // Giữ attempt mới nhất
+          if (!existing || new Date(attempt.startedAt) > new Date(existing.startedAt)) {
+            attemptsMap.set(attempt.quizId, attempt);
+          }
+        });
+      }
+      
+      // Handle nested response structure
+      const responseData = response as any;
+      const quizList = responseData?.data?.items 
+        ?? responseData?.data?.data 
+        ?? responseData?.data 
+        ?? responseData?.items
+        ?? [];
+
+      const mappedQuizzes: QuizItem[] = (Array.isArray(quizList) ? quizList : []).map((quiz: any) => {
+        const attempt = attemptsMap.get(quiz.id);
+        
+        let status: "not-started" | "in-progress" | "completed" = "not-started";
+        let score: number | undefined;
+        let attemptId: string | undefined;
+
+        if (attempt) {
+          attemptId = attempt.id;
+          if (attempt.status === "completed") {
+            status = "completed";
+            score = Math.round(attempt.percentage);
+          } else if (attempt.status === "in-progress") {
+            status = "in-progress";
+          }
+        }
+
+        return {
+          id: quiz.id,
+          title: quiz.title,
+          description: quiz.description || "",
+          questionCount: quiz.questions?.length || 0,
+          timeLimit: quiz.timeLimit || 0,
+          status,
+          score,
+          attemptId,
+        };
+      });
+
+      setQuizzes(mappedQuizzes);
+    } catch (error) {
+      console.error("Error fetching quizzes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="py-12">
       <div className="max-w-[1300px] mx-auto px-4 pt-12">
@@ -56,18 +103,34 @@ export const QuizSection: React.FC = () => {
             Chọn một bài kiểm tra để bắt đầu thử thách bản thân
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {fakeQuizzes.map((quiz, index) => (
-            <QuizCard
-              key={`${quiz.id}-${index}`}
-              id={quiz.id}
-              title={quiz.title}
-              description={quiz.description}
-              questionCount={quiz.questionCount}
-              timeLimit={quiz.timeLimit}
-            />
-          ))}
-        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-64 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : quizzes.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {quizzes.map((quiz) => (
+              <QuizCard
+                key={quiz.id}
+                id={quiz.id}
+                title={quiz.title}
+                description={quiz.description}
+                questionCount={quiz.questionCount}
+                timeLimit={quiz.timeLimit}
+                status={quiz.status}
+                score={quiz.score}
+                attemptId={quiz.attemptId}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground py-8">
+            Chưa có bài kiểm tra nào
+          </p>
+        )}
       </div>
     </section>
   );

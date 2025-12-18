@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, Users, Clock, Heart, ShoppingCart, Check } from "lucide-react";
+import { Star, Users, Clock, Heart, ShoppingCart, Check, Play } from "lucide-react";
 import { CourseItemType } from "@/src/types/course/course-item.types";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { formatDuration } from "@/lib/format-duration";
 import { wishlistService } from "@/src/services/wishlist";
+import { enrollmentService } from "@/src/services/enrollment";
+import { useQueryHook } from "@/src/hooks/useQueryHook";
 import { toast } from "sonner";
 
 interface CourseCardProps {
@@ -25,6 +27,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
     addToOrderList,
     clearOrderList,
     isAuthenticated,
+    user,
   } = useAppStore();
   const [isHovered, setIsHovered] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -32,6 +35,22 @@ const CourseCard = ({ course }: CourseCardProps) => {
   const [popupPosition, setPopupPosition] = useState<"left" | "right">("right");
   const cardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Check if user is enrolled in this course
+  const { data: enrollments } = useQueryHook(
+    ['my-enrollments'],
+    () => enrollmentService.getMyLearning(),
+    {
+      enabled: !!user,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    }
+  );
+
+  const currentEnrollment = enrollments?.find(
+    (enrollment: any) => enrollment.courseId === course.id
+  );
+  const isEnrolled = !!currentEnrollment;
+  const progress = currentEnrollment ? Number(currentEnrollment.progress) || 0 : 0;
 
   const isInCart = cart.some((c) => c.id === course.id);
 
@@ -89,11 +108,39 @@ const CourseCard = ({ course }: CourseCardProps) => {
     }
   };
 
-  const handleBuyNow = (e: React.MouseEvent) => {
+  const handleBuyNow = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    clearOrderList();
-    addToOrderList(course);
-    router.push("/checkout");
+    
+    // Nếu đã enrolled thì chuyển đến trang học
+    if (isEnrolled) {
+      router.push(`/learning/${course.id}`);
+      return;
+    }
+    
+    const isFree = displayPrice === 0;
+    
+    if (isFree) {
+      // Khóa học miễn phí - enroll trực tiếp
+      if (!isAuthenticated) {
+        toast.error("Vui lòng đăng nhập để đăng ký khóa học");
+        router.push("/login");
+        return;
+      }
+      
+      try {
+        await enrollmentService.enrollFreeCourse(course.id);
+        toast.success("Đăng ký khóa học thành công! Chúc bạn học tập vui vẻ 🎉");
+        router.push('/profile');
+      } catch (error: any) {
+        console.error('Failed to enroll:', error);
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi đăng ký khóa học');
+      }
+    } else {
+      // Khóa học có phí - qua checkout
+      clearOrderList();
+      addToOrderList(course);
+      router.push("/checkout");
+    }
   };
 
   const handleToggleWishlist = async (e: React.MouseEvent) => {
@@ -251,19 +298,27 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
           <div className="pt-2 border-t">
             <div className="flex items-center gap-2">
-              <p
-                className={` ${
-                  displayPrice === 0
-                    ? "text-[18px] font-medium"
-                    : "text-xl font-bold"
-                } text-primary`}
-              >
-                {formatPrice(displayPrice)}
-              </p>
-              {hasSale && (
-                <p className="text-sm text-muted-foreground line-through">
-                  {formatPrice(originalPrice)}
+              {isEnrolled ? (
+                <p className="text-[18px] font-medium text-primary-dark">
+                  Đã đăng ký
                 </p>
+              ) : (
+                <>
+                  <p
+                    className={` ${
+                      displayPrice === 0
+                        ? "text-[18px] font-medium"
+                        : "text-xl font-bold"
+                    } text-primary-dark`}
+                  >
+                    {formatPrice(displayPrice)}
+                  </p>
+                  {hasSale && (
+                    <p className="text-sm text-muted-foreground line-through">
+                      {formatPrice(originalPrice)}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -330,72 +385,104 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
             {/* Price */}
             <div className="flex items-center gap-2">
-              <p
-                className={`${
-                  displayPrice === 0
-                    ? "font-medium text-[18px] "
-                    : "font-bold text-xl "
-                } text-primary`}
-              >
-                {formatPrice(displayPrice)}
-              </p>
-              {hasSale && (
-                <p className="text-xs text-muted-foreground line-through">
-                  {formatPrice(originalPrice)}
+              {isEnrolled ? (
+                <p className="font-medium text-[18px] text-primary-dark">
+                  Đã đăng ký
                 </p>
+              ) : (
+                <>
+                  <p
+                    className={`${
+                      displayPrice === 0
+                        ? "font-medium text-[18px] "
+                        : "font-bold text-xl "
+                    } text-primary-dark`}
+                  >
+                    {formatPrice(displayPrice)}
+                  </p>
+                  {hasSale && (
+                    <p className="text-xs text-muted-foreground line-through">
+                      {formatPrice(originalPrice)}
+                    </p>
+                  )}
+                </>
               )}
             </div>
 
             {/* Action Buttons */}
             <div className="space-y-2">
-              <Button
-                onClick={handleAddToCart}
-                className={`w-full ${
-                  isInCart
-                    ? "bg-green-600 hover:bg-green-600"
-                    : "bg-primary hover:bg-primary/90"
-                }`}
-                size="sm"
-                disabled={isInCart}
-              >
-                {isInCart ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Đã thêm vào giỏ
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Thêm vào giỏ
-                  </>
-                )}
-              </Button>
-              <div className="flex gap-2">
+              {isEnrolled ? (
+                // Đã đăng ký - hiển thị nút học ngay
                 <Button
                   onClick={handleBuyNow}
-                  className="flex-1"
-                  variant="outline"
+                  className="w-full bg-primary hover:bg-primary/90"
                   size="sm"
                 >
-                  Mua ngay
+                  <Play className="w-4 h-4 mr-2" />
+                  {progress > 0 ? `Tiếp tục học (${progress.toFixed(0)}%)` : 'Học ngay'}
                 </Button>
+              ) : displayPrice === 0 ? (
+                // Khóa học miễn phí - chỉ hiển thị nút đăng ký
                 <Button
-                  onClick={handleToggleWishlist}
-                  variant="outline"
+                  onClick={handleBuyNow}
+                  className="w-full bg-primary hover:bg-primary/90"
                   size="sm"
-                  className={`px-3 ${
-                    isInWishlist
-                      ? "bg-red-50 border-red-500 hover:bg-red-100 dark:bg-red-950 dark:border-red-500"
-                      : ""
-                  }`}
                 >
-                  <Heart
-                    className={`w-4 h-4 ${
-                      isInWishlist ? "fill-red-500 text-red-500" : ""
-                    }`}
-                  />
+                  Đăng ký học miễn phí
                 </Button>
-              </div>
+              ) : (
+                // Khóa học có phí - hiển thị đầy đủ các nút
+                <>
+                  <Button
+                    onClick={handleAddToCart}
+                    className={`w-full ${
+                      isInCart
+                        ? "bg-green-600 hover:bg-green-600"
+                        : "bg-primary hover:bg-primary/90"
+                    }`}
+                    size="sm"
+                    disabled={isInCart}
+                  >
+                    {isInCart ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Đã thêm vào giỏ
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Thêm vào giỏ
+                      </>
+                    )}
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleBuyNow}
+                      className="flex-1"
+                      variant="outline"
+                      size="sm"
+                    >
+                      Mua ngay
+                    </Button>
+                    <Button
+                      onClick={handleToggleWishlist}
+                      variant="outline"
+                      size="sm"
+                      className={`px-3 ${
+                        isInWishlist
+                          ? "bg-red-50 border-red-500 hover:bg-red-100 dark:bg-red-950 dark:border-red-500"
+                          : ""
+                      }`}
+                    >
+                      <Heart
+                        className={`w-4 h-4 ${
+                          isInWishlist ? "fill-red-500 text-red-500" : ""
+                        }`}
+                      />
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

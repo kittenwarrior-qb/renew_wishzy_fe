@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { courseService } from '@/services/course'
 import { UserRole } from '@/types/auth'
 import { CourseItemType } from '@/types/course/course-item.types'
-import { getPersistedQueryData, persistQueryData } from '@/lib/queryClient'
 
 export type Course = {
   id: string
@@ -88,27 +87,14 @@ export const useCourseDetail = (id?: string) => {
   return useQuery<any, unknown, Course>({
     queryKey: [ENDPOINT, id],
     queryFn: async () => {
-      // Try to get from localStorage first
-      const cached = getPersistedQueryData<any>([ENDPOINT, id || '']);
-      if (cached) {
-        return cached;
-      }
-
-      // Fetch from API
       const result = await courseService.get(id as string);
-      
-      // Persist to localStorage
-      persistQueryData([ENDPOINT, id || ''], result, 15);
-      
       return result;
     },
     enabled: !!id,
-    staleTime: 15 * 60 * 1000, // Increased to 15 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 5 * 60 * 1000,
     select: (res: any): Course => {
-      const payload = res?.data ?? res
-      const item = (payload && typeof payload === 'object' && 'data' in payload) ? (payload as any).data : payload
-      return item as Course
+      // API returns { success: true, data: {...} }
+      return res?.data ?? res
     },
   })
 }
@@ -194,7 +180,9 @@ export const useUpdateCourse = () => {
     mutationFn: async ({ id, ...data }) => courseService.update(id, data),
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: [ENDPOINT] })
-      if (vars?.id) qc.invalidateQueries({ queryKey: [`${ENDPOINT}/${vars.id}`] })
+      if (vars?.id) {
+        qc.invalidateQueries({ queryKey: [ENDPOINT, vars.id] })
+      }
     },
   })
 }
@@ -205,7 +193,9 @@ export const useToggleCourseStatus = () => {
     mutationFn: async ({ id }) => courseService.toggleStatus(id),
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: [ENDPOINT] })
-      if (vars?.id) qc.invalidateQueries({ queryKey: [`${ENDPOINT}/${vars.id}`] })
+      if (vars?.id) {
+        qc.invalidateQueries({ queryKey: [ENDPOINT, vars.id] })
+      }
     },
   })
 }

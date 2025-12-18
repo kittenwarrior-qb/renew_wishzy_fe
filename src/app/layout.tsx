@@ -3,6 +3,12 @@ import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "../providers/QueryProvider";
 import { ThemeProvider } from "../providers/ThemeProvider";
+import { AuthProvider } from "@/providers/AuthProvider";
+import { GoogleOAuthProvider } from "@/providers/GoogleOAuthProvider";
+import Header from "@/components/shared/layout/Header";
+import Footer from "@/components/shared/layout/Footer";
+import ScrollToTop from "@/components/shared/ScrollToTop";
+import { MaintenanceGuard } from "@/components/shared/layout/MaintenanceGuard";
 import { Toaster } from "sonner";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -10,9 +16,7 @@ const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
-if (typeof window !== "undefined") {
-  throw new Error("TEST GLOBAL ERROR")
-}
+
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
@@ -29,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="vi" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -52,7 +56,18 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <QueryProvider>
-            {children}
+            <GoogleOAuthProvider>
+              <AuthProvider>
+                <div className="flex flex-col min-h-screen">
+                  <Header />
+                  <main className="flex-1">
+                    <MaintenanceGuard>{children}</MaintenanceGuard>
+                  </main>
+                  <Footer />
+                </div>
+                <ScrollToTop />
+              </AuthProvider>
+            </GoogleOAuthProvider>
             <Toaster
               position="top-center"
               richColors

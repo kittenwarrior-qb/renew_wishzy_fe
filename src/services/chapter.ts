@@ -11,6 +11,12 @@ export const chapterService = {
     return response.data;
   },
 
+  // Get chapters with full lecture data for enrolled users
+  getChapterByCourseIdForEnrolled: async (courseId: string) => {
+    const response = await api.get(`/chapters/course/${courseId}/enrolled`);
+    return response.data;
+  },
+
   create: async (data: {
     name: string;
     courseId: string;

@@ -17,7 +17,8 @@ import {
   Menu,
   Sun,
   Moon,
-  Globe
+  LayoutDashboard,
+  GraduationCap,
 } from "lucide-react"
 import {
   Sheet,
@@ -27,11 +28,9 @@ import {
 } from "@/components/ui/sheet"
 import React from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { ThemeSwitcherDropdownItem } from "../common/ThemeSwitcherDropdownItem"
-import { LocaleSwitcherDropdownItem } from "../common/LocaleSwitcherDropdownItem"
 import { useLogout, useAuthStatus } from "@/components/shared/auth/useAuth"
-import { useTranslations } from "@/providers/TranslationProvider"
 import { useAppStore } from "@/stores/useAppStore"
 import CartPopover from "../cart/CartPopover"
 import SearchHeader from "./header/SearchHeader"
@@ -39,8 +38,6 @@ import DiscoverDropdown from "./header/DiscoverDropdown"
 
 const Header = () => {
   const pathname = usePathname();
-  const router = useRouter();
-  const t = useTranslations();
   const { user, isAuthenticated } = useAuthStatus();
   const logoutMutation = useLogout();
   const theme = useAppStore((state) => state.theme);
@@ -132,42 +129,27 @@ const Header = () => {
             </div>
 
             <div className="hidden md:flex items-center gap-6">
-              <a
-                href="#features"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                }}
+              <Link
+                href="/quiz"
                 className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
               >
-                Tính năng
-                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </a>
-              <a
-                href="#faq"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
-              >
-                FAQ
-                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </a>
-              <a
+                Bài kiểm tra
+                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+              <Link
                 href="/about"
                 className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
               >
-                Giới thiệu
-                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </a>
-              <a
-                href="/blog"
+                Về chúng tôi
+                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+              <Link
+                href="/#faq"
                 className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
               >
-                Bài viết
-                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </a>
+                FAQ
+                <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </Link>
             </div>
           </div>
 
@@ -185,7 +167,7 @@ const Header = () => {
                         {user.avatar ? (
                           <img
                             src={user.avatar}
-                            alt={t('common.avatar')}
+                            alt="Avatar"
                             className="w-8 h-8 rounded-full object-cover transition-colors"
                           />
                         ) : (
@@ -223,9 +205,25 @@ const Header = () => {
                           <span>Hồ sơ</span>
                         </Link>
                       </DropdownMenuItem>
+                      {/* Role-based dashboard links */}
+                      {user.role === 'admin' && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin" className="cursor-pointer flex items-center">
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            <span>Quản trị viên</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      {user.role === 'instructor' && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/instructor" className="cursor-pointer flex items-center">
+                            <GraduationCap className="mr-2 h-4 w-4" />
+                            <span>Giảng viên</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <ThemeSwitcherDropdownItem />
-                      <LocaleSwitcherDropdownItem />
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={handleLogout}
@@ -233,7 +231,7 @@ const Header = () => {
                         className="cursor-pointer text-destructive focus:text-destructive"
                       >
                         <LogOut className="mr-2 h-4 w-4" />
-                        <span>{t('auth.logout')}</span>
+                        <span>Đăng xuất</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -242,12 +240,12 @@ const Header = () => {
                 <div className="flex items-center space-x-2">
                   <Link href="/auth/login">
                     <Button variant="ghost" className="font-medium">
-                      {t('auth.login')}
+                      Đăng nhập
                     </Button>
                   </Link>
                   <Link href="/auth/register">
                     <Button className="font-medium bg-primary hover:bg-primary/90">
-                      {t('auth.register')}
+                      Đăng ký
                     </Button>
                   </Link>
                 </div>
@@ -269,34 +267,38 @@ const Header = () => {
 
                 <div className="flex flex-col p-4 space-y-6">
                   <div className="flex flex-col space-y-4">
-                    <a
-                      href="#features"
+                    <Link
+                      href="/quiz"
                       className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsOpen(false);
-                        setTimeout(() => {
-                          document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                        }, 300);
-                      }}
+                      onClick={() => setIsOpen(false)}
                     >
-                      Tính năng
-                      <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
-                    </a>
-                    <a
-                      href="#faq"
+                      Bài kiểm tra
+                      <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                    <Link
+                      href="/about"
                       className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsOpen(false);
-                        setTimeout(() => {
-                          document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
-                        }, 300);
-                      }}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Về chúng tôi
+                      <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                    <Link
+                      href="/#faq"
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block"
+                      onClick={() => setIsOpen(false)}
                     >
                       FAQ
-                      <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
-                    </a>
+                      <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
+                    <Link
+                      href="/contact"
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Liên hệ
+                      <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </Link>
                   </div>
 
                   <div className="border-t pt-4">
@@ -306,7 +308,7 @@ const Header = () => {
                           {user.avatar ? (
                             <img
                               src={user.avatar}
-                              alt={t('common.avatar')}
+                              alt="Avatar"
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
@@ -335,6 +337,20 @@ const Header = () => {
                           <span>Hồ sơ</span>
                         </Link>
 
+                        {/* Role-based dashboard links - Mobile */}
+                        {user.role === 'admin' && (
+                          <Link href="/admin" className="flex items-center py-2 hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            <span>Quản trị viên</span>
+                          </Link>
+                        )}
+                        {user.role === 'instructor' && (
+                          <Link href="/instructor" className="flex items-center py-2 hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
+                            <GraduationCap className="mr-2 h-4 w-4" />
+                            <span>Giảng viên</span>
+                          </Link>
+                        )}
+
                         <button
                           onClick={() => {
                             handleLogout();
@@ -344,19 +360,19 @@ const Header = () => {
                           className="flex items-center py-2 text-destructive hover:text-destructive/80 transition-colors"
                         >
                           <LogOut className="mr-2 h-4 w-4" />
-                          <span>{t('auth.logout')}</span>
+                          <span>Đăng xuất</span>
                         </button>
                       </div>
                     ) : (
                       <div className="flex flex-col space-y-3">
                         <Link href="/auth/login" className="w-full" onClick={() => setIsOpen(false)}>
                           <Button variant="outline" className="w-full font-medium">
-                            {t('auth.login')}
+                            Đăng nhập
                           </Button>
                         </Link>
                         <Link href="/auth/register" className="w-full" onClick={() => setIsOpen(false)}>
                           <Button className="w-full font-medium bg-primary hover:bg-primary/90">
-                            {t('auth.register')}
+                            Đăng ký
                           </Button>
                         </Link>
                       </div>
@@ -371,26 +387,11 @@ const Header = () => {
                       }}
                       className="flex items-center justify-between py-2 hover:text-primary transition-colors"
                     >
-                      <span className="text-sm">{t('settings.theme')}</span>
+                      <span className="text-sm">Giao diện</span>
                       {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                     </button>
-                    <button
-                      onClick={() => {
-                        const pathname = usePathname();
-                        const segments = pathname.split('/');
-                        const currentLocale = segments[1] === 'en' ? 'en' : 'vi';
-                        const newLocale = currentLocale === 'vi' ? 'en' : 'vi';
-                        const newPath = '/' + newLocale + pathname.substring(3);
-                        router.push(newPath);
-                        setIsOpen(false);
-                      }}
-                      className="flex items-center justify-between py-2 hover:text-primary transition-colors"
-                    >
-                      <span className="text-sm">{t('settings.language')}</span>
-                      <Globe className="h-5 w-5" />
-                    </button>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">{t('settings.cart')}</span>
+                      <span className="text-sm">Giỏ hàng</span>
                       <CartPopover />
                     </div>
                   </div>
@@ -404,4 +405,4 @@ const Header = () => {
   );
 };
 
-export default Header;  
+export default Header;

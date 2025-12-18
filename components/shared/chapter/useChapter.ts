@@ -65,6 +65,27 @@ export const useChapterList = (courseId?: string) => {
   });
 };
 
+// Hook for enrolled users - returns full lecture data including fileUrl
+export const useChapterListForEnrolled = (courseId?: string, enabled = true) => {
+  return useQuery<{ items: Chapter[] }>({
+    queryKey: [ENDPOINT, "course", courseId, "enrolled"],
+    queryFn: async () => {
+      const result = await chapterService.getChapterByCourseIdForEnrolled(
+        courseId as string
+      );
+      return result;
+    },
+    enabled: !!courseId && enabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    select: (res: any): { items: Chapter[] } => {
+      const payload = res?.data ?? res;
+      const items = payload?.items ?? [];
+      return { items: items as Chapter[] };
+    },
+  });
+};
+
 type CreateChapterInput = {
   courseId: string;
   name: string;

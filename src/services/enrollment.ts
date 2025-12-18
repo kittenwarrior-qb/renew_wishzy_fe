@@ -5,6 +5,15 @@ import { cache } from "@/lib/cache";
 const CACHE_TTL = 5; // 5 minutes
 
 export const enrollmentService = {
+    enrollFreeCourse: async (courseId: string): Promise<Enrollment> => {
+        const response = await api.post('enrollments/enroll-free', { courseId });
+        
+        // Clear cache after enrollment
+        enrollmentService.clearCache();
+        
+        return response.data.data || response.data;
+    },
+
     getMyLearning: async (skipCache: boolean = false): Promise<Enrollment[]> => {
         // Try cache first (unless skipCache is true)
         if (!skipCache) {

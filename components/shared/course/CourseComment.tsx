@@ -24,9 +24,11 @@ interface CommentWithUser extends CommentType {
 interface CourseCommentProps {
   courseId: string
   isEnrolled?: boolean
+  progress?: number // Progress percentage (0-100)
 }
 
-const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => {
+const CourseComment = ({ courseId, isEnrolled = false, progress = 0 }: CourseCommentProps) => {
+  const isCompleted = progress >= 100;
   const [newComment, setNewComment] = useState("")
   const [newRating, setNewRating] = useState(5)
   const [page, setPage] = useState(1)
@@ -34,7 +36,22 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
   const queryClient = useQueryClient()
   const { user } = useAppStore()
 
-  // Fetch comments
+  // Check if user already submitted feedback
+  const { data: userFeedback } = useQueryHook<CommentWithUser | null>(
+    ['user-feedback', courseId, user?.id || 'anonymous'],
+    async () => {
+      if (!user?.id) return null
+      const res = await commentService.listByCourse(courseId, 1, 100)
+      return res.items.find(item => item.userId === user.id && item.rating > 0) || null
+    },
+    {
+      enabled: !!user?.id && isCompleted
+    }
+  )
+
+  const hasSubmittedFeedback = !!userFeedback
+
+  // Fetch feedbacks (only with rating > 0)
   const { data: commentsData, isLoading } = useQueryHook<{
     items: CommentWithUser[]
     pagination: {
@@ -44,7 +61,7 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
       totalPage: number
     }
   }>(
-    ['comments', courseId, page.toString(), limit.toString()],
+    ['feedbacks', courseId, page.toString(), limit.toString()],
     () => commentService.listByCourse(courseId, page, limit)
   )
 
@@ -60,7 +77,8 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
       })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', courseId] })
+      queryClient.invalidateQueries({ queryKey: ['feedbacks', courseId] })
+      queryClient.invalidateQueries({ queryKey: ['user-feedback', courseId] })
       setNewComment("")
       setNewRating(5)
       toast.success("Đánh giá của bạn đã được gửi thành công!")
@@ -77,7 +95,7 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
   const likeCommentMutation = useMutation({
     mutationFn: (commentId: string) => commentService.like(commentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', courseId] })
+      queryClient.invalidateQueries({ queryKey: ['feedbacks', courseId] })
     },
     onError: () => {
       toast.error("Có lỗi xảy ra. Vui lòng thử lại!")
@@ -88,7 +106,7 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
   const dislikeCommentMutation = useMutation({
     mutationFn: (commentId: string) => commentService.dislike(commentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', courseId] })
+      queryClient.invalidateQueries({ queryKey: ['feedbacks', courseId] })
     },
     onError: () => {
       toast.error("Có lỗi xảy ra. Vui lòng thử lại!")
@@ -99,7 +117,8 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: string) => commentService.delete(commentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', courseId] })
+      queryClient.invalidateQueries({ queryKey: ['feedbacks', courseId] })
+      queryClient.invalidateQueries({ queryKey: ['user-feedback', courseId] })
       toast.success("Đã xóa đánh giá thành công!")
     },
     onError: () => {
@@ -207,8 +226,29 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
 
   return (
     <div className="space-y-8" id="feedback">
+      {/* Already Submitted Feedback */}
+      {isCompleted && hasSubmittedFeedback && (
+        <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+          <CardContent className="py-6">
+            <div className="flex flex-col items-center justify-center gap-2 text-center">
+              <div className="p-2 bg-green-500/10 rounded-full">
+                <MessageCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                  Bạn đã đánh giá khóa học này
+                </p>
+                <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                  Cảm ơn bạn đã chia sẻ đánh giá!
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Write Review Section */}
-      {isEnrolled && (
+      {isCompleted && !hasSubmittedFeedback && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -278,8 +318,8 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
         </Card>
       )}
 
-      {/* Not Enrolled Message */}
-      {!isEnrolled && (
+      {/* Not Completed Message */}
+      {!isCompleted && (
         <Card className="bg-muted/30 border-dashed">
           <CardContent className="py-6">
             <div className="flex flex-col items-center justify-center gap-2 text-center">
@@ -288,10 +328,14 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Bạn cần đăng ký khóa học để viết đánh giá
+                  {!isEnrolled 
+                    ? "Bạn cần đăng ký khóa học để viết đánh giá"
+                    : "Bạn cần hoàn thành khóa học để viết đánh giá"}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Hãy tham gia khóa học để chia sẻ trải nghiệm của bạn
+                  {!isEnrolled
+                    ? "Hãy tham gia khóa học để chia sẻ trải nghiệm của bạn"
+                    : `Tiến độ hiện tại: ${progress.toFixed(0)}%`}
                 </p>
               </div>
             </div>
@@ -304,18 +348,18 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
         <div className="flex items-center justify-between pb-2 border-b">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-            Đánh giá từ học viên
+            Đánh giá từ học viên đã hoàn thành
             <Badge variant="secondary" className="ml-1">
               {commentsData?.pagination?.totalItems || 0}
             </Badge>
           </h3>
         </div>
 
-        {displayComments.length === 0 ? (
+        {displayComments.filter(c => c.rating > 0).length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="py-8">
               <div className="flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-                <MessageCircle className="w-10 h-10 opacity-50" />
+                <Star className="w-10 h-10 opacity-50" />
                 <p className="text-sm">Chưa có đánh giá nào cho khóa học này</p>
               </div>
             </CardContent>
@@ -323,7 +367,7 @@ const CourseComment = ({ courseId, isEnrolled = false }: CourseCommentProps) => 
         ) : (
           <>
             <div className="space-y-3">
-              {displayComments.map((comment) => (
+              {displayComments.filter(c => c.rating > 0).map((comment) => (
                 <Card key={comment.id}>
                   <CardContent className="p-4">
                     <div className="flex gap-3">

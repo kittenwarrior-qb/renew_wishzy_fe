@@ -32,6 +32,7 @@ export function QuizExam({ quiz, onSubmit }: QuizExamProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [showTimeUpDialog, setShowTimeUpDialog] = useState(false);
   const [startTime] = useState(Date.now());
 
   const currentQuestion = quiz.questions[currentQuestionIndex];
@@ -89,6 +90,11 @@ export function QuizExam({ quiz, onSubmit }: QuizExamProps) {
   };
 
   const handleTimeUp = () => {
+    setShowTimeUpDialog(true);
+  };
+
+  const handleTimeUpSubmit = () => {
+    setShowTimeUpDialog(false);
     handleConfirmSubmit();
   };
 
@@ -242,6 +248,50 @@ export function QuizExam({ quiz, onSubmit }: QuizExamProps) {
               Hủy
             </Button>
             <Button onClick={handleConfirmSubmit}>Xác nhận nộp bài</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Time Up Dialog */}
+      <Dialog open={showTimeUpDialog} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                <svg className="w-8 h-8 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <DialogTitle className="text-center text-xl">Hết giờ làm bài!</DialogTitle>
+            <DialogDescription className="text-center">
+              Thời gian làm bài đã kết thúc. Bài làm của bạn sẽ được nộp tự động.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2 text-sm bg-muted p-4 rounded-lg">
+              <div className="flex justify-between">
+                <span>Tổng số câu:</span>
+                <span className="font-semibold">{totalQuestions}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Đã trả lời:</span>
+                <span className="font-semibold text-green-600">
+                  {answeredCount}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Chưa trả lời:</span>
+                <span className="font-semibold text-orange-600">
+                  {totalQuestions - answeredCount}
+                </span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleTimeUpSubmit} className="w-full">
+              Xem kết quả
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

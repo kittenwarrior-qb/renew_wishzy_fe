@@ -28,9 +28,9 @@ export const useStudents = (params?: UserListParams) => {
       
       // Nếu role là instructor, sử dụng endpoint riêng
       if (params?.role === 'instructor') {
-        const { role, fullName, email, ...restParams } = params;
+        const { role, ...restParams } = params;
         // Endpoint /users/instructors/my-students tự động lấy instructorId từ token
-        // Chỉ cần truyền page, limit, search
+        // Truyền page, limit và các filter params (fullName, email)
         response = await userService.getInstructorStudents(restParams);
       } else if (params?.role) {
         // Sử dụng role từ params cho admin hoặc các role khác
@@ -44,18 +44,15 @@ export const useStudents = (params?: UserListParams) => {
       const items = response.data.data.items.map(transformUserToStudent);
       const apiPagination = response.data.data.pagination;
       return {
-        ...response,
+        success: response.success,
+        message: response.message,
         data: {
-          ...response.data,
-          data: {
-            items,
-            pagination: {
-              ...apiPagination,
-              total: apiPagination.totalItems,
-              page: apiPagination.currentPage,
-              limit: apiPagination.itemsPerPage,
-              totalPages: apiPagination.totalPage,
-            },
+          items,
+          pagination: {
+            total: apiPagination.totalItems,
+            page: apiPagination.currentPage,
+            limit: apiPagination.itemsPerPage,
+            totalPages: apiPagination.totalPage,
           },
         },
       };

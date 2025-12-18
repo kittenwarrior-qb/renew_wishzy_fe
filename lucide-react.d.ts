@@ -130,6 +130,15 @@ declare module 'lucide-react' {
   export const TrendingDown: Icon
   export const Trophy: Icon
   export const Download: Icon
+  export const Headset: Icon
+  export const Zap: Icon
+  export const Bookmark: Icon
+  export const Code: Icon
+  export const PenTool: Icon
+  export const Layout: Icon
+  export const BarChart2: Icon
+  export const MapPin: Icon
+  export const Youtube: Icon
   
   interface Icons {
     [key: string]: Icon
