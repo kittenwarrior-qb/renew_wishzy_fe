@@ -1,8 +1,25 @@
+"use client";
+
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Share2,
+  MessageSquare,
+  Tag,
+  Heart,
+  Reply
+} from "lucide-react";
 import { notFound } from "next/navigation";
+
 import { blogData } from "@/lib/blogData";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import Comments from "@/components/shared/blog/Comments";
 
 interface BlogDetailPageProps {
   params: Promise<{
@@ -11,86 +28,179 @@ interface BlogDetailPageProps {
   }>;
 }
 
-const BlogDetailPage = async ({ params }: BlogDetailPageProps) => {
-  const { blogId } = await params;
-  const blog = blogData.find(b => b.id === blogId);
+const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
+  const { blogId } = React.use(params);
 
-  if (!blog) {
-    notFound();
-  }
+  const blog = blogData.find((b) => b.id === blogId);
+
+  if (!blog) notFound();
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "—";
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return "—";
+    return new Intl.DateTimeFormat("vi-VN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  };
+
+  const [commentLikes, setCommentLikes] = React.useState<Record<string, number>>(
+    () =>
+      Object.fromEntries(
+        blog.comments?.map((c) => [c.id, c.likes ?? 0]) ?? []
+      )
+  );
+
+  const toggleLike = (id: string) => {
+    setCommentLikes((prev) => ({
+      ...prev,
+      [id]: (prev[id] ?? 0) + 1,
+    }));
+  };
+
+  const sharePost = async () => {
+    if (navigator.share) {
+      await navigator.share({
+        title: blog.title,
+        text: blog.description,
+        url: window.location.href,
+      });
+    } else {
+      await navigator.clipboard.writeText(window.location.href);
+      alert("Link đã được sao chép!");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="relative w-full h-[400px] md:h-[500px] bg-muted">
+      <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px]">
         <Image
           src={blog.image}
           alt={blog.title}
           fill
-          className="object-cover"
           priority
+          className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
       </div>
 
-      {/* Content */}
-      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
-        {/* Back Button */}
-        <Link
-          href="/blog"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8 bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Quay lại Blog
-        </Link>
-
-        {/* Article Header */}
-        <div className="bg-background rounded-2xl shadow-xl p-8 md:p-12 mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-sm font-medium mb-6">
-            <span className="text-primary">✦</span>
-            <span>Blog</span>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 -mt-20 relative z-10">
+        <div className="bg-background rounded-2xl shadow-xl overflow-hidden">
+          <div className="p-6 pb-0">
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Quay lại Blog
+            </Link>
           </div>
 
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-foreground leading-tight">
-            {blog.title}
-          </h1>
+          <div className="p-6 md:p-12 pt-4 md:pt-8">
+            <Badge variant="secondary" className="gap-1.5 mb-6">
+              <Tag className="w-3.5 h-3.5" />
+              {blog.categoryBlog}
+            </Badge>
 
-          <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-            {blog.description}
-          </p>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
+              {blog.title}
+            </h1>
 
-          {/* Meta Info */}
-          <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground border-t border-border pt-6">
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              <span>{blog.author}</span>
+            <p className="text-xl text-muted-foreground mb-8">
+              {blog.description}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground border-t pt-6">
+              <div className="flex items-center gap-2">
+                <Image
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    blog.author
+                  )}&background=random`}
+                  alt={blog.author}
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                />
+                {blog.author}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                {formatDate(blog.date)}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                {blog.readTime}
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto"
+                onClick={sharePost}
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Chia sẻ
+              </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>{blog.date}</span>
+          </div>
+
+          <div className="px-6 pb-12 md:px-12">
+            <Separator className="mb-8" />
+            <div
+              className="prose prose-lg max-w-none
+              prose-headings:text-foreground
+              prose-p:text-muted-foreground
+              prose-p:leading-8
+              prose-a:text-primary
+              prose-blockquote:border-l-4 prose-blockquote:border-primary
+              prose-code:bg-muted prose-code:rounded"
+              dangerouslySetInnerHTML={{ __html: blog.content }}
+            />
+          </div>
+
+          <div className="p-6 md:p-8 border-t">
+            <div className="flex items-center gap-2 mb-6">
+              <MessageSquare className="w-5 h-5" />
+              <h3 className="text-xl font-semibold">
+                Bình luận ({blog.comments?.length ?? 0})
+              </h3>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              <span>{blog.readTime}</span>
-            </div>
+            <Comments comments={blog.comments || []} />
+          </div>
+        </div>
+        {/* Related */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold mb-8">Bài viết liên quan</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {blogData
+              .filter((b) => b.id !== blog.id)
+              .slice(0, 3)
+              .map((item) => (
+                <Link key={item.id} href={`/blog/${item.id}`} className="group">
+                  <div className="relative aspect-video rounded-lg overflow-hidden mb-4">
+                    <Image
+                      src={item.image}
+                      alt={item.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                  <h3 className="font-semibold group-hover:text-primary">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {item.description}
+                  </p>
+                </Link>
+              ))}
           </div>
         </div>
 
-        {/* Article Content */}
-        <div className="bg-background rounded-2xl shadow-xl p-8 md:p-12 mb-16">
-          <div
-            className="prose prose-lg max-w-none
-              prose-headings:text-foreground prose-headings:font-bold prose-headings:mt-8 prose-headings:mb-4
-              prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6
-              prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4
-              prose-ul:text-muted-foreground prose-ul:my-6
-              prose-li:my-2
-              prose-strong:text-foreground prose-strong:font-semibold
-              prose-code:text-primary prose-code:bg-muted prose-code:px-2 prose-code:py-1 prose-code:rounded
-              prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:rounded-lg prose-pre:p-4"
-            dangerouslySetInnerHTML={{ __html: blog.content }}
-          />
-        </div>
-      </article>
+      </div>
     </div>
   );
 };
