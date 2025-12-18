@@ -52,7 +52,8 @@ export const SearchHeaderDropdown = ({ query, isOpen, onClose }: SearchHeaderDro
   const { data: courseResults, isLoading: isLoadingCourses } = useCourseList({
     name: debouncedQuery,
     limit: 5,
-    page: 1
+    page: 1,
+    status: true
   }, {
     enabled: debouncedQuery.length > 2 && isOpen
   });
