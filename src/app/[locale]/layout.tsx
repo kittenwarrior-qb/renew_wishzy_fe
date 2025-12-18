@@ -6,6 +6,7 @@ import Header from "@/components/shared/layout/Header";
 import Footer from "@/components/shared/layout/Footer";
 import ScrollToTop from "@/components/shared/ScrollToTop";
 import { MaintenanceGuard } from "@/components/shared/layout/MaintenanceGuard";
+import AIChatWrapper from "@/components/ai-chat/AIChatWrapper";
 
 const locales = ["vi", "en"];
 
@@ -73,6 +74,7 @@ export default async function LocaleLayout({
             <Footer />
           </div>
           <ScrollToTop />
+          <AIChatWrapper />
         </AuthProvider>
       </TranslationProvider>
     </GoogleOAuthProvider>
