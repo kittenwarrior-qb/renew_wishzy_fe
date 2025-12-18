@@ -41,7 +41,11 @@ const BlogCard = ({
             {category}
           </span>
 
-          <TruncateTooltipWrapper lineClamp={1} className="mb-2">
+          <TruncateTooltipWrapper
+            lineClamp={1}
+            className="mb-2"
+            contentClassName="!bg-primary !text-primary-foreground shadow-xl rounded-lg px-3 py-2 text-sm font-medium leading-relaxed"
+          >
             <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
               {title}
             </h3>
@@ -49,7 +53,10 @@ const BlogCard = ({
 
           {description && (
             <div className="mb-3">
-              <TruncateTooltipWrapper lineClamp={2}>
+              <TruncateTooltipWrapper
+                lineClamp={2}
+                contentClassName="!bg-primary !text-primary-foreground shadow-xl rounded-lg px-3 py-2 text-sm font-medium leading-relaxed"
+              >
                 <p className="text-sm text-gray-600">{description}</p>
               </TruncateTooltipWrapper>
             </div>

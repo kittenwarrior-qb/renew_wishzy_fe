@@ -11,6 +11,7 @@ type Props = Readonly<{
     lineClamp?: 1 | 2 | 3 | 4 | 5 | 6
     maxWidth?: number
     className?: string
+    contentClassName?: string
 }>
 
 const lineClampClasses: Record<number, string> = {
@@ -28,6 +29,7 @@ export function TruncateTooltipWrapper({
     lineClamp = 1,
     maxWidth = 500,
     className,
+    contentClassName,
 }: Props) {
     const ref = React.useRef<HTMLDivElement>(null)
     const [isTruncated, setIsTruncated] = React.useState(false)
@@ -63,7 +65,10 @@ export function TruncateTooltipWrapper({
         <Tooltip>
             <TooltipTrigger asChild>{content}</TooltipTrigger>
             <TooltipContent
-                className="max-w-[500px] w-full whitespace-normal break-words text-left"
+                className={cn(
+                    "max-w-[500px] w-full whitespace-normal break-words text-left",
+                    contentClassName
+                )}
                 side="bottom"
                 align="start"
             >
