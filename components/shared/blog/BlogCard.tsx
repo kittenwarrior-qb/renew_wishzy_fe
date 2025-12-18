@@ -1,40 +1,76 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
+import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper";
 
 interface BlogCardProps {
-  id: string;
+  id: string | number;
   title: string;
-  description: string;
   image: string;
+  author: string;
+  category?: string;
+  date?: string;
+  readTime?: string;
+  description?: string;
 }
 
-const BlogCard = ({ id, title, description, image }: BlogCardProps) => {
+const BlogCard = ({
+  id,
+  title,
+  image,
+  author,
+  category = "Công nghệ",
+  description,
+  date,
+  readTime,
+}: BlogCardProps) => {
   return (
-    <Link
-      href={`/blog/${id}`}
-      className="inline-flex items-center gap-2 text-sm font-medium transition-all"
-    >
-      <Card className="border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden group cursor-pointer">
-        <div className="relative h-[240px] w-full overflow-hidden bg-muted">
+    <Link href={`/blog/${id}`} className="block h-full">
+      <div className="h-full flex flex-col bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 group">
+        <div className="relative aspect-video overflow-hidden">
           <Image
-            src={image || "/images/momo.png"}
+            src={image}
             alt={title}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
 
-        <CardContent className="px-6">
-          <h3 className="text-lg font-semibold mb-2 text-foreground line-clamp-2 min-h-[56px]">
-            {title}
-          </h3>
+        <div className="p-4 flex-1 flex flex-col">
+          <span className="text-sm font-medium text-blue-600 mb-2">
+            {category}
+          </span>
 
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 min-h-[60px]">
-            {description}
-          </p>
-        </CardContent>
-      </Card>
+          <TruncateTooltipWrapper lineClamp={1} className="mb-2">
+            <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+              {title}
+            </h3>
+          </TruncateTooltipWrapper>
+
+          {description && (
+            <div className="mb-3">
+              <TruncateTooltipWrapper lineClamp={2}>
+                <p className="text-sm text-gray-600">{description}</p>
+              </TruncateTooltipWrapper>
+            </div>
+          )}
+
+          <div className="mt-auto pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                <Image
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(author)}&background=random`}
+                  alt={author}
+                  width={24}
+                  height={24}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="text-sm text-gray-600 truncate">{author}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </Link>
   );
 };

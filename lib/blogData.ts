@@ -1,153 +1,751 @@
+export interface Comment {
+  id: string
+  author: string
+  date: string
+  content: string
+  avatar?: string
+  likes?: number
+}
+
 export interface Blog {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  image: string;
-  author: string;
-  date: string;
-  readTime: string;
-  content: string;
+  id: string
+  categoryBlog: string
+  title: string
+  description: string
+  image: string
+  author: string
+  authorBio?: string
+  date: string
+  readTime: string
+  tags?: string[]
+  content: string
+  comments?: Comment[]
 }
 
 export const blogData: Blog[] = [
   {
     id: "1",
-    slug: "getting-started-shadcn-ui",
+    categoryBlog: "getting-started-shadcn-ui",
     title: "Bắt Đầu Với Các Component shadcn/ui",
-    description: "Tìm hiểu cách tích hợp và tùy chỉnh các component shadcn/ui trong dự án Next.js của bạn. Chúng tôi sẽ hướng dẫn cài đặt, thiết lập theme và các phương pháp tốt nhất để xây dựng giao diện hiện đại.",
-    image: "https://assets.lummi.ai/assets/QmSF4wkudctbvGGdNm7pwwDZfbs2GRxouzxFgZvDK3vTas?auto=format&w=1500",
+    description:
+      "Tìm hiểu cách tích hợp và tùy chỉnh các component shadcn/ui trong dự án Next.js của bạn.",
+    image:
+      "https://assets.lummi.ai/assets/QmSF4wkudctbvGGdNm7pwwDZfbs2GRxouzxFgZvDK3vTas?auto=format&w=1500",
     author: "Nguyễn Văn A",
+    authorBio: "Frontend Developer, yêu thích Next.js và UI Systems.",
     date: "20 Tháng 11, 2024",
     readTime: "5 phút đọc",
+    tags: ["shadcn/ui", "nextjs", "tailwind"],
     content: `
-      <h2>Giới Thiệu</h2>
-      <p>shadcn/ui là một bộ sưu tập các component có thể tái sử dụng được xây dựng bằng Radix UI và Tailwind CSS. Khác với các thư viện component truyền thống, shadcn/ui không phải là một package npm mà bạn cài đặt. Thay vào đó, bạn sao chép và dán code vào dự án của mình.</p>
+      <h2>Giới thiệu</h2>
+      <p>
+        Next.js 15 mang đến nhiều cải tiến mạnh mẽ về hiệu năng, routing và trải nghiệm
+        developer. Trong bài viết này, chúng ta sẽ cùng nhau khám phá những điểm nổi bật
+        nhất và lý do vì sao bạn nên nâng cấp.
+      </p>
 
-      <h2>Tại Sao Chọn shadcn/ui?</h2>
-      <p>Có nhiều lý do để chọn shadcn/ui cho dự án Next.js của bạn:</p>
+      <h2>1. App Router ngày càng ổn định</h2>
+      <p>
+        App Router tiếp tục được hoàn thiện với khả năng xử lý Server Components tốt hơn,
+        giảm bundle phía client và cải thiện thời gian tải trang.
+      </p>
+
+      <blockquote>
+        App Router là tương lai của Next.js – vừa mạnh, vừa tối ưu SEO.
+      </blockquote>
+
+      <h2>2. Xử lý dữ liệu và caching thông minh</h2>
+      <p>
+        Next.js 15 tối ưu lại cơ chế caching, giúp kiểm soát tốt hơn giữa dữ liệu động
+        và dữ liệu tĩnh.
+      </p>
+
+      <pre>
+        <code>
+export const dynamic = "force-dynamic";
+        </code>
+      </pre>
+
+      <h2>3. Trải nghiệm developer tốt hơn</h2>
       <ul>
-        <li><strong>Tùy chỉnh hoàn toàn:</strong> Bạn sở hữu code, có thể chỉnh sửa tùy ý</li>
-        <li><strong>Accessible:</strong> Được xây dựng trên Radix UI với hỗ trợ accessibility tốt</li>
-        <li><strong>Styling linh hoạt:</strong> Sử dụng Tailwind CSS để styling dễ dàng</li>
-        <li><strong>TypeScript:</strong> Hỗ trợ TypeScript đầy đủ</li>
+        <li>Fast Refresh ổn định hơn</li>
+        <li>Error message rõ ràng</li>
+        <li>Hỗ trợ TypeScript tốt hơn</li>
       </ul>
 
-      <h2>Cài Đặt</h2>
-      <p>Để bắt đầu với shadcn/ui, bạn cần cài đặt các dependencies cần thiết:</p>
-      <pre><code>npx shadcn-ui@latest init</code></pre>
-      <p>Lệnh này sẽ thiết lập cấu hình cần thiết và tạo file <code>components.json</code>.</p>
-
-      <h2>Thêm Component</h2>
-      <p>Sau khi cài đặt, bạn có thể thêm các component vào dự án:</p>
-      <pre><code>npx shadcn-ui@latest add button</code></pre>
-      <p>Component sẽ được thêm vào thư mục <code>components/ui</code> của bạn.</p>
-
-      <h2>Tùy Chỉnh Theme</h2>
-      <p>shadcn/ui sử dụng CSS variables để quản lý theme. Bạn có thể tùy chỉnh màu sắc trong file <code>globals.css</code>:</p>
-      <pre><code>:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-}</code></pre>
-
-      <h2>Kết Luận</h2>
-      <p>shadcn/ui là một lựa chọn tuyệt vời cho việc xây dựng UI hiện đại với Next.js. Với khả năng tùy chỉnh cao và hỗ trợ accessibility tốt, nó giúp bạn tạo ra các ứng dụng web chất lượng cao một cách nhanh chóng.</p>
-    `
+      <h2>Kết luận</h2>
+      <p>
+        Nếu bạn đang xây dựng ứng dụng React hiện đại, Next.js 15 là một lựa chọn rất
+        đáng để thử. Với hiệu năng tốt, SEO mạnh và hệ sinh thái lớn, nó phù hợp cho
+        cả dự án cá nhân lẫn sản phẩm lớn.
+      </p>
+    `,
+    comments: [
+      {
+        id: "c1-1",
+        author: "Hoàng Minh",
+        date: "21 Tháng 11, 2024",
+        content: "Bài viết rất dễ hiểu, mình làm theo là chạy được ngay 👍",
+        avatar: "/avatars/user1.png",
+        likes: 2
+      },
+      {
+        id: "c1-2",
+        author: "Lan Anh",
+        date: "22 Tháng 11, 2024",
+        content: "Phần giải thích theme rất hữu ích, cảm ơn tác giả!",
+        likes: 2
+      }
+    ]
   },
+
   {
     id: "2",
-    slug: "building-accessible-web-apps",
+    categoryBlog: "building-accessible-web-apps",
     title: "Xây Dựng Ứng Dụng Web Dễ Tiếp Cận",
-    description: "Khám phá cách tạo trải nghiệm web toàn diện bằng các component có khả năng tiếp cận của shadcn/ui. Tìm hiểu các mẹo thực tế để triển khai ARIA labels, điều hướng bàn phím và HTML ngữ nghĩa.",
-    image: "https://assets.lummi.ai/assets/QmXXeMW7hwXnQvyhHBPiHFMGQHmh7UYQtWYFHAdvNrpYzW?auto=format&w=1500",
+    description:
+      "Khám phá cách tạo trải nghiệm web toàn diện với accessibility.",
+    image:
+      "https://assets.lummi.ai/assets/QmXXeMW7hwXnQvyhHBPiHFMGQHmh7UYQtWYFHAdvNrpYzW?auto=format&w=1500",
     author: "Trần Thị B",
     date: "18 Tháng 11, 2024",
     readTime: "7 phút đọc",
+    tags: ["accessibility", "aria", "a11y"],
     content: `
-      <h2>Tầm Quan Trọng Của Accessibility</h2>
-      <p>Accessibility (khả năng tiếp cận) không chỉ là một tính năng bổ sung mà là một phần thiết yếu của việc phát triển web hiện đại. Nó đảm bảo rằng mọi người, bao gồm cả người khuyết tật, đều có thể sử dụng ứng dụng của bạn.</p>
+      <h2>Giới thiệu</h2>
+      <p>
+        Next.js 15 mang đến nhiều cải tiến mạnh mẽ về hiệu năng, routing và trải nghiệm
+        developer. Trong bài viết này, chúng ta sẽ cùng nhau khám phá những điểm nổi bật
+        nhất và lý do vì sao bạn nên nâng cấp.
+      </p>
 
-      <h2>ARIA Labels và Roles</h2>
-      <p>ARIA (Accessible Rich Internet Applications) cung cấp các thuộc tính để làm cho nội dung web dễ tiếp cận hơn:</p>
+      <h2>1. App Router ngày càng ổn định</h2>
+      <p>
+        App Router tiếp tục được hoàn thiện với khả năng xử lý Server Components tốt hơn,
+        giảm bundle phía client và cải thiện thời gian tải trang.
+      </p>
+
+      <blockquote>
+        App Router là tương lai của Next.js – vừa mạnh, vừa tối ưu SEO.
+      </blockquote>
+
+      <h2>2. Xử lý dữ liệu và caching thông minh</h2>
+      <p>
+        Next.js 15 tối ưu lại cơ chế caching, giúp kiểm soát tốt hơn giữa dữ liệu động
+        và dữ liệu tĩnh.
+      </p>
+
+      <pre>
+        <code>
+export const dynamic = "force-dynamic";
+        </code>
+      </pre>
+
+      <h2>3. Trải nghiệm developer tốt hơn</h2>
       <ul>
-        <li><strong>aria-label:</strong> Cung cấp nhãn cho các element</li>
-        <li><strong>aria-describedby:</strong> Liên kết element với mô tả</li>
-        <li><strong>role:</strong> Xác định vai trò của element</li>
+        <li>Fast Refresh ổn định hơn</li>
+        <li>Error message rõ ràng</li>
+        <li>Hỗ trợ TypeScript tốt hơn</li>
       </ul>
 
-      <h2>Điều Hướng Bàn Phím</h2>
-      <p>Đảm bảo ứng dụng của bạn có thể được điều hướng hoàn toàn bằng bàn phím:</p>
-      <ul>
-        <li>Tab để di chuyển giữa các element có thể focus</li>
-        <li>Enter/Space để kích hoạt buttons và links</li>
-        <li>Arrow keys để điều hướng trong menus và lists</li>
-        <li>Escape để đóng modals và dropdowns</li>
-      </ul>
-
-      <h2>Semantic HTML</h2>
-      <p>Sử dụng các thẻ HTML ngữ nghĩa giúp screen readers hiểu cấu trúc trang:</p>
-      <pre><code>&lt;header&gt;, &lt;nav&gt;, &lt;main&gt;, &lt;article&gt;, &lt;section&gt;, &lt;footer&gt;</code></pre>
-
-      <h2>Testing Accessibility</h2>
-      <p>Sử dụng các công cụ như axe DevTools, Lighthouse, và WAVE để kiểm tra accessibility của ứng dụng.</p>
-
-      <h2>Kết Luận</h2>
-      <p>Xây dựng ứng dụng web dễ tiếp cận không chỉ là đúng đắn về mặt đạo đức mà còn mở rộng đối tượng người dùng của bạn. shadcn/ui giúp việc này trở nên dễ dàng hơn với các component được xây dựng sẵn với accessibility.</p>
-    `
+      <h2>Kết luận</h2>
+      <p>
+        Nếu bạn đang xây dựng ứng dụng React hiện đại, Next.js 15 là một lựa chọn rất
+        đáng để thử. Với hiệu năng tốt, SEO mạnh và hệ sinh thái lớn, nó phù hợp cho
+        cả dự án cá nhân lẫn sản phẩm lớn.
+      </p>
+    `,
+    comments: [
+      {
+        id: "c2-1",
+        author: "Tuấn Anh",
+        date: "19 Tháng 11, 2024",
+        content: "Mình hay bỏ qua a11y, đọc bài này mới thấy thiếu sót.",
+        likes: 3
+      },
+      {
+        id: "c2-2",
+        author: "Phương Linh",
+        date: "20 Tháng 11, 2024",
+        content: "Có ví dụ ARIA rất thực tế 👌",
+        likes: 3
+      }
+    ]
   },
+
   {
     id: "3",
-    slug: "modern-design-systems-tailwind",
+    categoryBlog: "modern-design-systems-tailwind",
     title: "Hệ Thống Thiết Kế Hiện Đại Với Tailwind CSS",
-    description: "Tìm hiểu cách tạo hệ thống thiết kế có khả năng mở rộng bằng Tailwind CSS và shadcn/ui. Học cách duy trì tính nhất quán trong khi xây dựng thư viện component linh hoạt và dễ bảo trì.",
-    image: "https://assets.lummi.ai/assets/QmaE3ByjEoMpBcY7EDfza1h9aQXKFfv1asXwFVT3prgdbv?auto=format&w=1500",
+    description:
+      "Tạo design system có khả năng mở rộng với Tailwind và shadcn/ui.",
+    image:
+      "https://assets.lummi.ai/assets/QmaE3ByjEoMpBcY7EDfza1h9aQXKFfv1asXwFVT3prgdbv?auto=format&w=1500",
     author: "Lê Văn C",
     date: "15 Tháng 11, 2024",
     readTime: "8 phút đọc",
+    tags: ["design-system", "tailwind"],
     content: `
-      <h2>Hệ Thống Thiết Kế Là Gì?</h2>
-      <p>Hệ thống thiết kế là một bộ sưu tập các component, patterns, và guidelines có thể tái sử dụng giúp đảm bảo tính nhất quán trong toàn bộ sản phẩm.</p>
+      <h2>Giới thiệu</h2>
+      <p>
+        Next.js 15 mang đến nhiều cải tiến mạnh mẽ về hiệu năng, routing và trải nghiệm
+        developer. Trong bài viết này, chúng ta sẽ cùng nhau khám phá những điểm nổi bật
+        nhất và lý do vì sao bạn nên nâng cấp.
+      </p>
 
-      <h2>Lợi Ích Của Tailwind CSS</h2>
-      <p>Tailwind CSS cung cấp một cách tiếp cận utility-first cho styling:</p>
+      <h2>1. App Router ngày càng ổn định</h2>
+      <p>
+        App Router tiếp tục được hoàn thiện với khả năng xử lý Server Components tốt hơn,
+        giảm bundle phía client và cải thiện thời gian tải trang.
+      </p>
+
+      <blockquote>
+        App Router là tương lai của Next.js – vừa mạnh, vừa tối ưu SEO.
+      </blockquote>
+
+      <h2>2. Xử lý dữ liệu và caching thông minh</h2>
+      <p>
+        Next.js 15 tối ưu lại cơ chế caching, giúp kiểm soát tốt hơn giữa dữ liệu động
+        và dữ liệu tĩnh.
+      </p>
+
+      <pre>
+        <code>
+export const dynamic = "force-dynamic";
+        </code>
+      </pre>
+
+      <h2>3. Trải nghiệm developer tốt hơn</h2>
       <ul>
-        <li><strong>Rapid development:</strong> Styling nhanh chóng với utility classes</li>
-        <li><strong>Consistency:</strong> Design tokens được định nghĩa sẵn</li>
-        <li><strong>Customization:</strong> Dễ dàng tùy chỉnh qua config file</li>
-        <li><strong>Performance:</strong> PurgeCSS loại bỏ CSS không sử dụng</li>
+        <li>Fast Refresh ổn định hơn</li>
+        <li>Error message rõ ràng</li>
+        <li>Hỗ trợ TypeScript tốt hơn</li>
       </ul>
 
-      <h2>Thiết Lập Design Tokens</h2>
-      <p>Design tokens là các giá trị được định nghĩa trước cho colors, spacing, typography:</p>
-      <pre><code>module.exports = {
-  theme: {
-    colors: {
-      primary: '#3b82f6',
-      secondary: '#8b5cf6',
-    },
-    spacing: {
-      xs: '0.5rem',
-      sm: '1rem',
-      md: '1.5rem',
-    }
-  }
-}</code></pre>
+      <h2>Kết luận</h2>
+      <p>
+        Nếu bạn đang xây dựng ứng dụng React hiện đại, Next.js 15 là một lựa chọn rất
+        đáng để thử. Với hiệu năng tốt, SEO mạnh và hệ sinh thái lớn, nó phù hợp cho
+        cả dự án cá nhân lẫn sản phẩm lớn.
+      </p>
+    `,
+    comments: [
+      {
+        id: "c3-1",
+        author: "Hải Đăng",
+        date: "16 Tháng 11, 2024",
+        content: "Design tokens giải thích rất rõ ràng."
+      },
+      {
+        id: "c3-2",
+        author: "Ngọc Mai",
+        date: "17 Tháng 11, 2024",
+        content: "Mình đang build design system, bài này đúng thứ mình cần."
+      }
+    ]
+  },
 
-      <h2>Component Library</h2>
-      <p>Xây dựng thư viện component với shadcn/ui và Tailwind:</p>
+  {
+    id: "4",
+    categoryBlog: "nextjs-13-app-router",
+    title: "Làm Chủ App Router Trong Next.js 13+",
+    description:
+      "Hiểu rõ App Router, Server Components và layout trong Next.js.",
+    image:
+      "https://assets.lummi.ai/assets/QmXx5fKzLJj8vUe9dGfFb4A/nextjs-app-router.jpg?auto=format&w=1500",
+    author: "Phạm Thị D",
+    date: "12 Tháng 11, 2024",
+    readTime: "10 phút đọc",
+    tags: ["nextjs", "app-router"],
+    content: `
+      <h2>Giới thiệu</h2>
+      <p>
+        Next.js 15 mang đến nhiều cải tiến mạnh mẽ về hiệu năng, routing và trải nghiệm
+        developer. Trong bài viết này, chúng ta sẽ cùng nhau khám phá những điểm nổi bật
+        nhất và lý do vì sao bạn nên nâng cấp.
+      </p>
+
+      <h2>1. App Router ngày càng ổn định</h2>
+      <p>
+        App Router tiếp tục được hoàn thiện với khả năng xử lý Server Components tốt hơn,
+        giảm bundle phía client và cải thiện thời gian tải trang.
+      </p>
+
+      <blockquote>
+        App Router là tương lai của Next.js – vừa mạnh, vừa tối ưu SEO.
+      </blockquote>
+
+      <h2>2. Xử lý dữ liệu và caching thông minh</h2>
+      <p>
+        Next.js 15 tối ưu lại cơ chế caching, giúp kiểm soát tốt hơn giữa dữ liệu động
+        và dữ liệu tĩnh.
+      </p>
+
+      <pre>
+        <code>
+export const dynamic = "force-dynamic";
+        </code>
+      </pre>
+
+      <h2>3. Trải nghiệm developer tốt hơn</h2>
       <ul>
-        <li>Buttons với các variants khác nhau</li>
-        <li>Form inputs với validation</li>
-        <li>Cards và layouts</li>
-        <li>Navigation components</li>
+        <li>Fast Refresh ổn định hơn</li>
+        <li>Error message rõ ràng</li>
+        <li>Hỗ trợ TypeScript tốt hơn</li>
       </ul>
 
-      <h2>Documentation</h2>
-      <p>Tài liệu hóa hệ thống thiết kế của bạn với Storybook hoặc tương tự để team có thể sử dụng dễ dàng.</p>
+      <h2>Kết luận</h2>
+      <p>
+        Nếu bạn đang xây dựng ứng dụng React hiện đại, Next.js 15 là một lựa chọn rất
+        đáng để thử. Với hiệu năng tốt, SEO mạnh và hệ sinh thái lớn, nó phù hợp cho
+        cả dự án cá nhân lẫn sản phẩm lớn.
+      </p>
+    `,
+    comments: [
+      {
+        id: "c4-1",
+        author: "Minh Quân",
+        date: "13 Tháng 11, 2024",
+        content: "Đọc xong là hiểu ngay sự khác nhau giữa pages và app router."
+      },
+      {
+        id: "c4-2",
+        author: "Thanh Tâm",
+        date: "14 Tháng 11, 2024",
+        content: "Server Component đúng là game changer."
+      }
+    ]
+  },
 
-      <h2>Kết Luận</h2>
-      <p>Một hệ thống thiết kế tốt giúp team phát triển nhanh hơn, đảm bảo tính nhất quán, và dễ dàng bảo trì. Tailwind CSS và shadcn/ui là combo hoàn hảo để xây dựng hệ thống thiết kế hiện đại.</p>
-    `
+  {
+    id: "5",
+    categoryBlog: "typescript-advanced-patterns",
+    title: "Các Mẫu Thiết Kế Nâng Cao Với TypeScript",
+    description:
+      "Generics, Utility Types và các pattern nâng cao.",
+    image:
+      "https://assets.lummi.ai/assets/QmXx5fKzLJj8vUe9dGfFb4A/typescript-advanced.jpg?auto=format&w=1500",
+    author: "Nguyễn Văn E",
+    date: "10 Tháng 11, 2024",
+    readTime: "12 phút đọc",
+    tags: ["typescript", "advanced"],
+    content: `
+      <h2>Giới thiệu</h2>
+      <p>
+        Next.js 15 mang đến nhiều cải tiến mạnh mẽ về hiệu năng, routing và trải nghiệm
+        developer. Trong bài viết này, chúng ta sẽ cùng nhau khám phá những điểm nổi bật
+        nhất và lý do vì sao bạn nên nâng cấp.
+      </p>
+
+      <h2>1. App Router ngày càng ổn định</h2>
+      <p>
+        App Router tiếp tục được hoàn thiện với khả năng xử lý Server Components tốt hơn,
+        giảm bundle phía client và cải thiện thời gian tải trang.
+      </p>
+
+      <blockquote>
+        App Router là tương lai của Next.js – vừa mạnh, vừa tối ưu SEO.
+      </blockquote>
+
+      <h2>2. Xử lý dữ liệu và caching thông minh</h2>
+      <p>
+        Next.js 15 tối ưu lại cơ chế caching, giúp kiểm soát tốt hơn giữa dữ liệu động
+        và dữ liệu tĩnh.
+      </p>
+
+      <pre>
+        <code>
+export const dynamic = "force-dynamic";
+        </code>
+      </pre>
+
+      <h2>3. Trải nghiệm developer tốt hơn</h2>
+      <ul>
+        <li>Fast Refresh ổn định hơn</li>
+        <li>Error message rõ ràng</li>
+        <li>Hỗ trợ TypeScript tốt hơn</li>
+      </ul>
+
+      <h2>Kết luận</h2>
+      <p>
+        Nếu bạn đang xây dựng ứng dụng React hiện đại, Next.js 15 là một lựa chọn rất
+        đáng để thử. Với hiệu năng tốt, SEO mạnh và hệ sinh thái lớn, nó phù hợp cho
+        cả dự án cá nhân lẫn sản phẩm lớn.
+      </p>
+    `,
+    comments: [
+      {
+        id: "c5-1",
+        author: "Bảo Long",
+        date: "11 Tháng 11, 2024",
+        content: "Ví dụ Generics rất dễ hiểu."
+      },
+      {
+        id: "c5-2",
+        author: "Khánh Vy",
+        date: "12 Tháng 11, 2024",
+        content: "Mong có thêm bài về conditional types."
+      }
+    ]
+  },
+
+  {
+    id: "6",
+    categoryBlog: "react-server-components",
+    title: "Hiểu Rõ Về React Server Components",
+    description:
+      "Cách React Server Components cải thiện hiệu suất.",
+    image:
+      "https://assets.lummi.ai/assets/QmXx5fKzLJj8vUe9dGfFb4A/react-server-components.jpg?auto=format&w=1500",
+    author: "Trần Văn F",
+    date: "8 Tháng 11, 2024",
+    readTime: "9 phút đọc",
+    tags: ["react", "server-components"],
+    content: `
+      <h2>Giới thiệu</h2>
+      <p>
+        Next.js 15 mang đến nhiều cải tiến mạnh mẽ về hiệu năng, routing và trải nghiệm
+        developer. Trong bài viết này, chúng ta sẽ cùng nhau khám phá những điểm nổi bật
+        nhất và lý do vì sao bạn nên nâng cấp.
+      </p>
+
+      <h2>1. App Router ngày càng ổn định</h2>
+      <p>
+        App Router tiếp tục được hoàn thiện với khả năng xử lý Server Components tốt hơn,
+        giảm bundle phía client và cải thiện thời gian tải trang.
+      </p>
+
+      <blockquote>
+        App Router là tương lai của Next.js – vừa mạnh, vừa tối ưu SEO.
+      </blockquote>
+
+      <h2>2. Xử lý dữ liệu và caching thông minh</h2>
+      <p>
+        Next.js 15 tối ưu lại cơ chế caching, giúp kiểm soát tốt hơn giữa dữ liệu động
+        và dữ liệu tĩnh.
+      </p>
+
+      <pre>
+        <code>
+export const dynamic = "force-dynamic";
+        </code>
+      </pre>
+
+      <h2>3. Trải nghiệm developer tốt hơn</h2>
+      <ul>
+        <li>Fast Refresh ổn định hơn</li>
+        <li>Error message rõ ràng</li>
+        <li>Hỗ trợ TypeScript tốt hơn</li>
+      </ul>
+
+      <h2>Kết luận</h2>
+      <p>
+        Nếu bạn đang xây dựng ứng dụng React hiện đại, Next.js 15 là một lựa chọn rất
+        đáng để thử. Với hiệu năng tốt, SEO mạnh và hệ sinh thái lớn, nó phù hợp cho
+        cả dự án cá nhân lẫn sản phẩm lớn.
+      </p>
+    `,
+    comments: [
+      {
+        id: "c6-1",
+        author: "Đức Anh",
+        date: "9 Tháng 11, 2024",
+        content: "Giờ mới hiểu vì sao bundle nhẹ hơn."
+      },
+      {
+        id: "c6-2",
+        author: "Thảo Nhi",
+        date: "10 Tháng 11, 2024",
+        content: "Bài viết giải thích rất dễ tiếp cận."
+      }
+    ]
+  },
+
+  {
+    id: "7",
+    categoryBlog: "tailwind-vs-css-modules",
+    title: "So Sánh Giữa Tailwind CSS Và CSS Modules",
+    description:
+      "Ưu nhược điểm của Tailwind và CSS Modules.",
+    image:
+      "https://assets.lummi.ai/assets/QmXx5fKzLJj8vUe9dGfFb4A/tailwind-vs-css-modules.jpg?auto=format&w=1500",
+    author: "Lê Thị G",
+    date: "5 Tháng 11, 2024",
+    readTime: "11 phút đọc",
+    tags: ["tailwind", "css"],
+    content: `
+      <h2>Giới thiệu</h2>
+      <p>
+        Next.js 15 mang đến nhiều cải tiến mạnh mẽ về hiệu năng, routing và trải nghiệm
+        developer. Trong bài viết này, chúng ta sẽ cùng nhau khám phá những điểm nổi bật
+        nhất và lý do vì sao bạn nên nâng cấp.
+      </p>
+
+      <h2>1. App Router ngày càng ổn định</h2>
+      <p>
+        App Router tiếp tục được hoàn thiện với khả năng xử lý Server Components tốt hơn,
+        giảm bundle phía client và cải thiện thời gian tải trang.
+      </p>
+
+      <blockquote>
+        App Router là tương lai của Next.js – vừa mạnh, vừa tối ưu SEO.
+      </blockquote>
+
+      <h2>2. Xử lý dữ liệu và caching thông minh</h2>
+      <p>
+        Next.js 15 tối ưu lại cơ chế caching, giúp kiểm soát tốt hơn giữa dữ liệu động
+        và dữ liệu tĩnh.
+      </p>
+
+      <pre>
+        <code>
+export const dynamic = "force-dynamic";
+        </code>
+      </pre>
+
+      <h2>3. Trải nghiệm developer tốt hơn</h2>
+      <ul>
+        <li>Fast Refresh ổn định hơn</li>
+        <li>Error message rõ ràng</li>
+        <li>Hỗ trợ TypeScript tốt hơn</li>
+      </ul>
+
+      <h2>Kết luận</h2>
+      <p>
+        Nếu bạn đang xây dựng ứng dụng React hiện đại, Next.js 15 là một lựa chọn rất
+        đáng để thử. Với hiệu năng tốt, SEO mạnh và hệ sinh thái lớn, nó phù hợp cho
+        cả dự án cá nhân lẫn sản phẩm lớn.
+      </p>
+    `,
+    comments: [
+      {
+        id: "c7-1",
+        author: "Quốc Bảo",
+        date: "6 Tháng 11, 2024",
+        content: "Team mình đang tranh luận đúng chủ đề này 😂"
+      },
+      {
+        id: "c7-2",
+        author: "Mai Phương",
+        date: "7 Tháng 11, 2024",
+        content: "So sánh rất công tâm."
+      }
+    ]
+  },
+
+  {
+    id: "8",
+    categoryBlog: "state-management-2024",
+    title: "Quản Lý State Hiện Đại Năm 2024",
+    description:
+      "So sánh Context, Zustand, Jotai và xu hướng mới.",
+    image:
+      "https://assets.lummi.ai/assets/QmXx5fKzLJj8vUe9dGfFb4A/state-management.jpg?auto=format&w=1500",
+    author: "Phạm Văn H",
+    date: "1 Tháng 11, 2024",
+    readTime: "14 phút đọc",
+    tags: ["state-management", "react"],
+    content: `
+      <h2>Giới thiệu</h2>
+      <p>
+        Next.js 15 mang đến nhiều cải tiến mạnh mẽ về hiệu năng, routing và trải nghiệm
+        developer. Trong bài viết này, chúng ta sẽ cùng nhau khám phá những điểm nổi bật
+        nhất và lý do vì sao bạn nên nâng cấp.
+      </p>
+
+      <h2>1. App Router ngày càng ổn định</h2>
+      <p>
+        App Router tiếp tục được hoàn thiện với khả năng xử lý Server Components tốt hơn,
+        giảm bundle phía client và cải thiện thời gian tải trang.
+      </p>
+
+      <blockquote>
+        App Router là tương lai của Next.js – vừa mạnh, vừa tối ưu SEO.
+      </blockquote>
+
+      <h2>2. Xử lý dữ liệu và caching thông minh</h2>
+      <p>
+        Next.js 15 tối ưu lại cơ chế caching, giúp kiểm soát tốt hơn giữa dữ liệu động
+        và dữ liệu tĩnh.
+      </p>
+
+      <pre>
+        <code>
+export const dynamic = "force-dynamic";
+        </code>
+      </pre>
+
+      <h2>3. Trải nghiệm developer tốt hơn</h2>
+      <ul>
+        <li>Fast Refresh ổn định hơn</li>
+        <li>Error message rõ ràng</li>
+        <li>Hỗ trợ TypeScript tốt hơn</li>
+      </ul>
+
+      <h2>Kết luận</h2>
+      <p>
+        Nếu bạn đang xây dựng ứng dụng React hiện đại, Next.js 15 là một lựa chọn rất
+        đáng để thử. Với hiệu năng tốt, SEO mạnh và hệ sinh thái lớn, nó phù hợp cho
+        cả dự án cá nhân lẫn sản phẩm lớn.
+      </p>
+    `,
+    comments: [
+      {
+        id: "c8-1",
+        author: "Anh Tuấn",
+        date: "2 Tháng 11, 2024",
+        content: "Zustand đúng là nhẹ thật."
+      },
+      {
+        id: "c8-2",
+        author: "Ngọc Hân",
+        date: "3 Tháng 11, 2024",
+        content: "Bảng so sánh rất trực quan."
+      }
+    ]
+  },
+
+  {
+    id: "9",
+    categoryBlog: "microfrontends-architecture",
+    title: "Kiến Trúc Microfrontends: Từ Cơ Bản Đến Nâng Cao",
+    description:
+      "Xây dựng ứng dụng lớn với microfrontends.",
+    image:
+      "https://assets.lummi.ai/assets/QmXx5fKzLJj8vUe9dGfFb4A/microfrontends.jpg?auto=format&w=1500",
+    author: "Nguyễn Thị K",
+    date: "28 Tháng 10, 2024",
+    readTime: "15 phút đọc",
+    tags: ["microfrontends", "architecture"],
+    content: `
+      <h2>Giới thiệu</h2>
+      <p>
+        Next.js 15 mang đến nhiều cải tiến mạnh mẽ về hiệu năng, routing và trải nghiệm
+        developer. Trong bài viết này, chúng ta sẽ cùng nhau khám phá những điểm nổi bật
+        nhất và lý do vì sao bạn nên nâng cấp.
+      </p>
+
+      <h2>1. App Router ngày càng ổn định</h2>
+      <p>
+        App Router tiếp tục được hoàn thiện với khả năng xử lý Server Components tốt hơn,
+        giảm bundle phía client và cải thiện thời gian tải trang.
+      </p>
+
+      <blockquote>
+        App Router là tương lai của Next.js – vừa mạnh, vừa tối ưu SEO.
+      </blockquote>
+
+      <h2>2. Xử lý dữ liệu và caching thông minh</h2>
+      <p>
+        Next.js 15 tối ưu lại cơ chế caching, giúp kiểm soát tốt hơn giữa dữ liệu động
+        và dữ liệu tĩnh.
+      </p>
+
+      <pre>
+        <code>
+export const dynamic = "force-dynamic";
+        </code>
+      </pre>
+
+      <h2>3. Trải nghiệm developer tốt hơn</h2>
+      <ul>
+        <li>Fast Refresh ổn định hơn</li>
+        <li>Error message rõ ràng</li>
+        <li>Hỗ trợ TypeScript tốt hơn</li>
+      </ul>
+
+      <h2>Kết luận</h2>
+      <p>
+        Nếu bạn đang xây dựng ứng dụng React hiện đại, Next.js 15 là một lựa chọn rất
+        đáng để thử. Với hiệu năng tốt, SEO mạnh và hệ sinh thái lớn, nó phù hợp cho
+        cả dự án cá nhân lẫn sản phẩm lớn.
+      </p>
+    `,
+    comments: [
+      {
+        id: "c9-1",
+        author: "Hoài Nam",
+        date: "29 Tháng 10, 2024",
+        content: "Module Federation giải thích rất rõ."
+      },
+      {
+        id: "c9-2",
+        author: "Thu Trang",
+        date: "30 Tháng 10, 2024",
+        content: "Bài này phù hợp cho team lớn."
+      }
+    ]
+  },
+
+  {
+    id: "10",
+    categoryBlog: "web-performance-optimization",
+    title: "Tối Ưu Hiệu Năng Web: Kỹ Thuật Và Công Cụ",
+    description:
+      "Cải thiện Core Web Vitals và UX.",
+    image:
+      "https://assets.lummi.ai/assets/QmXx5fKzLJj8vUe9dGfFb4A/web-performance.jpg?auto=format&w=1500",
+    author: "Trần Văn L",
+    date: "25 Tháng 10, 2024",
+    readTime: "13 phút đọc",
+    tags: ["performance", "web-vitals"],
+    content: `
+      <h2>Giới thiệu</h2>
+      <p>
+        Next.js 15 mang đến nhiều cải tiến mạnh mẽ về hiệu năng, routing và trải nghiệm
+        developer. Trong bài viết này, chúng ta sẽ cùng nhau khám phá những điểm nổi bật
+        nhất và lý do vì sao bạn nên nâng cấp.
+      </p>
+
+      <h2>1. App Router ngày càng ổn định</h2>
+      <p>
+        App Router tiếp tục được hoàn thiện với khả năng xử lý Server Components tốt hơn,
+        giảm bundle phía client và cải thiện thời gian tải trang.
+      </p>
+
+      <blockquote>
+        App Router là tương lai của Next.js – vừa mạnh, vừa tối ưu SEO.
+      </blockquote>
+
+      <h2>2. Xử lý dữ liệu và caching thông minh</h2>
+      <p>
+        Next.js 15 tối ưu lại cơ chế caching, giúp kiểm soát tốt hơn giữa dữ liệu động
+        và dữ liệu tĩnh.
+      </p>
+
+      <pre>
+        <code>
+export const dynamic = "force-dynamic";
+        </code>
+      </pre>
+
+      <h2>3. Trải nghiệm developer tốt hơn</h2>
+      <ul>
+        <li>Fast Refresh ổn định hơn</li>
+        <li>Error message rõ ràng</li>
+        <li>Hỗ trợ TypeScript tốt hơn</li>
+      </ul>
+
+      <h2>Kết luận</h2>
+      <p>
+        Nếu bạn đang xây dựng ứng dụng React hiện đại, Next.js 15 là một lựa chọn rất
+        đáng để thử. Với hiệu năng tốt, SEO mạnh và hệ sinh thái lớn, nó phù hợp cho
+        cả dự án cá nhân lẫn sản phẩm lớn.
+      </p>
+    `,
+    comments: [
+      {
+        id: "c10-1",
+        author: "Gia Huy",
+        date: "26 Tháng 10, 2024",
+        content: "LCP và CLS giờ mới hiểu rõ."
+      },
+      {
+        id: "c10-2",
+        author: "Bích Ngọc",
+        date: "27 Tháng 10, 2024",
+        content: "Áp dụng xong Lighthouse tăng điểm liền 🚀"
+      }
+    ]
   }
-];
+]

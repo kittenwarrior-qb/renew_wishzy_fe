@@ -9,12 +9,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { 
-  LogOut, 
-  Heart, 
-  BookOpen, 
-  UserCircle, 
-  Menu, 
+import {
+  LogOut,
+  Heart,
+  BookOpen,
+  UserCircle,
+  Menu,
   Sun,
   Moon,
   LayoutDashboard,
@@ -47,25 +47,25 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [scrollProgress, setScrollProgress] = React.useState(0);
   const rafRef = React.useRef<number | undefined>(undefined);
-  
+
   React.useEffect(() => {
     const handleScroll = () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
-      
+
       rafRef.current = requestAnimationFrame(() => {
         setIsScrolled(window.scrollY > 0);
-        
+
         const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
         const scrolled = windowHeight > 0 ? (window.scrollY / windowHeight) * 100 : 0;
         setScrollProgress(scrolled);
       });
     };
-    
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       if (rafRef.current) {
@@ -84,9 +84,9 @@ const Header = () => {
 
   return (
     <header className={`sticky top-0 z-50 w-full bg-card text-card-foreground transition-all duration-200   ${isScrolled ? 'shadow-sm ' : 'border-b border-borderư'}`}>
-      <div 
+      <div
         className="absolute bottom-0 left-0 h-[3px] bg-primary w-full origin-left"
-        style={{ 
+        style={{
           transform: `scaleX(${scrollProgress / 100})`,
           willChange: 'transform'
         }}
@@ -107,7 +107,7 @@ const Header = () => {
                 ) : (
                   <div className="hidden sm:block w-[100px] h-[90px]" />
                 )}
-                
+
                 <img
                   src="/images/simple-logo.png"
                   alt="Wishzy logo"
@@ -117,33 +117,33 @@ const Header = () => {
                 />
               </Link>
             )}
-            
+
             {!isSearchExpanded && <DiscoverDropdown />}
-            
+
             <div className="hidden md:block">
               <SearchHeader />
             </div>
-            
+
             <div className={`${isSearchExpanded ? 'w-full' : ''} md:hidden transition-all duration-200`}>
               <SearchHeader onExpand={setIsSearchExpanded} isMobile={true} />
             </div>
 
             <div className="hidden md:flex items-center gap-6">
-              <Link 
+              <Link
                 href="/quiz"
                 className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
               >
                 Bài kiểm tra
                 <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </Link>
-              <Link 
+              <Link
                 href="/about"
                 className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
               >
                 Về chúng tôi
                 <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </Link>
-              <Link 
+              <Link
                 href="/#faq"
                 className="relative text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
               >
@@ -157,7 +157,7 @@ const Header = () => {
             <div className={`hidden sm:flex items-center space-x-2 ${isSearchExpanded ? 'md:hidden' : ''}`}>
               <CartPopover />
             </div>
-            
+
             <div className="hidden sm:block">
               {isAuthenticated && user ? (
                 <div className="flex items-center space-x-3">
@@ -251,7 +251,7 @@ const Header = () => {
                 </div>
               )}
             </div>
-            
+
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">
@@ -264,43 +264,43 @@ const Header = () => {
                     Menu
                   </SheetTitle>
                 </div>
-                
+
                 <div className="flex flex-col p-4 space-y-6">
                   <div className="flex flex-col space-y-4">
-                    <Link 
-                      href="/quiz" 
-                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
+                    <Link
+                      href="/quiz"
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block"
                       onClick={() => setIsOpen(false)}
                     >
                       Bài kiểm tra
                       <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
                     </Link>
-                    <Link 
-                      href="/about" 
-                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
+                    <Link
+                      href="/about"
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block"
                       onClick={() => setIsOpen(false)}
                     >
                       Về chúng tôi
                       <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
                     </Link>
-                    <Link 
-                      href="/#faq" 
-                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
+                    <Link
+                      href="/#faq"
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block"
                       onClick={() => setIsOpen(false)}
                     >
                       FAQ
                       <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
                     </Link>
-                    <Link 
-                      href="/contact" 
-                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block" 
+                    <Link
+                      href="/contact"
+                      className="relative py-2 text-muted-foreground hover:text-foreground transition-colors group inline-block"
                       onClick={() => setIsOpen(false)}
                     >
                       Liên hệ
                       <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
                     </Link>
                   </div>
-                  
+
                   <div className="border-t pt-4">
                     {isAuthenticated && user ? (
                       <div className="flex flex-col space-y-4">
@@ -323,7 +323,7 @@ const Header = () => {
                             <p className="text-xs text-muted-foreground">{user.email}</p>
                           </div>
                         </div>
-                        
+
                         <Link href="/profile?tab=wishlist" className="flex items-center py-2 hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
                           <Heart className="mr-2 h-4 w-4" />
                           <span>Khoá học yêu thích</span>
@@ -336,7 +336,7 @@ const Header = () => {
                           <UserCircle className="mr-2 h-4 w-4" />
                           <span>Hồ sơ</span>
                         </Link>
-                        
+
                         {/* Role-based dashboard links - Mobile */}
                         {user.role === 'admin' && (
                           <Link href="/admin" className="flex items-center py-2 hover:text-primary transition-colors" onClick={() => setIsOpen(false)}>
@@ -350,7 +350,7 @@ const Header = () => {
                             <span>Giảng viên</span>
                           </Link>
                         )}
-                        
+
                         <button
                           onClick={() => {
                             handleLogout();
@@ -378,9 +378,9 @@ const Header = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="border-t pt-4 flex flex-col space-y-4">
-                    <button 
+                    <button
                       onClick={() => {
                         const appStore = useAppStore.getState();
                         appStore.toggleTheme();

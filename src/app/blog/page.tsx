@@ -1,11 +1,8 @@
-import BlogList from "@/components/shared/blog/BlogList";
+"use client";
+import BlogListPage from "@/components/shared/blog/BlogListPage"
 
 const BlogPage = () => {
-  return (
-    <div className="min-h-screen bg-background">
-      <BlogList limit={3} />
-    </div>
-  );
-};
+  return <BlogListPage />
+}
 
-export default BlogPage;
+export default BlogPage

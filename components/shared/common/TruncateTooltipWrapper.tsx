@@ -26,7 +26,7 @@ export function TruncateTooltipWrapper({
     children,
     tooltipLabel,
     lineClamp = 1,
-    maxWidth = 240,
+    maxWidth = 500,
     className,
 }: Props) {
     const ref = React.useRef<HTMLDivElement>(null)
@@ -46,7 +46,7 @@ export function TruncateTooltipWrapper({
             ref={ref}
             className={cn(
                 lineClampClasses[lineClamp],
-                "overflow-hidden break-words break-all whitespace-normal [&>*]:inline",
+                "overflow-hidden break-words whitespace-normal [&>*]:inline",
                 className,
             )}
             style={{ maxWidth }}
@@ -62,7 +62,11 @@ export function TruncateTooltipWrapper({
     return (
         <Tooltip>
             <TooltipTrigger asChild>{content}</TooltipTrigger>
-            <TooltipContent className="max-w-[260px] whitespace-normal break-words break-all text-left">
+            <TooltipContent
+                className="max-w-[500px] w-full whitespace-normal break-words text-left"
+                side="bottom"
+                align="start"
+            >
                 {tooltipLabel ?? children}
             </TooltipContent>
         </Tooltip>
