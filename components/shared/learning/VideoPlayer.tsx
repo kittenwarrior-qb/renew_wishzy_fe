@@ -223,8 +223,8 @@ export function VideoPlayer({
 
     // Validate video URL first
     if (!videoUrl || videoUrl.trim() === '') {
-      console.error('Empty or invalid video URL');
-      setVideoError('Bài giảng này chưa có video. Vui lòng liên hệ giảng viên.');
+      // This is expected for lectures without video - show friendly message
+      setVideoError('Bài giảng này chưa có video. Vui lòng liên hệ giảng viên để được hỗ trợ.');
       setIsLoading(false);
       return;
     }
@@ -526,7 +526,6 @@ export function VideoPlayer({
             ref={videoRef}
             className="video-js vjs-big-play-centered vjs-theme-fantasy"
             playsInline
-            crossOrigin="anonymous"
           />
         </div>
 

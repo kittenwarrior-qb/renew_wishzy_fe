@@ -197,8 +197,6 @@ const CartPage = () => {
             >
               Thanh toán ngay
             </Button>
-            <hr className='mt-4' />
-            <Button variant={'outline'} className='w-full mt-4'>Voucher giảm giá</Button>
           </div>
         </div>
       )}

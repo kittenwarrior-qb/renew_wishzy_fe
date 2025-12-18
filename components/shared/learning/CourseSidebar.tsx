@@ -27,13 +27,16 @@ export function CourseSidebar({
   const [finishedLectures, setFinishedLectures] = useState<string[]>([]);
   const [totalLectures, setTotalLectures] = useState(0);
 
-  // Fetch enrollment data for completed lectures
+  // Fetch enrollment data for completed lectures (only if not provided via props)
   useEffect(() => {
+    // If completedLectureIds is provided from parent, use that instead of fetching
+    if (completedLectureIds && completedLectureIds.length > 0) {
+      setFinishedLectures(completedLectureIds);
+      return;
+    }
+    
     const fetchEnrollment = async () => {
       try {
-        // Reset state when courseId changes
-        setFinishedLectures([]);
-        
         const enrollment = await enrollmentService.getEnrollmentByCourseId(courseId);
         if (enrollment?.attributes?.finishedLectures) {
           setFinishedLectures(enrollment.attributes.finishedLectures);
@@ -43,11 +46,12 @@ export function CourseSidebar({
       }
     };
     fetchEnrollment();
-  }, [courseId]);
+  }, [courseId, completedLectureIds]);
 
   // Update finishedLectures when completedLectureIds prop changes
+  // This takes priority over API data to ensure immediate UI updates
   useEffect(() => {
-    if (completedLectureIds && completedLectureIds.length > 0) {
+    if (completedLectureIds) {
       setFinishedLectures(completedLectureIds);
     }
   }, [completedLectureIds]);
@@ -107,7 +111,21 @@ export function CourseSidebar({
              scrollbarWidth: 'thin',
              scrollbarColor: 'hsl(var(--muted-foreground) / 0.3) transparent'
            }}>
-        {course.chapters.map((chapter) => (
+        {(() => {
+          // Build flat list of all lectures across all chapters for sequential access check
+          const allLecturesFlat: Array<{ id: string; chapterId: string }> = [];
+          course.chapters.forEach(ch => {
+            const sortedLectures = [...ch.lectures].sort((a, b) => {
+              const orderA = a.orderIndex ?? a.order ?? 0;
+              const orderB = b.orderIndex ?? b.order ?? 0;
+              return orderA - orderB;
+            });
+            sortedLectures.forEach(lec => {
+              allLecturesFlat.push({ id: lec.id, chapterId: ch.id });
+            });
+          });
+          
+          return course.chapters.map((chapter) => (
           <div key={chapter.id} className="border-b">
             <Button
               variant="ghost"
@@ -138,11 +156,18 @@ export function CourseSidebar({
                     const orderB = b.orderIndex ?? b.order ?? 0;
                     return orderA - orderB;
                   })
-                  .map((lecture, index, sortedLectures) => {
-                    // Check if previous lecture is completed (for sequential learning)
-                    const previousLecture = index > 0 ? sortedLectures[index - 1] : null;
-                    const isPreviousCompleted = !previousLecture || finishedLectures.includes(previousLecture.id);
-                    const isLocked = !isPreviousCompleted && !finishedLectures.includes(lecture.id);
+                  .map((lecture) => {
+                    // Find this lecture's position in the flat list
+                    const flatIndex = allLecturesFlat.findIndex(l => l.id === lecture.id);
+                    
+                    // First lecture overall is always accessible
+                    // Other lectures need the previous lecture (in flat list) to be completed
+                    const previousLectureInFlat = flatIndex > 0 ? allLecturesFlat[flatIndex - 1] : null;
+                    const canAccess = flatIndex === 0 || 
+                      !previousLectureInFlat || 
+                      finishedLectures.includes(previousLectureInFlat.id);
+                    
+                    const isLocked = !canAccess && !finishedLectures.includes(lecture.id);
                     
                     return isLocked ? (
                       <div
@@ -186,7 +211,7 @@ export function CourseSidebar({
                         )}
                       >
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0">
                         {finishedLectures.includes(lecture.id) ? (
                           <CheckCircle className="w-4 h-4 text-green-500" />
                         ) : (
@@ -195,7 +220,7 @@ export function CourseSidebar({
                       </div>
                       <div className="flex-1 min-w-0 flex items-start gap-2">
                         <span className={cn(
-                          "text-sm flex-shrink-0 w-6 text-left tabular-nums font-medium",
+                          "text-sm shrink-0 w-6 text-left tabular-nums font-medium",
                           currentLectureId === lecture.id ? "text-primary" : "text-foreground"
                         )}>
                           {lecture.order}.
@@ -216,7 +241,8 @@ export function CourseSidebar({
               </div>
             )}
           </div>
-        ))}
+          ));
+        })()}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { CourseSidebar } from '@/components/shared/learning/CourseSidebar';
@@ -8,7 +8,7 @@ import { VideoPlayer } from '@/components/shared/learning/VideoPlayer';
 import { LectureInfo } from '@/components/shared/learning/LectureInfo';
 import { LearningComment } from '@/components/shared/learning/LearningComment';
 import CourseComment from '@/components/shared/course/CourseComment';
-import { useChapterList } from '@/components/shared/chapter/useChapter';
+import { useChapterListForEnrolled } from '@/components/shared/chapter/useChapter';
 import { useCourseDetail } from '@/components/shared/course/useCourse';
 import { enrollmentService } from '@/services/enrollment';
 import { usePrefetchLearning, usePrefetchAdjacentLectures } from '@/hooks/usePrefetchLearning';
@@ -23,6 +23,13 @@ export default function LearningPage() {
   const [progress, setProgress] = useState<LectureProgress | undefined>(undefined);
   const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
   const [completedLectureIds, setCompletedLectureIds] = useState<string[]>([]);
+  
+  // Ref to track if we're navigating after completion (to skip lock check)
+  const isNavigatingAfterCompletionRef = useRef(false);
+  // Ref to store the latest completed lecture IDs (for immediate access in effects)
+  const completedLectureIdsRef = useRef<string[]>([]);
+  // Ref to track which lecture we last checked for lock (to prevent re-checking)
+  const lastCheckedLectureIdRef = useRef<string | null>(null);
 
   // Prefetch data for better performance
   usePrefetchLearning(courseId);
@@ -63,8 +70,8 @@ export default function LearningPage() {
   // Fetch course data
   const { data: courseData, isLoading: isCourseLoading } = useCourseDetail(courseId);
   
-  // Fetch chapters with lectures
-  const { data: chaptersData, isLoading: isChaptersLoading } = useChapterList(courseId);
+  // Fetch chapters with lectures (use enrolled API to get full lecture data including fileUrl)
+  const { data: chaptersData, isLoading: isChaptersLoading } = useChapterListForEnrolled(courseId, !!enrollmentId);
 
   // Process data to find current lecture and chapter
   const { lecture, chapter, course, allLectures } = useMemo((): {
@@ -153,6 +160,64 @@ export default function LearningPage() {
 
   const isLoading = isCourseLoading || isChaptersLoading;
 
+  // Keep ref in sync with state
+  useEffect(() => {
+    completedLectureIdsRef.current = completedLectureIds;
+  }, [completedLectureIds]);
+
+  // Check if current lecture is locked and redirect if necessary
+  useEffect(() => {
+    // Skip if navigating after completion
+    if (isNavigatingAfterCompletionRef.current) {
+      isNavigatingAfterCompletionRef.current = false;
+      lastCheckedLectureIdRef.current = lectureId;
+      return;
+    }
+    
+    // Skip if we already checked this lecture
+    if (lastCheckedLectureIdRef.current === lectureId) {
+      return;
+    }
+    
+    // Only check after we have enrollment data loaded
+    if (isLoading || !allLectures.length || !lectureId || !enrollmentId) return;
+    
+    // Mark this lecture as checked
+    lastCheckedLectureIdRef.current = lectureId;
+    
+    const currentIndex = allLectures.findIndex(l => l.lecture.id === lectureId);
+    if (currentIndex === -1) return;
+    
+    // First lecture is always accessible
+    if (currentIndex === 0) return;
+    
+    // Use ref for most up-to-date completed lectures
+    const currentCompletedIds = completedLectureIdsRef.current;
+    
+    // Check if this lecture is already completed - if so, allow access
+    if (currentCompletedIds.includes(lectureId)) return;
+    
+    // Get the previous lecture in the flat list
+    const previousLectureInList = allLectures[currentIndex - 1];
+    
+    // If previous lecture is completed, this lecture is accessible
+    if (currentCompletedIds.includes(previousLectureInList.lecture.id)) return;
+    
+    // Previous lecture is not completed - this lecture is locked
+    toast.error('Bạn cần hoàn thành bài học trước để mở khóa bài này');
+    
+    // Find the next lecture that should be watched (first uncompleted lecture)
+    let targetLectureId = allLectures[0].lecture.id;
+    for (let i = 0; i < allLectures.length; i++) {
+      if (!currentCompletedIds.includes(allLectures[i].lecture.id)) {
+        targetLectureId = allLectures[i].lecture.id;
+        break;
+      }
+    }
+    
+    router.replace(`/learning/${courseId}/${targetLectureId}`);
+  }, [allLectures, lectureId, isLoading, courseId, router, enrollmentId]);
+
   // Prefetch adjacent lectures for smoother navigation
   usePrefetchAdjacentLectures(courseId, lectureId, allLectures);
 
@@ -202,6 +267,8 @@ export default function LearningPage() {
     if (lectureId && !completedLectureIds.includes(lectureId)) {
       const newCompletedLectures = [...completedLectureIds, lectureId];
       setCompletedLectureIds(newCompletedLectures);
+      // Also update ref for immediate access
+      completedLectureIdsRef.current = newCompletedLectures;
       
       // Show toast notification for lecture completion
       toast.success('Bài học hoàn thành! 🎉', {
@@ -224,6 +291,10 @@ export default function LearningPage() {
             toast.info('Đang chuyển sang bài tiếp theo...', {
               duration: 1500,
             });
+            // Set flag to skip lock check when navigating after completion
+            isNavigatingAfterCompletionRef.current = true;
+            // Pre-set the lastCheckedLectureId to the next lecture to prevent double-check
+            lastCheckedLectureIdRef.current = nextLecture.lecture.id;
             router.push(`/learning/${courseId}/${nextLecture.lecture.id}`);
           }
         }, 2000); // Wait 2 seconds before auto-navigate
