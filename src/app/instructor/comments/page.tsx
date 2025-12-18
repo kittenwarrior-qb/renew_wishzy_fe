@@ -31,6 +31,7 @@ import {
   useDeleteComment 
 } from "@/hooks/useInstructorApi";
 import type { Comment, CommentListQuery } from "@/types/instructor";
+import { Row } from "react-day-picker";
 
 export default function CommentsPage() {
   const [page, setPage] = React.useState<number>(1);
@@ -56,6 +57,17 @@ export default function CommentsPage() {
   const { mutate: replyToComment, isPending: isReplying } = useReplyToComment();
   const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateCommentStatus();
   const { mutate: deleteComment, isPending: isDeleting } = useDeleteComment();
+
+  // Debug logging
+  React.useEffect(() => {
+    if (commentsData) {
+      console.log('Comments page data:', {
+        totalItems: commentsData.data?.items?.length,
+        queryParams,
+        sampleComment: commentsData.data?.items?.[0]
+      });
+    }
+  }, [commentsData, queryParams]);
 
   // Extract data from API response
   const comments = commentsData?.data?.items || [];
@@ -116,7 +128,6 @@ export default function CommentsPage() {
       deleteComment(commentId);
     }
   };
-
   const columns: Column<any>[] = [
     {
       key: 'content',
@@ -125,9 +136,6 @@ export default function CommentsPage() {
       render: (row: Comment) => (
         <div className="max-w-[300px]">
           <p className="text-sm line-clamp-2">{row.content}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {row.lectureTitle || row.courseName}
-          </p>
         </div>
       ),
     },
@@ -147,11 +155,11 @@ export default function CommentsPage() {
       ),
     },
     {
-      key: 'courseName',
-      label: 'Khóa học',
+      key: 'lectureTitle',
+      label: 'Bài giảng',
       type: 'short',
       render: (row: Comment) => (
-        <span className="text-sm">{row.courseName}</span>
+        <span className="text-sm">{row.lectureTitle || 'Unknown Lecture'}</span>
       ),
     },
     {

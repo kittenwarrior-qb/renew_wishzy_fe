@@ -4,39 +4,38 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay";
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Users, GraduationCap, BookOpen, Clock, Inbox } from "lucide-react";
-import { useInstructorStudents, useSendMessageToStudent } from "@/hooks/useInstructorApi";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Eye, Users, GraduationCap, BookOpen, Clock, Inbox, Mail } from "lucide-react";
+import { useInstructorStudents } from "@/hooks/useInstructorApi";
 import type { StudentListQuery } from "@/types/instructor";
 
 export default function StudentsPage() {
   const [page, setPage] = React.useState<number>(1);
   const [limit, setLimit] = React.useState<number>(10);
   const [searchTerm, setSearchTerm] = React.useState<string>("");
-  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [selectedStudent, setSelectedStudent] = React.useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
 
   // API query parameters
   const queryParams: StudentListQuery = React.useMemo(() => ({
     page,
     limit,
     search: searchTerm || undefined,
-    status: statusFilter !== "all" ? statusFilter as any : undefined,
     sortBy: "joinDate",
     sortOrder: "desc"
-  }), [page, limit, searchTerm, statusFilter]);
+  }), [page, limit, searchTerm]);
 
   // API hooks
   const { data: studentsData, isPending, isFetching } = useInstructorStudents(queryParams);
   console.log("ccc", studentsData)
-  const sendMessageMutation = useSendMessageToStudent();
 
   // Extract data from API response
   const students = studentsData?.data?.items || [];
@@ -66,11 +65,9 @@ export default function StudentsPage() {
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
-  const handleSendMessage = (studentId: string) => {
-    const message = prompt('Nhập tin nhắn gửi cho học viên:');
-    if (message && message.trim()) {
-      sendMessageMutation.mutate({ studentId, message: message.trim() });
-    }
+  const handleViewDetail = (student: any) => {
+    setSelectedStudent(student);
+    setIsDetailModalOpen(true);
   };
 
   const columns: Column<any>[] = [
@@ -136,34 +133,19 @@ export default function StudentsPage() {
       ),
     },
     {
-      key: 'status',
-      label: 'Trạng thái',
-      type: 'short',
-      render: (row: any) => (
-        <Badge variant={row.status === "active" ? "default" : "secondary"}>
-          {row.status === "active" ? "Hoạt động" : "Không hoạt động"}
-        </Badge>
-      ),
-    },
-    {
       key: 'actions',
       label: 'Hành động',
       type: 'action',
       render: (row: any) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSendMessage(row.id)}>
-              {/* Gửi tin nhắn */}
-            </DropdownMenuItem>
-            <DropdownMenuItem>Xem tiến độ</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleViewDetail(row)}
+          className="gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          Xem chi tiết
+        </Button>
       ),
     },
   ];
@@ -232,21 +214,6 @@ export default function StudentsPage() {
                 className="h-9 w-52" 
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lọc theo trạng thái
-              </label>
-              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1) }}>
-                <SelectTrigger className="h-9 w-44">
-                  <SelectValue placeholder="Chọn trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all"> Tất cả học viên</SelectItem>
-                  <SelectItem value="active"> Đang hoạt động</SelectItem>
-                  <SelectItem value="inactive">Không hoạt động</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </div>
       </div>
@@ -281,6 +248,121 @@ export default function StudentsPage() {
           />
         )}
       </div>
+
+      {/* Student Detail Modal */}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Thông tin học viên</DialogTitle>
+            <DialogDescription>
+              Chi tiết về học viên và các khóa học đã đăng ký
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedStudent && (
+            <div className="space-y-6">
+              {/* Student Info */}
+              <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                  <span className="text-2xl font-medium text-primary">
+                    {selectedStudent.name.charAt(0)}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold">{selectedStudent.name}</h3>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                    <Mail className="h-4 w-4" />
+                    {selectedStudent.email}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mt-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Ngày tham gia</p>
+                      <p className="text-sm font-medium">{formatJoinDate(selectedStudent.joinDate)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Hoạt động cuối</p>
+                      <p className="text-sm font-medium">{formatLastActivity(selectedStudent.lastActivity)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Statistics */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="p-4 bg-card border rounded-lg">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                    <BookOpen className="h-4 w-4" />
+                    <span className="text-xs">Đã đăng ký</span>
+                  </div>
+                  <p className="text-2xl font-bold">{selectedStudent.totalEnrolledCourses}</p>
+                </div>
+                <div className="p-4 bg-card border rounded-lg">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                    <GraduationCap className="h-4 w-4" />
+                    <span className="text-xs">Hoàn thành</span>
+                  </div>
+                  <p className="text-2xl font-bold">{selectedStudent.totalCompletedCourses}</p>
+                </div>
+                <div className="p-4 bg-card border rounded-lg">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                    <Clock className="h-4 w-4" />
+                    <span className="text-xs">Tiến độ TB</span>
+                  </div>
+                  <p className="text-2xl font-bold">{selectedStudent.averageProgress}%</p>
+                </div>
+              </div>
+
+              {/* Enrolled Courses */}
+              <div>
+                <h4 className="font-semibold mb-3">Các khóa học đã mua</h4>
+                {selectedStudent.enrollments && selectedStudent.enrollments.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedStudent.enrollments.map((enrollment: any, index: number) => (
+                      <div key={index} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h5 className="font-medium">{enrollment.courseName}</h5>
+                            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                              <span>Đăng ký: {formatJoinDate(enrollment.enrolledAt)}</span>
+                              {enrollment.completedAt && (
+                                <span className="text-green-600">
+                                  Hoàn thành: {formatJoinDate(enrollment.completedAt)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <Badge variant={enrollment.status === 'completed' ? 'default' : 'secondary'}>
+                              {enrollment.status === 'completed' ? 'Hoàn thành' : 'Đang học'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between text-sm mb-1">
+                            <span className="text-muted-foreground">Tiến độ</span>
+                            <span className="font-medium">{enrollment.progress}%</span>
+                          </div>
+                          <div className="w-full bg-secondary rounded-full h-2">
+                            <div
+                              className="bg-primary h-2 rounded-full transition-all"
+                              style={{ width: `${enrollment.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <BookOpen className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Chưa có khóa học nào</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
