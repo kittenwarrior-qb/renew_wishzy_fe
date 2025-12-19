@@ -55,24 +55,41 @@ export default function AdminAppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const [open, setOpen] = useState<{ [k: string]: boolean }>({});
   const base = `/admin`;
-  const isActive = (sub: string) => {
-    if (sub === ".") return (pathname || "").replace(/\/$/, "") === base;
-    return (pathname || "").startsWith(`${base}/${sub}`);
+  const isActive = (sub: string, isGroup = false) => {
+    const p = (pathname || "").replace(/\/$/, "");
+    const target = `${base}/${sub}`.replace(/\/$/, "");
+
+    if (sub === ".") return p === base;
+    if (p === target) return true;
+
+    // For the group open state, we just need prefix matching
+    if (isGroup) {
+      return p.startsWith(target + "/");
+    }
+
+    // Special handling for the posts list to not overlap with its sub-sections
+    if (sub === "posts") {
+      return p.startsWith(`${target}/`) &&
+        !p.startsWith(`${target}/categories`) &&
+        !p.startsWith(`${target}/comments`);
+    }
+
+    return p.startsWith(target + "/");
   };
 
   useEffect(() => {
     setOpen({
       dashboard: isActive("."),
-      users: isActive("users/"),
-      classes: isActive("categories") || isActive("categories/create"),
-      courses: isActive("courses"),
-      exams: isActive("exams"),
-      communication: isActive("communication/"),
-      posts: isActive("posts/"),
-      orders: isActive("orders"),
-      banners: isActive("banners"),
-      vouchers: isActive("vouchers"),
-      settings: isActive("settings"),
+      users: isActive("users", true),
+      classes: isActive("categories", true) || isActive("categories/create", true),
+      courses: isActive("courses", true),
+      exams: isActive("exams", true),
+      communication: isActive("communication", true),
+      posts: isActive("posts", true),
+      orders: isActive("orders", true),
+      banners: isActive("banners", true),
+      vouchers: isActive("vouchers", true),
+      settings: isActive("settings", true),
     });
   }, [pathname]);
 

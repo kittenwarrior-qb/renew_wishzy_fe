@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
-import { Pencil, Trash2, Filter, Eye, Calendar, Clock } from "lucide-react"
+import { Pencil, Trash2, Filter, Eye, Calendar, Clock, Copy, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
@@ -48,6 +48,31 @@ export default function Page() {
     isActive: status === "all" ? undefined : (status === "active" ? true : false)
   })
   const { mutate: deletePost, isPending: deleting } = useDeletePost()
+  const [duplicatingId, setDuplicatingId] = React.useState<string | null>(null)
+
+  const handleDuplicate = async (id: string) => {
+    try {
+      setDuplicatingId(id)
+      const { postService } = await import("@/services/post")
+      const detail = await postService.get(id)
+      const payload = detail?.data ?? detail
+
+      // Filter out system fields
+      const { id: _, createdAt: __, updatedAt: ___, views: ____, author: _____, category: ______, comments: _______, ...duplicateData } = payload
+
+      sessionStorage.setItem("wishzy_duplicate_post", JSON.stringify({
+        ...duplicateData,
+        title: `${duplicateData.title} (Copy)`,
+        isActive: false
+      }))
+
+      router.push("/admin/posts/create?duplicate=true")
+    } catch (e: any) {
+      notify({ title: "Lỗi", description: "Không thể lấy thông tin bài viết để nhân bản", variant: "destructive" })
+    } finally {
+      setDuplicatingId(null)
+    }
+  }
 
   const items = data?.items ?? []
   const total = data?.total ?? 0
@@ -137,6 +162,16 @@ export default function Page() {
                 ),
               },
               {
+                key: "author",
+                title: "Người đăng",
+                render: (row: PostRow) => (
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{row.author?.fullName || "N/A"}</span>
+                    <span className="text-[10px] text-muted-foreground">{row.author?.email || ""}</span>
+                  </div>
+                ),
+              },
+              {
                 key: "category",
                 title: "Danh mục",
                 render: (row: PostRow) => (
@@ -202,8 +237,17 @@ export default function Page() {
                     </Link>
                     <button
                       type="button"
+                      className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent text-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={duplicatingId === row.id || deleting}
+                      onClick={() => handleDuplicate(row.id)}
+                      title="Nhân bản"
+                    >
+                      {duplicatingId === row.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                    <button
+                      type="button"
                       className="h-8 w-8 inline-flex items-center justify-center rounded hover:bg-accent text-destructive cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={deleting}
+                      disabled={deleting || !!duplicatingId}
                       onClick={() => { setTarget({ id: row.id, title: row.title }); setOpenDelete(true) }}
                     >
                       <Trash2 className="h-4 w-4" />

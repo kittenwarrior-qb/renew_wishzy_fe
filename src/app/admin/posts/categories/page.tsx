@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, Loader2 } from "lucide-react"
 import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 import { categoryBlogService, type CategoryBlog } from "@/services/category-blog"
@@ -52,7 +52,6 @@ export default function Page() {
       notify({ title: "Tạo danh mục thành công", variant: "success" })
       setOpenDialog(false)
       qc.invalidateQueries({ queryKey: ['category-blogs'] })
-      refetch()
     },
     onError: (e: any) => notify({ title: "Lỗi", description: e.message, variant: "destructive" })
   })
@@ -63,7 +62,6 @@ export default function Page() {
       notify({ title: "Cập nhật thành công", variant: "success" })
       setOpenDialog(false)
       qc.invalidateQueries({ queryKey: ['category-blogs'] })
-      refetch()
     },
     onError: (e: any) => notify({ title: "Lỗi", description: e.message, variant: "destructive" })
   })
@@ -74,7 +72,6 @@ export default function Page() {
       notify({ title: "Xoá thành công", variant: "success" })
       setOpenDelete(false)
       qc.invalidateQueries({ queryKey: ['category-blogs'] })
-      refetch()
     },
     onError: (e: any) => notify({ title: "Lỗi", description: e.message, variant: "destructive" })
   })
@@ -114,10 +111,22 @@ export default function Page() {
     return () => setPrimaryAction(null)
   }, [setPrimaryAction])
 
-  const loading = isLoading || creating || updating || deleting
+  const isDataLoading = isLoading || response === undefined
 
   // Columns
   const columns: Column<CategoryBlog>[] = [
+    {
+      key: "id",
+      title: "STT",
+      width: 50,
+      align: "center",
+      type: "short",
+      render: (_: any, __: any, ri: number) => (
+        <span className="text-muted-foreground font-medium">
+          {(page - 1) * limit + ri + 1}
+        </span>
+      )
+    },
     {
       key: "name",
       title: "Tên danh mục",
@@ -153,7 +162,7 @@ export default function Page() {
         <p className="text-sm text-muted-foreground">Quản lý các danh mục cho bài viết blog</p>
       </div>
 
-      <LoadingOverlay show={loading} />
+      <LoadingOverlay show={isDataLoading} />
 
       <div className="border rounded-md">
         <DynamicTable
@@ -193,7 +202,8 @@ export default function Page() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenDialog(false)}>Huỷ</Button>
             <Button onClick={handleSave} disabled={!name.trim() || creating || updating}>
-              {editingId ? "Lưu thay đổi" : "Tạo mới"}
+              {(creating || updating) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {editingId ? "Cập nhật danh mục" : "Tạo mới"}
             </Button>
           </DialogFooter>
         </DialogContent>

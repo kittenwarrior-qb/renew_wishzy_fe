@@ -47,7 +47,7 @@ export type PostListParams = {
   limit?: number;
   search?: string;
   category?: string;
-  isActive?: boolean;
+  isActive?: true;
 };
 
 export const postService = {

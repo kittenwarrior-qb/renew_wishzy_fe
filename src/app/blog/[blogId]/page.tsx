@@ -197,7 +197,7 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
               </h3>
               <div className="space-y-6">
                 {TOP_SELLING_COURSES.map((course, index) => (
-                  <Link href="#" key={course.id} className="group block relative pl-4">
+                  <Link href={`/course-detail/${course.id}`} key={course.id} className="group block relative pl-4">
                     {/* Ranking Number */}
                     <span
                       className={`absolute -left-2 top-0 text-3xl font-black italic opacity-20 select-none
