@@ -11,6 +11,9 @@ import * as z from "zod";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/src/stores/useAppStore";
 import { useAuthModalStore } from "@/src/stores/useAuthModalStore";
+import { useCommentBlogList, useCreateCommentBlog, useToggleLikeCommentBlog, useDeleteCommentBlog } from "./useCommentBlog";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 
 const commentSchema = z.object({
     content: z.string().min(1, "Vui lòng nhập nội dung bình luận"),
@@ -18,12 +21,18 @@ const commentSchema = z.object({
 
 export interface Comment {
     id: string;
-    author: string;
-    date: string;
+    author?: string; // We'll map from user.fullName
+    date?: string;   // We'll map from createdAt
     content: string;
     avatar?: string;
     likes?: number;
     replies?: Comment[];
+    parentId?: string;
+    user?: {
+        fullName: string;
+        avatar?: string;
+    };
+    createdAt: string;
 }
 
 export interface CurrentUser {
@@ -33,7 +42,7 @@ export interface CurrentUser {
 
 interface CommentsProps {
     comments: Comment[];
-    // currentUser is now fetched from store
+    blogId: string;
 }
 
 interface CommentFormProps {
@@ -154,14 +163,26 @@ const CommentItem: React.FC<{
     onCancelReply,
     depth = 0,
 }) => {
+        const [sessionLikes, setSessionLikes] = useState<Set<string>>(new Set());
+
+        const toggleLike = (id: string) => {
+            onToggleLike(id);
+            setSessionLikes(prev => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+            });
+        };
+
         return (
             <div className={cn("space-y-4", depth > 0 && "ml-12 mt-4")}>
                 <div className="flex items-start gap-3">
                     <Image
-                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                            comment.author
+                        src={comment.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            comment.user?.fullName || comment.author || "User"
                         )}&background=random`}
-                        alt={comment.author}
+                        alt={comment.user?.fullName || comment.author || "User"}
                         width={40}
                         height={40}
                         className="rounded-full shrink-0 w-10 h-10 object-cover"
@@ -170,9 +191,9 @@ const CommentItem: React.FC<{
                         <div className="bg-muted/30 p-4 rounded-xl">
                             <div className="flex items-center justify-between mb-2">
                                 <div>
-                                    <p className="font-semibold text-sm">{comment.author}</p>
+                                    <p className="font-semibold text-sm">{comment.user?.fullName || comment.author || "Người dùng Wishzy"}</p>
                                     <p className="text-xs text-muted-foreground">
-                                        {comment.date}
+                                        {comment.createdAt ? format(new Date(comment.createdAt), "dd/MM/yyyy HH:mm", { locale: vi }) : comment.date}
                                     </p>
                                 </div>
                             </div>
@@ -183,11 +204,11 @@ const CommentItem: React.FC<{
 
                         <div className="flex items-center gap-4 px-2 text-xs font-medium text-muted-foreground">
                             <button
-                                onClick={() => onToggleLike(comment.id)}
+                                onClick={() => toggleLike(comment.id)}
                                 className="flex items-center gap-1 hover:text-red-500 transition-colors"
                             >
-                                <Heart className={cn("w-3.5 h-3.5", likes[comment.id] && "fill-current text-red-500")} />
-                                {likes[comment.id] ?? 0} Thích
+                                <Heart className={cn("w-3.5 h-3.5", (sessionLikes.has(comment.id) || (comment.likes || 0) > 0) && "fill-current text-red-500")} />
+                                {(comment.likes || 0) + (sessionLikes.has(comment.id) ? 1 : 0)} Thích
                             </button>
 
                             <button
@@ -206,7 +227,7 @@ const CommentItem: React.FC<{
                                         onReplySubmit(comment.id, data.content)
                                     }
                                     currentUser={currentUser}
-                                    placeholder={`Trả lời ${comment.author}...`}
+                                    placeholder={`Trả lời ${comment.user?.fullName || "bình luận này"}...`}
                                     submitLabel="Trả lời"
                                     autoFocus
                                     onCancel={onCancelReply}
@@ -242,34 +263,67 @@ const CommentItem: React.FC<{
         );
     };
 
-const Comments: React.FC<CommentsProps> = ({ comments }) => {
+const buildCommentTree = (flatComments: Comment[]): Comment[] => {
+    const commentMap: Record<string, Comment> = {};
+    const tree: Comment[] = [];
+
+    // First pass: add all comments to map and ensure replies array exists
+    flatComments.forEach(comment => {
+        commentMap[comment.id] = { ...comment, replies: comment.replies || [] };
+    });
+
+    // Second pass: build the tree
+    flatComments.forEach(comment => {
+        if (comment.parentId && commentMap[comment.parentId]) {
+            // It's a reply, add it to parent's replies if not already there
+            if (!commentMap[comment.parentId].replies?.find(r => r.id === comment.id)) {
+                commentMap[comment.parentId].replies?.push(commentMap[comment.id]);
+            }
+        } else if (!comment.parentId) {
+            // It's a root comment
+            tree.push(commentMap[comment.id]);
+        }
+    });
+
+    return tree;
+};
+
+const Comments: React.FC<CommentsProps> = ({ comments: initialComments, blogId }) => {
     const { user: currentUser } = useAppStore();
     const { openLoginModal } = useAuthModalStore();
 
-    const [commentLikes, setCommentLikes] = useState<Record<string, number>>(() =>
-        Object.fromEntries(comments.map((c) => [c.id, c.likes ?? 0]) ?? [])
-    );
+    const { data: realCommentsData } = useCommentBlogList(blogId, { limit: 100 });
+
+    // Use helper to build tree if data is flat (initialComments) or just use nested items from real-time query
+    const rawComments = realCommentsData?.items || initialComments;
+    const comments = buildCommentTree(rawComments);
+
+    const { mutate: createComment } = useCreateCommentBlog();
+    const { mutate: toggleLike } = useToggleLikeCommentBlog(blogId);
+
     const [replyingToId, setReplyingToId] = useState<string | null>(null);
 
-    const toggleLike = (id: string) => {
-        setCommentLikes((prev) => ({
-            ...prev,
-            [id]: (prev[id] ?? 0) + 1,
-        }));
-    };
-
     const handleMainSubmit = async (data: { content: string }) => {
-        // TODO: Replace with your actual API call for main comment
-        console.log("New main comment:", data.content);
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        if (!currentUser) {
+            openLoginModal();
+            return;
+        }
+        createComment({
+            content: data.content,
+            blogId,
+        });
     };
 
     const handleReplySubmit = async (parentId: string, content: string) => {
-        // TODO: Replace with your actual API call for reply
-        console.log(`New reply to ${parentId}:`, content);
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        if (!currentUser) {
+            openLoginModal();
+            return;
+        }
+        createComment({
+            content,
+            blogId,
+            parentId,
+        });
         setReplyingToId(null);
     };
 
@@ -328,9 +382,9 @@ const Comments: React.FC<CommentsProps> = ({ comments }) => {
                             key={comment.id}
                             comment={comment}
                             currentUser={currentUser}
-                            likes={commentLikes}
+                            likes={{}} // Placeholder as we use comment.likes
                             replyingToId={replyingToId}
-                            onToggleLike={toggleLike}
+                            onToggleLike={(id) => toggleLike(id)}
                             onReplyClick={(id) => {
                                 if (!currentUser) {
                                     openLoginModal();

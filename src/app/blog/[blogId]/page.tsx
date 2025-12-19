@@ -7,14 +7,16 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
-  Share2,
+  ExternalLink,
   Tag,
   Star,
   Users,
 } from "lucide-react";
 import { notFound } from "next/navigation";
 
-import { blogData } from "@/lib/blogData";
+import { usePostDetail } from "@/components/shared/post/usePost";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -69,26 +71,17 @@ interface BlogDetailPageProps {
 const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
   const { blogId } = React.use(params);
 
-  const blog = blogData.find((b) => b.id === blogId);
+  const { data: blog, isLoading } = usePostDetail(blogId)
+
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>
 
   if (!blog) notFound();
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "—";
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return "—";
-    return new Intl.DateTimeFormat("vi-VN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(date);
-  };
 
   const sharePost = async () => {
     if (navigator.share) {
       await navigator.share({
         title: blog.title,
-        text: blog.description,
+        text: blog.description || "",
         url: window.location.href,
       });
     } else {
@@ -100,13 +93,15 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px]">
-        <Image
-          src={blog.image}
-          alt={blog.title}
-          fill
-          priority
-          className="object-cover"
-        />
+        {blog.image && (
+          <Image
+            src={blog.image}
+            alt={blog.title}
+            fill
+            priority
+            className="object-cover"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
       </div>
 
@@ -116,7 +111,7 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
 
           {/* Left Column: Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-background rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-background rounded-2xl shadow-xl overflow-hidden border">
               <div className="p-6 pb-0">
                 <Link
                   href="/blog"
@@ -130,7 +125,7 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
               <div className="p-6 md:p-10 pt-4 md:pt-6">
                 <Badge variant="secondary" className="gap-1.5 mb-4 bg-primary/10 text-primary-dark hover:bg-primary/20">
                   <Tag className="w-3.5 h-3.5" />
-                  {blog.categoryBlog}
+                  {blog.category?.name || "Chưa phân loại"}
                 </Badge>
 
                 <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 leading-tight">
@@ -141,28 +136,28 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
                   <div className="flex items-center gap-2">
                     <Image
                       src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        blog.author
+                        blog.author?.fullName || "Wishzy"
                       )}&background=random`}
-                      alt={blog.author}
+                      alt={blog.author?.fullName || "Author"}
                       width={32}
                       height={32}
                       className="rounded-full"
                     />
-                    <span className="font-medium text-foreground">{blog.author}</span>
+                    <span className="font-medium text-foreground">{blog.author?.fullName || "Tác giả Wishzy"}</span>
                   </div>
 
                   <Separator orientation="vertical" className="h-4" />
 
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
-                    {formatDate(blog.date)}
+                    {format(new Date(blog.createdAt), "dd 'tháng' MM, yyyy", { locale: vi })}
                   </div>
 
                   <Separator orientation="vertical" className="h-4 hidden sm:block" />
 
                   <div className="flex items-center gap-2 hidden sm:flex">
                     <Clock className="w-4 h-4" />
-                    {blog.readTime}
+                    {Math.max(1, Math.ceil((blog.content?.length || 0) / 1000))} phút đọc
                   </div>
 
                   <Button
@@ -171,7 +166,7 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
                     className="ml-auto text-muted-foreground hover:text-primary"
                     onClick={sharePost}
                   >
-                    <Share2 className="w-4 h-4 mr-2" />
+                    <ExternalLink className="w-4 h-4 mr-2" />
                     Chia sẻ
                   </Button>
                 </div>
@@ -189,7 +184,7 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
               </div>
 
               <div className="p-6 md:p-10 border-t bg-muted/20">
-                <Comments comments={blog.comments || []} />
+                <Comments comments={blog.comments || []} blogId={blog.id} />
               </div>
             </div>
           </div>

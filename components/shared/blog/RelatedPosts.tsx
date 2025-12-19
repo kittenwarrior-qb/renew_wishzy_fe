@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { blogData } from "@/lib/blogData";
+import { usePostList } from "../post/usePost";
 import {
     Carousel,
     CarouselContent,
@@ -24,7 +24,12 @@ export const RelatedPosts = ({
     className = "",
     limit = 10
 }: RelatedPostsProps) => {
-    const relatedPosts = blogData
+    const { data, isLoading } = usePostList({
+        limit: limit + 1, // Fetch one extra in case current is included
+        isActive: true
+    })
+
+    const relatedPosts = (data?.items || [])
         .filter(blog => blog.id !== currentPostId)
         .slice(0, limit);
 
@@ -49,7 +54,13 @@ export const RelatedPosts = ({
                 </div>
 
                 <CarouselContent className="-ml-4">
-                    {relatedPosts.map((post) => (
+                    {isLoading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                            <CarouselItem key={i} className="pl-4 md:basis-1/2 lg:basis-1/4">
+                                <div className="h-[250px] bg-muted animate-pulse rounded-2xl" />
+                            </CarouselItem>
+                        ))
+                    ) : (relatedPosts || []).map((post) => (
                         <CarouselItem key={post.id} className="pl-4 md:basis-1/2 lg:basis-1/4">
                             <Link
                                 href={`/blog/${post.id}`}
@@ -67,14 +78,14 @@ export const RelatedPosts = ({
                                     </div>
                                     <div className="p-4 flex flex-col flex-1">
                                         <Badge variant="secondary" className="w-fit mb-3 text-xs bg-slate-100 text-slate-600 hover:bg-slate-200">
-                                            {post.categoryBlog}
+                                            {post.category?.name || "Tin tức"}
                                         </Badge>
                                         <h3 className="font-bold text-base mb-2 group-hover:text-primary transition-colors line-clamp-2">
                                             {post.title}
                                         </h3>
                                         <div className="mt-auto pt-4 flex items-center text-xs text-muted-foreground gap-2">
                                             <Calendar className="w-3.5 h-3.5" />
-                                            {new Date(post.date).toLocaleDateString('vi-VN')}
+                                            {post.createdAt ? new Date(post.createdAt).toLocaleDateString('vi-VN') : "--/--/----"}
                                         </div>
                                     </div>
                                 </div>

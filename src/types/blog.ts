@@ -12,7 +12,7 @@ export interface Post {
     seoDescription?: string
 
     // Category & Tags
-    categoryId?: number | string
+    categoryId?: string
     tags?: string[]
 
     // Status

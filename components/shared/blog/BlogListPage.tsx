@@ -4,7 +4,9 @@ import { useControlParams } from "@/hooks/useControlParams"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, ArrowRight, TrendingUp } from "lucide-react"
 import BlogCard from "./BlogCard"
-import { blogData } from "@/lib/blogData"
+import { usePostList } from "../post/usePost"
+import { format } from "date-fns"
+import { vi } from "date-fns/locale"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -25,21 +27,25 @@ interface BlogListPageProps {
 
 export const BlogListPage = ({ limit }: BlogListPageProps) => {
   const { queryParams, replaceParams } = useControlParams()
-  const currentPage = Math.max(1, parseInt(queryParams.pPage || '1', 10))
+  const currentPage = Math.max(1, parseInt(queryParams.page || '1', 10))
 
-  // Featured Post is the very first one
-  const featuredBlog = blogData[0];
+  const { data, isLoading } = usePostList({
+    page: currentPage,
+    limit: limit || ITEMS_PER_PAGE,
+    isActive: true
+  })
 
-  // The rest of the blogs
-  const remainingBlogs = blogData.slice(1);
+  const blogs = data?.items || []
+  const totalPages = data?.totalPages || 0
 
-  const totalItems = limit && limit < remainingBlogs.length ? limit : remainingBlogs.length
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE)
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-  const paginatedBlogs = remainingBlogs.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  // Featured Post is the first one on the first page
+  const featuredBlog = currentPage === 1 ? blogs[0] : null;
 
-  // Simulate "Most Viewed" - let's take some interesting ones
-  const mostViewedBlogs = blogData.slice(2, 7)
+  // The rest of the blogs on this page
+  const listBlogs = currentPage === 1 ? blogs.slice(1) : blogs;
+
+  // Simulate "Most Viewed" using real data (first 5)
+  const mostViewedBlogs = blogs.slice(0, 5)
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -61,6 +67,8 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
     for (let i = startPage; i <= endPage; i++) {
       pageNumbers.push(i)
     }
+
+    if (isLoading) return null
 
     return pageNumbers.map((pageNum) => (
       <Button
@@ -95,17 +103,19 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
         </Breadcrumb>
 
         {/* Hero Section (Featured Post) - Only on first page */}
-        {currentPage === 1 && (
+        {currentPage === 1 && featuredBlog && (
           <div className="relative rounded-2xl overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
             <div className="relative h-[400px] md:h-[500px] w-full">
-              <Image
-                src={featuredBlog.image}
-                alt={featuredBlog.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-700"
-                priority
-              />
+              {featuredBlog.image && (
+                <Image
+                  src={featuredBlog.image}
+                  alt={featuredBlog.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  priority
+                />
+              )}
             </div>
             <div className="absolute bottom-0 left-0 p-6 md:p-10 z-20 max-w-3xl text-white space-y-4">
               <Badge variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 pointer-events-none mb-2">
@@ -144,12 +154,14 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
               {mostViewedBlogs.slice(0, 3).map((blog) => (
                 <Link href={`/blog/${blog.id}`} key={blog.id} className="group flex gap-4 items-start md:block md:space-y-3">
                   <div className="relative w-24 h-20 md:w-full md:h-40 shrink-0 overflow-hidden rounded-xl bg-muted">
-                    <Image
-                      src={blog.image}
-                      alt={blog.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {blog.image && (
+                      <Image
+                        src={blog.image}
+                        alt={blog.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 space-y-2">
                     <h4 className="font-semibold text-sm md:text-base leading-snug group-hover:text-primary transition-colors line-clamp-2">
@@ -157,7 +169,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
                     </h4>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Clock className="w-3 h-3" />
-                      <span>{blog.date}</span>
+                      <span>{format(new Date(blog.createdAt), "dd/MM/yyyy", { locale: vi })}</span>
                     </div>
                   </div>
                 </Link>
@@ -172,11 +184,29 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {paginatedBlogs.map((blog) => (
-                <div key={blog.id} className="group">
-                  <BlogCard {...blog} />
+              {isLoading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="h-[350px] bg-muted animate-pulse rounded-xl" />
+                ))
+              ) : listBlogs.length > 0 ? (
+                listBlogs.map((blog) => (
+                  <div key={blog.id} className="group">
+                    <BlogCard
+                      id={blog.id}
+                      title={blog.title}
+                      image={blog.image || ""}
+                      author={blog.author?.fullName || "Wishzy"}
+                      category={blog.category?.name}
+                      description={blog.description || ""}
+                      date={format(new Date(blog.createdAt), "dd/MM/yyyy", { locale: vi })}
+                    />
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full py-20 text-center text-muted-foreground">
+                  Không tìm thấy bài viết nào.
                 </div>
-              ))}
+              )}
             </div>
 
             {totalPages > 1 && (
