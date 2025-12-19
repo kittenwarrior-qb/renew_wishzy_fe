@@ -20,10 +20,12 @@ import { useQueryHook } from "@/src/hooks/useQueryHook";
 import { courseService } from "@/src/services/course";
 import { CourseItemType } from "@/src/types/course/course-item.types";
 import { ThemeSwitcherDropdownItem } from "../common/ThemeSwitcherDropdownItem";
+import { useLogout } from "@/components/shared/auth/useAuth";
 
 export default function HeaderAdmin() {
   const pathname = usePathname() || "";
-  const { user, logout } = useAppStore();
+  const { user } = useAppStore();
+  const logoutMutation = useLogout();
   const { primaryAction } = useAdminHeaderStore();
   const initials = React.useMemo(() => {
     if (user?.fullName)
@@ -143,8 +145,9 @@ export default function HeaderAdmin() {
             <ThemeSwitcherDropdownItem />
             <DropdownMenuSeparator />
             
-            <DropdownMenuItem 
-              onClick={logout}
+            <DropdownMenuItem
+              onClick={() => logoutMutation.mutate()}
+              disabled={logoutMutation.isPending}
               className="cursor-pointer text-destructive focus:text-destructive"
             >
               <LogOut className="mr-2 h-4 w-4" />

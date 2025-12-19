@@ -89,7 +89,7 @@ const InstructorQuizzesPage = () => {
   return (
     <div className="relative w-full">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-card text-card-foreground rounded-lg border p-4">
           <div className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div className="text-sm font-medium">Tổng Quiz</div>
@@ -131,7 +131,7 @@ const InstructorQuizzesPage = () => {
           </div>
           <p className="text-xs text-muted-foreground">Tổng chia sẻ</p>
         </div>
-      </div>
+      </div> */}
 
       {/* Search and Filters */}
       <div className="mb-4">

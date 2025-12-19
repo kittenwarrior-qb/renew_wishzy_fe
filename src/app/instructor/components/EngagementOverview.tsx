@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "../../../../components/ui/progress"
@@ -38,6 +39,8 @@ export function EngagementOverview({
   feedbacksStats, 
   isLoading = false 
 }: EngagementOverviewProps) {
+  const router = useRouter();
+  
   const formatPercentage = (value: number, total: number) => {
     return total > 0 ? Math.round((value / total) * 100) : 0;
   };
@@ -85,7 +88,10 @@ export function EngagementOverview({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       {/* Comments Overview */}
-      <Card>
+      <Card 
+        className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+        onClick={() => router.push('/instructor/comments')}
+      >
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
@@ -151,7 +157,10 @@ export function EngagementOverview({
       </Card>
 
       {/* Feedbacks Overview */}
-      <Card>
+      <Card 
+        className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+        onClick={() => router.push('/instructor/feedbacks')}
+      >
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Star className="h-5 w-5" />
