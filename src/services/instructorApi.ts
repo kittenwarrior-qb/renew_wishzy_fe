@@ -38,25 +38,52 @@ export const commentsApi = {
   // Get comments list
   getComments: async (params: CommentListQuery): Promise<CommentListResponse> => {
     try {
-      // Use real API endpoint
+      // Use real API endpoint - this should only return comments from students enrolled in instructor's courses
       const backendParams = {
         page: params.page,
         limit: params.limit,
-        lectureId: params.courseId, // Backend uses lectureId, frontend sends courseId
+        // Note: Backend should automatically filter by instructor's courses
+        // lectureId: params.courseId, // Removed - let backend handle instructor filtering
         // Backend doesn't support search and status yet, so we filter client-side if needed
       };
 
       const response = await api.get('/comments/instructor/my-courses', { params: backendParams });
       
       console.log('Comments API response:', response.data);
+      console.log('Backend params sent:', backendParams);
+      console.log('API endpoint called:', '/comments/instructor/my-courses');
       
       // Backend returns: { success: boolean, data: { items: Comment[], pagination: {...}, statistics: {...} }, message: string }
-      const comments = response.data?.data?.items || [];
-      const pagination = response.data?.data?.pagination || {};
-      const statistics = response.data?.data?.statistics || {};
+      // Handle different possible response structures
+      const responseData = response.data?.data || response.data;
+      const comments = responseData?.items || responseData || [];
+      const pagination = responseData?.pagination || {};
+      const statistics = responseData?.statistics || {};
       
+      console.log('Extracted comments array:', comments);
+      console.log('Comments array length:', comments.length);
+      
+      if (comments.length === 0) {
+        console.warn('No comments received from backend');
+        return {
+          success: true,
+          data: {
+            items: [],
+            pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrev: false },
+            statistics: { totalComments: 0, pendingComments: 0, repliedComments: 0, resolvedComments: 0 }
+          }
+        };
+      }
+      
+      // Temporarily disable course mapping to focus on displaying comments
+      // TODO: Re-enable when backend provides course info in comments
+      let coursesMap: Record<string, { id: string; name: string }> = {};
+      
+      console.log('Skipping course mapping - will show "Unknown Course" for now');
+
       // Apply client-side filtering if needed
       let filteredComments = [...comments];
+      console.log('Before client-side filtering:', filteredComments.length);
       
       if (params.search) {
         const search = params.search.toLowerCase();
@@ -64,32 +91,141 @@ export const commentsApi = {
           comment.content?.toLowerCase().includes(search) ||
           comment.user?.fullName?.toLowerCase().includes(search)
         );
+        console.log('After search filtering:', filteredComments.length);
       }
       
       if (params.status && params.status !== 'all') {
         filteredComments = filteredComments.filter(comment => comment.status === params.status);
+        console.log('After status filtering:', filteredComments.length);
       }
 
       // Transform backend data to match frontend expectations
-      const transformedComments = filteredComments.map(comment => ({
-        id: comment.id,
-        content: comment.content,
-        studentId: comment.userId,
-        studentName: comment.user?.fullName || 'Unknown Student',
-        studentAvatar: comment.user?.avatar || '/images/avatar-placeholder.png',
-        courseId: comment.lecture?.chapter?.course?.id || '',
-        courseName: comment.lecture?.chapter?.course?.name || 'Unknown Course',
-        lectureId: comment.lectureId,
-        lectureTitle: comment.lecture?.name || 'Unknown Lecture',
-        createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt,
-        status: comment.status,
-        repliesCount: comment.repliesCount || 0,
-        lastReplyAt: comment.lastReplyAt || null,
-        isInappropriate: false, // Backend doesn't have this field yet
-        parentCommentId: comment.parentId,
-      }));
+      const transformedComments = filteredComments
+        .map(comment => {
+          // Log raw comment structure to understand backend response
+          console.log('Raw comment from backend:', {
+            id: comment.id,
+            lectureId: comment.lectureId,
+            lecture: comment.lecture,
+            course: comment.course,
+            courseId: comment.courseId,
+            user: comment.user
+          });
+          
+          // Try multiple possible paths for course info
+          let courseId = comment.lecture?.chapter?.course?.id || 
+                        comment.course?.id || 
+                        comment.courseId || '';
+          
+          let courseName = comment.lecture?.chapter?.course?.name || 
+                          comment.course?.name || 
+                          comment.courseName || '';
+          
+          // If we have courseId but no courseName, look it up
+          if (courseId && !courseName && coursesMap[courseId]) {
+            courseName = coursesMap[courseId].name;
+          }
+          
+          // If we still don't have course info, try to extract from lecture path
+          if (!courseId || !courseName) {
+            // Check if lecture has course reference
+            const lectureCourseId = comment.lecture?.courseId || 
+                                   comment.lecture?.course?.id ||
+                                   comment.lecture?.chapter?.courseId;
+            
+            if (lectureCourseId && coursesMap[lectureCourseId]) {
+              courseId = lectureCourseId;
+              courseName = coursesMap[lectureCourseId].name;
+            }
+          }
+          
+          // Final fallback - always provide a course name
+          if (!courseName) {
+            courseName = 'Unknown Course';
+          }
+          
+          // Ensure we always have a courseId (use lectureId as fallback)
+          if (!courseId) {
+            courseId = comment.lectureId || comment.lecture?.id || 'unknown';
+          }
+          
+          // Try multiple possible paths for user info
+          const studentName = comment.user?.fullName || 
+                             comment.user?.name || 
+                             comment.userName || 
+                             comment.studentName ||
+                             `User ${comment.userId || comment.user?.id || 'Unknown'}`;
+          
+          const studentAvatar = comment.user?.avatar || 
+                               comment.user?.profilePicture || 
+                               comment.userAvatar || 
+                               '/images/avatar-placeholder.png';
+          
+          // Try multiple possible paths for lecture info
+          const lectureTitle = comment.lecture?.name || 
+                              comment.lecture?.title || 
+                              comment.lectureTitle || 
+                              comment.lectureName || 
+                              'Unknown Lecture';
+          
+          console.log('Processed comment data:', {
+            commentId: comment.id,
+            lectureId: comment.lectureId,
+            lectureName: comment.lecture?.name,
+            courseId,
+            courseName,
+            studentName,
+            userId: comment.userId || comment.user?.id,
+            lectureTitle,
+            hasContent: !!comment.content,
+            mappingUsed: courseId ? (comment.course?.id ? 'direct' : 'mapped') : 'none'
+          });
+          
+          return {
+            id: comment.id,
+            content: comment.content || '',
+            studentId: comment.userId || comment.user?.id || '',
+            studentName,
+            studentAvatar,
+            courseId,
+            courseName,
+            lectureId: comment.lectureId || comment.lecture?.id || '',
+            lectureTitle,
+            createdAt: comment.createdAt,
+            updatedAt: comment.updatedAt,
+            status: comment.status || 'pending',
+            repliesCount: comment.repliesCount || comment.replies?.length || 0,
+            lastReplyAt: comment.lastReplyAt || null,
+            isInappropriate: false, // Backend doesn't have this field yet
+            parentCommentId: comment.parentId || comment.parentCommentId || null,
+          };
+        })
+        .filter(comment => {
+          // Only filter out comments that are completely invalid
+          // Don't filter based on course info - allow "Unknown Course"
+          const isValid = comment.id && comment.content && comment.studentName;
+          
+          if (!isValid) {
+            console.warn('Filtering out invalid comment:', {
+              id: comment.id,
+              hasContent: !!comment.content,
+              hasStudentName: !!comment.studentName,
+              comment: comment
+            });
+          } else {
+            console.log('Valid comment passed filter:', {
+              id: comment.id,
+              courseName: comment.courseName,
+              studentName: comment.studentName
+            });
+          }
+          
+          return isValid;
+        });
 
+      console.log('Final transformed comments:', transformedComments);
+      console.log('Transformed comments count:', transformedComments.length);
+      
       return {
         success: true,
         data: {
@@ -97,16 +233,16 @@ export const commentsApi = {
           pagination: {
             page: pagination.currentPage || params.page || 1,
             limit: pagination.itemsPerPage || params.limit || 10,
-            total: pagination.totalItems || comments.length,
-            totalPages: pagination.totalPage || Math.ceil(comments.length / (params.limit || 10)),
-            hasNext: (pagination.currentPage || 1) * (pagination.itemsPerPage || 10) < (pagination.totalItems || comments.length),
+            total: pagination.totalItems || transformedComments.length,
+            totalPages: pagination.totalPage || Math.ceil(transformedComments.length / (params.limit || 10)),
+            hasNext: (pagination.currentPage || 1) * (pagination.itemsPerPage || 10) < (pagination.totalItems || transformedComments.length),
             hasPrev: (pagination.currentPage || 1) > 1,
           },
           statistics: {
-            totalComments: statistics.totalComments || 0,
-            pendingComments: statistics.pendingComments || 0,
-            repliedComments: statistics.repliedComments || 0,
-            resolvedComments: statistics.resolvedComments || 0,
+            totalComments: statistics.totalComments || transformedComments.length,
+            pendingComments: statistics.pendingComments || transformedComments.filter(c => c.status === 'pending').length,
+            repliedComments: statistics.repliedComments || transformedComments.filter(c => c.status === 'replied').length,
+            resolvedComments: statistics.resolvedComments || transformedComments.filter(c => c.status === 'resolved').length,
           },
         },
       };
@@ -431,31 +567,6 @@ export const documentsApi = {
         });
       }
 
-      // Helper function to estimate file size from URL
-      const estimateFileSize = (fileUrl: string, fileName: string): number => {
-        // Estimate based on file extension
-        const extension = fileName?.split('.').pop()?.toLowerCase() || '';
-        const baseSizes: Record<string, number> = {
-          'pdf': 2 * 1024 * 1024,      // 2MB
-          'docx': 500 * 1024,          // 500KB
-          'doc': 300 * 1024,           // 300KB
-          'pptx': 5 * 1024 * 1024,     // 5MB
-          'ppt': 3 * 1024 * 1024,      // 3MB
-          'xlsx': 200 * 1024,          // 200KB
-          'xls': 150 * 1024,           // 150KB
-          'png': 1 * 1024 * 1024,      // 1MB
-          'jpg': 800 * 1024,           // 800KB
-          'jpeg': 800 * 1024,          // 800KB
-          'gif': 500 * 1024,           // 500KB
-          'zip': 10 * 1024 * 1024,     // 10MB
-          'rar': 8 * 1024 * 1024,      // 8MB
-          'mp4': 50 * 1024 * 1024,     // 50MB
-          'avi': 100 * 1024 * 1024,    // 100MB
-          'txt': 50 * 1024,            // 50KB
-        };
-        
-        return baseSizes[extension] || 1 * 1024 * 1024; // Default 1MB
-      };
 
       // Transform backend data to match frontend expectations
       const transformedDocuments = filteredDocuments.map(doc => {
@@ -489,16 +600,13 @@ export const documentsApi = {
           }
         }
 
-        // Estimate file size
-        const estimatedSize = estimateFileSize(doc.fileUrl || '', doc.name || '');
-
         return {
           id: doc.id,
           name: doc.name || 'Unknown Document',
           originalName: doc.name || 'Unknown Document',
           fileType: doc.name?.split('.').pop()?.toLowerCase() || 'unknown',
           mimeType: getMimeType(doc.name?.split('.').pop()?.toLowerCase() || ''),
-          size: estimatedSize, // Use estimated size
+          size: doc.size || 0, // Use actual size from backend
           url: doc.fileUrl || '#',
           downloadUrl: doc.fileUrl || '#',
           courseId: courseId,
@@ -506,7 +614,6 @@ export const documentsApi = {
           lectureId: doc.entityType === 'lecture' ? doc.entityId : null,
           lectureTitle: doc.descriptions || undefined, // Use descriptions for lecture title
           uploadedAt: doc.createdAt,
-          downloadCount: 0, // Backend doesn't track downloads yet
           status: 'active' as 'active' | 'archived' | 'processing',
           description: doc.descriptions || '',
         };
