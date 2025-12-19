@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users, TrendingUp, Star, MessageSquare, BarChart3, Trophy, Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EngagementOverview } from "./components/EngagementOverview";
 import { QuickActions } from "./components/QuickActions";
 import { useInstructorComments, useInstructorFeedbacks } from "@/hooks/useInstructorApi";
 
 const InstructorDashboard = () => {
+  const router = useRouter();
   const { data: stats, isLoading, isError, error } = useInstructorStats();
   const [revenueMode, setRevenueMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
   const { data: revenueStats, isLoading: loadingRevenue } = useRevenueStats({ mode: revenueMode });
@@ -109,7 +111,10 @@ const InstructorDashboard = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
+        <Card 
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+          onClick={() => router.push('/instructor/courses')}
+        >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Tổng doanh thu</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -120,7 +125,10 @@ const InstructorDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+          onClick={() => router.push('/instructor/courses')}
+        >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">TB/Khoá học</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -133,7 +141,10 @@ const InstructorDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+          onClick={() => router.push('/instructor/user/students')}
+        >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Tổng học viên</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -144,7 +155,10 @@ const InstructorDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+          onClick={() => router.push('/instructor/user/students')}
+        >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">TB/Học viên</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -157,7 +171,10 @@ const InstructorDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+          onClick={() => router.push('/instructor/courses')}
+        >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Tổng khoá học</CardTitle>
             <BookOpen className="h-4 w-4 text-muted-foreground" />
@@ -280,7 +297,10 @@ const InstructorDashboard = () => {
 
         {/* Top 5 Courses */}
         <Card>
-          <CardHeader>
+          <CardHeader 
+            className="cursor-pointer transition-all hover:bg-muted/50"
+            onClick={() => router.push('/instructor/courses')}
+          >
             <div className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-yellow-500" />
               <CardTitle>Top 5 khoá học</CardTitle>
@@ -374,7 +394,10 @@ const InstructorDashboard = () => {
 
       {/* All Courses Table */}
       <Card>
-        <CardHeader>
+        <CardHeader 
+          className="cursor-pointer transition-all hover:bg-muted/50"
+          onClick={() => router.push('/instructor/courses')}
+        >
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
             Khoá học của bạn

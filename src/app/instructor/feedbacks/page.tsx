@@ -72,7 +72,29 @@ export default function FeedbacksPage() {
   }, [feedbacksData, isError, error]);
 
   const totalFeedbacks = statistics?.totalFeedbacks || 0;
-  const averageRating = statistics?.averageRating || 0;
+  
+  // Calculate averageRating with validation and fallback
+  // If statistics.averageRating is invalid (> 5), recalculate from items
+  let averageRating = statistics?.averageRating || 0;
+  if (averageRating > 5 || averageRating < 0 || isNaN(averageRating)) {
+    // Fallback: calculate from feedbacks items
+    const validFeedbacks = feedbacks.filter(f => {
+      const rating = Number(f.rating);
+      return !isNaN(rating) && rating >= 1 && rating <= 5;
+    });
+    if (validFeedbacks.length > 0) {
+      averageRating = validFeedbacks.reduce((acc, f) => {
+        const rating = Number(f.rating);
+        const clampedRating = Math.max(1, Math.min(5, rating));
+        return acc + clampedRating;
+      }, 0) / validFeedbacks.length;
+    } else {
+      averageRating = 0;
+    }
+  }
+  // Clamp to 0-5 range
+  averageRating = Math.max(0, Math.min(5, averageRating));
+  
   const highRatings = statistics?.highRatings || 0;
   const needReply = statistics?.needReply || 0;
 
@@ -131,7 +153,7 @@ export default function FeedbacksPage() {
   return (
     <div className="relative">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-card text-card-foreground rounded-lg border p-4">
           <div className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div className="text-sm font-medium">Tổng đánh giá</div>
@@ -148,7 +170,7 @@ export default function FeedbacksPage() {
           </div>
           <div className="text-2xl font-bold">{averageRating.toFixed(1)}</div>
           <div className="flex items-center mt-1">
-            {renderStars(Math.round(averageRating))}
+            {renderStars(Math.max(0, Math.min(5, Math.round(averageRating))))}
           </div>
         </div>
 
@@ -171,7 +193,7 @@ export default function FeedbacksPage() {
           <div className="text-2xl font-bold">{needReply}</div>
           <p className="text-xs text-muted-foreground">Chưa phản hồi</p>
         </div>
-      </div>
+      </div> */}
 
       {/* Search and Filters */}
       <div className="mb-4">
