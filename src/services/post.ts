@@ -1,22 +1,43 @@
 import api from "./api";
 
-const BASE = "/posts";
+const BASE = "/blogs";
 
 export type PostStatus = "draft" | "published" | "archived";
+
+export type Comment = {
+  id: string;
+  content: string;
+  userId: string;
+  user: {
+    id: string;
+    fullName: string;
+    avatar?: string;
+  };
+  createdAt: string;
+  likes: number;
+  replies?: Comment[];
+};
 
 export type Post = {
   id: string;
   title: string;
-  slug: string;
   content: string;
-  excerpt?: string | null;
-  featuredImage?: string | null;
-  status: PostStatus;
-  categories?: string[];
-  tags?: string[];
-  metaTitle?: string | null;
-  metaDescription?: string | null;
-  metaKeywords?: string[] | null;
+  description?: string | null;
+  image?: string | null;
+  isActive: boolean;
+  categoryId?: string;
+  views: number;
+  authorId: string;
+  author?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+  category?: {
+    id: string;
+    name: string;
+  };
+  comments?: Comment[];
   createdAt: string;
   updatedAt: string;
 };
@@ -24,14 +45,13 @@ export type Post = {
 export type PostListParams = {
   page?: number;
   limit?: number;
-  q?: string;
-  status?: PostStatus | "__all";
-  categoryId?: string;
-  tag?: string;
+  search?: string;
+  category?: string;
+  isActive?: boolean;
 };
 
 export const postService = {
-  async list(params?: Record<string, any>) {
+  async list(params?: PostListParams) {
     const res = await api.get(BASE, { params });
     return res.data;
   },
@@ -44,7 +64,7 @@ export const postService = {
     return res.data;
   },
   async update(id: string, data: Partial<Post>) {
-    const res = await api.patch(`${BASE}/${id}`, data);
+    const res = await api.put(`${BASE}/${id}`, data);
     return res.data;
   },
   async remove(id: string) {

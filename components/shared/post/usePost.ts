@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { postService, type Post, type PostStatus } from '@/services/post'
 
-const ENDPOINT = 'posts'
+const ENDPOINT = 'blogs'
 
 export type PostList = {
-  data: Post[]
+  items: Post[]
   total: number
   page: number
   limit: number
@@ -15,19 +15,17 @@ export type PostFilter = Partial<{
   page: number
   limit: number
   q: string
-  status: PostStatus | '__all'
   categoryId: string
-  tag: string
+  isActive: boolean
 }>
 
 export const usePostList = (filter?: PostFilter) => {
   const params: Record<string, any> = {
     page: filter?.page ?? 1,
     limit: filter?.limit ?? 10,
-    q: filter?.q,
-    status: filter?.status && filter.status !== '__all' ? filter.status : undefined,
-    categoryId: filter?.categoryId,
-    tag: filter?.tag,
+    search: filter?.q,
+    category: filter?.categoryId,
+    isActive: filter?.isActive,
   }
   return useQuery<PostList>({
     queryKey: [ENDPOINT, params],
@@ -38,7 +36,7 @@ export const usePostList = (filter?: PostFilter) => {
       const items: Post[] = payload?.items ?? payload?.data ?? []
       const p = payload?.pagination ?? {}
       return {
-        data: items,
+        items,
         total: p?.totalItems ?? payload?.total ?? items.length ?? 0,
         page: p?.currentPage ?? payload?.page ?? params.page,
         limit: p?.itemsPerPage ?? payload?.limit ?? params.limit,
