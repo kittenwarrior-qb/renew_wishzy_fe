@@ -422,16 +422,31 @@ export const feedbacksApi = {
       }));
 
       // Calculate statistics
-      const totalFeedbacks = feedbacks.length;
+      // Validate and clamp ratings to 1-5 range
+      const validFeedbacks = feedbacks.filter((f: any) => {
+        const rating = Number(f.rating);
+        return !isNaN(rating) && rating >= 1 && rating <= 5;
+      });
+      
+      const totalFeedbacks = validFeedbacks.length;
       const averageRating = totalFeedbacks > 0 
-        ? feedbacks.reduce((acc: number, f: any) => acc + f.rating, 0) / totalFeedbacks 
+        ? validFeedbacks.reduce((acc: number, f: any) => {
+            const rating = Number(f.rating);
+            // Clamp rating to 1-5 range
+            const clampedRating = Math.max(1, Math.min(5, rating));
+            return acc + clampedRating;
+          }, 0) / totalFeedbacks 
         : 0;
+      
+      // Clamp averageRating to 0-5 range
+      const clampedAverageRating = Math.max(0, Math.min(5, averageRating));
+      
       const ratingDistribution = {
-        1: feedbacks.filter((f: any) => f.rating === 1).length,
-        2: feedbacks.filter((f: any) => f.rating === 2).length,
-        3: feedbacks.filter((f: any) => f.rating === 3).length,
-        4: feedbacks.filter((f: any) => f.rating === 4).length,
-        5: feedbacks.filter((f: any) => f.rating === 5).length,
+        1: validFeedbacks.filter((f: any) => Math.round(Number(f.rating)) === 1).length,
+        2: validFeedbacks.filter((f: any) => Math.round(Number(f.rating)) === 2).length,
+        3: validFeedbacks.filter((f: any) => Math.round(Number(f.rating)) === 3).length,
+        4: validFeedbacks.filter((f: any) => Math.round(Number(f.rating)) === 4).length,
+        5: validFeedbacks.filter((f: any) => Math.round(Number(f.rating)) === 5).length,
       };
 
       return {
@@ -448,10 +463,13 @@ export const feedbacksApi = {
           },
           statistics: {
             totalFeedbacks,
-            averageRating: Math.round(averageRating * 10) / 10,
+            averageRating: Math.round(clampedAverageRating * 10) / 10,
             ratingDistribution,
-            highRatings: feedbacks.filter((f: any) => f.rating >= 4).length,
-            needReply: feedbacks.filter((f: any) => !f.isReplied).length, // All need reply since backend doesn't have replies yet
+            highRatings: validFeedbacks.filter((f: any) => {
+              const rating = Number(f.rating);
+              return !isNaN(rating) && rating >= 4 && rating <= 5;
+            }).length,
+            needReply: validFeedbacks.filter((f: any) => !f.isReplied).length, // All need reply since backend doesn't have replies yet
           },
         },
       };
@@ -627,7 +645,10 @@ export const documentsApi = {
       return {
         success: true,
         data: {
-          items: transformedDocuments,
+          items: transformedDocuments.map(doc => ({
+            ...doc,
+            downloadCount: 0, // Added to satisfy Document type requirements
+          })),
           pagination: {
             page: pagination.currentPage || params.page || 1,
             limit: pagination.itemsPerPage || params.limit || 10,

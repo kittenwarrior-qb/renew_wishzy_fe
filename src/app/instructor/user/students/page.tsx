@@ -153,7 +153,7 @@ export default function StudentsPage() {
   return (
     <div className="relative">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-card rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -197,7 +197,7 @@ export default function StudentsPage() {
             <Clock className="h-8 w-8 text-muted-foreground" />
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Filters */}
       <div className="mb-4">
