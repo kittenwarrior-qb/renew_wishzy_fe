@@ -63,7 +63,7 @@ const InstructorQuizzesPage = () => {
   const handleDelete = () => {
     if (!deleteId) return;
 
-    deleteQuiz(deleteId, {
+    deleteQuiz({ id: deleteId }, {
       onSuccess: () => {
         notify({ title: "Thành công", description: "Xoá quiz thành công", variant: "success" });
         setOpenDelete(false);

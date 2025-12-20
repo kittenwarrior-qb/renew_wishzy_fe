@@ -31,7 +31,7 @@ import {
   useDeleteComment 
 } from "@/hooks/useInstructorApi";
 import type { Comment, CommentListQuery } from "@/types/instructor";
-import { Row } from "react-day-picker";
+import { apiLogger } from "@/utils/apiLogger";
 
 export default function CommentsPage() {
   const [page, setPage] = React.useState<number>(1);
@@ -58,13 +58,15 @@ export default function CommentsPage() {
   const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateCommentStatus();
   const { mutate: deleteComment, isPending: isDeleting } = useDeleteComment();
 
-  // Debug logging
+  // Log API data for debugging
   React.useEffect(() => {
     if (commentsData) {
-      console.log('Comments page data:', {
-        totalItems: commentsData.data?.items?.length,
-        queryParams,
-        sampleComment: commentsData.data?.items?.[0]
+      apiLogger.logApiCall({
+        endpoint: '/comments/instructor/my-courses',
+        method: 'GET',
+        params: queryParams,
+        response: commentsData,
+        level: 'success',
       });
     }
   }, [commentsData, queryParams]);

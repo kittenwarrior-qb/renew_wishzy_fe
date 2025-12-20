@@ -21,13 +21,16 @@ import {
   Eye,
   Plus,
   File,
-  Inbox
+  Inbox,
+  ExternalLink
 } from "lucide-react";
+import Link from "next/link";
 import { useInstructorDocuments, useDeleteDocument } from "@/hooks/useInstructorApi";
 import type { DocumentListQuery } from "@/types/instructor";
 import { UploadDocumentDialog } from "./UploadDocumentDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { instructorQueryKeys } from "@/hooks/useInstructorApi";
+import { apiLogger } from "@/utils/apiLogger";
 
 export default function DocumentsPage() {
   const queryClient = useQueryClient();
@@ -172,7 +175,7 @@ export default function DocumentsPage() {
         window.URL.revokeObjectURL(url);
       }, 100);
     } catch (error) {
-      console.error('Download error:', error);
+      apiLogger.logError(`/documents/${doc.id}/download`, error, 'GET');
       // Fallback to direct URL
       window.open(doc.url, '_blank');
     }
@@ -297,7 +300,17 @@ export default function DocumentsPage() {
                 label: 'Khóa học',
                 type: 'short',
                 render: (row: any) => (
-                  <span className="text-sm">{row.courseName}</span>
+                  row.courseId ? (
+                    <Link
+                      href={`/instructor/courses/${row.courseId}`}
+                      className="text-sm text-foreground hover:text-foreground/80 hover:underline transition-colors inline-flex items-center gap-1"
+                    >
+                      <span>{row.courseName}</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-foreground">{row.courseName}</span>
+                  )
                 ),
               },
               {
@@ -430,7 +443,17 @@ export default function DocumentsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Khóa học</p>
-                    <p className="font-medium">{selectedDocument.courseName}</p>
+                    {selectedDocument.courseId ? (
+                      <Link
+                        href={`/instructor/courses/${selectedDocument.courseId}`}
+                        className="font-medium text-foreground hover:text-foreground/80 hover:underline transition-colors inline-flex items-center gap-1.5 mt-1"
+                      >
+                        <span>{selectedDocument.courseName}</span>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                    ) : (
+                      <p className="font-medium text-foreground mt-1">{selectedDocument.courseName}</p>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Bài giảng</p>
