@@ -9,6 +9,7 @@ import {
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronDownIcon, Play, Trash2, Pencil, Plus, FileText } from "lucide-react";
 import { LectureDocuments } from "@/components/shared/lecture/LectureDocuments";
+import { LectureQuizzes } from "@/components/shared/lecture/LectureQuizzes";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/format-duration";
 import { ChapterType } from "@/src/types/chapter/chapter.types";
@@ -337,6 +338,8 @@ export function AdminCourseChapters({
                     </div>
                     {/* Document Section */}
                     <LectureDocuments lectureId={lecture.id} lectureName={lecture.name} />
+                    {/* Quiz Section */}
+                    <LectureQuizzes lectureId={lecture.id} lectureName={lecture.name} />
                   </div>
                 ))}
               </div>

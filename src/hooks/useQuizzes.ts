@@ -113,6 +113,19 @@ export const useQuizAdminDetails = (quizId: string) => {
   });
 };
 
+export const useLectureQuizzes = (lectureId: string) => {
+  return useQuery({
+    queryKey: ['lecture-quizzes', lectureId],
+    queryFn: async () => {
+      const response = await api.get<{ success: boolean; data: Quiz[]; message: string }>(`/quizzes/lecture/${lectureId}`);
+      return response.data.data;
+    },
+    enabled: !!lectureId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const useCreateQuiz = () => {
   const queryClient = useQueryClient();
 
@@ -124,6 +137,7 @@ export const useCreateQuiz = () => {
       isFree?: boolean;
       price?: number;
       timeLimit?: number;
+      entityId?: string;
       questions: Array<{
         questionText: string;
         orderIndex: number;
@@ -138,9 +152,12 @@ export const useCreateQuiz = () => {
       const response = await api.post<{ success: boolean; data: Quiz; message: string }>('/quizzes', data);
       return response.data.data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['quizzes'] });
       queryClient.invalidateQueries({ queryKey: ['my-quizzes'] });
+      if (variables.entityId) {
+        queryClient.invalidateQueries({ queryKey: ['lecture-quizzes', variables.entityId] });
+      }
     },
   });
 };
@@ -149,14 +166,18 @@ export const useUpdateQuiz = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Quiz> }) => {
+    mutationFn: async ({ id, data, entityId }: { id: string; data: Partial<Quiz>; entityId?: string }) => {
       const response = await api.patch<{ success: boolean; data: Quiz; message: string }>(`/quizzes/${id}`, data);
-      return response.data.data;
+      return { quiz: response.data.data, entityId };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['quizzes'] });
       queryClient.invalidateQueries({ queryKey: ['my-quizzes'] });
       queryClient.invalidateQueries({ queryKey: ['quiz'] });
+      queryClient.invalidateQueries({ queryKey: ['quiz-admin-details'] });
+      if (result.entityId) {
+        queryClient.invalidateQueries({ queryKey: ['lecture-quizzes', result.entityId] });
+      }
     },
   });
 };
@@ -165,13 +186,16 @@ export const useDeleteQuiz = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, entityId }: { id: string; entityId?: string }) => {
       const response = await api.delete<{ success: boolean; data: null; message: string }>(`/quizzes/${id}`);
-      return response.data;
+      return { data: response.data, entityId };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['quizzes'] });
       queryClient.invalidateQueries({ queryKey: ['my-quizzes'] });
+      if (result.entityId) {
+        queryClient.invalidateQueries({ queryKey: ['lecture-quizzes', result.entityId] });
+      }
     },
   });
 };

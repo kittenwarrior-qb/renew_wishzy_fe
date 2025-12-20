@@ -195,6 +195,12 @@ export default function AdminAppSidebar() {
           icon: <ListChecks className="h-[18px] w-[18px]" />,
           isActiveKey: "exams",
         },
+        {
+          label: "Bài làm",
+          href: `${base}/quiz-attempts`,
+          icon: <FileText className="h-[18px] w-[18px]" />,
+          isActiveKey: "quiz-attempts",
+        },
       ],
     },
     {

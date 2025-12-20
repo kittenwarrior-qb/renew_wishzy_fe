@@ -24,7 +24,7 @@ import {
   Users,
   BookOpen,
   MessageSquare,
-
+  ListChecks,
   ChevronDown,
   ArrowLeftToLine,
   ArrowRightToLine,
@@ -88,7 +88,7 @@ export default function InstructorAppSidebar() {
 
       feedbacks: isActive("feedbacks"),
       documents: isActive("documents"),
-      quizzes: isActive("quizzes"),
+      quizzes: isActive("quizzes") || isActive("quiz-attempts"),
     });
   }, [pathname]);
 
@@ -209,13 +209,19 @@ export default function InstructorAppSidebar() {
       key: "quizzes",
       label: "Quiz",
       icon: <FileQuestion className="mr-2 h-4 w-4" />,
-      collapsible: false,
+      collapsible: true,
       items: [
         {
           label: "Quản lý Quiz",
           href: `${base}/quizzes`,
           icon: <FileQuestion className="h-[18px] w-[18px]" />,
           isActiveKey: "quizzes",
+        },
+        {
+          label: "Bài làm học viên",
+          href: `${base}/quiz-attempts`,
+          icon: <ListChecks className="h-[18px] w-[18px]" />,
+          isActiveKey: "quiz-attempts",
         },
       ],
     },
