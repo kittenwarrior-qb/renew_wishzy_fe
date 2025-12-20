@@ -18,10 +18,17 @@ import { uploadImage } from "@/services/uploads"
 import UploadProgressOverlay from "@/components/shared/upload/UploadProgressOverlay"
 import { notify } from "@/components/shared/admin/Notifications"
 import { categoryBlogService } from "@/services/category-blog"
+import { useAppStore } from "@/stores/useAppStore"
+import { User } from "lucide-react"
+import Switch from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 export default function Page() {
   const router = useRouter()
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  const isDuplicate = searchParams?.get("duplicate") === "true"
   const { setPrimaryAction } = useAdminHeaderStore()
+  const currentUser = useAppStore((state) => state.user)
 
   const [title, setTitle] = React.useState("")
   const [isActive, setIsActive] = React.useState(true)
@@ -36,7 +43,27 @@ export default function Page() {
       const payload = res?.data ?? res
       setCategories(payload?.items || [])
     })
-  }, [])
+
+    // Load duplication data if present
+    if (isDuplicate) {
+      try {
+        const raw = sessionStorage.getItem("wishzy_duplicate_post")
+        if (raw) {
+          const data = JSON.parse(raw)
+          if (data.title) setTitle(data.title)
+          if (data.content) setContent(data.content)
+          if (data.description) setDescription(data.description)
+          if (data.image) setImage(data.image)
+          if (data.categoryId) setCategoryId(data.categoryId)
+          if (data.isActive !== undefined) setIsActive(data.isActive)
+          // Clear it after consume
+          sessionStorage.removeItem("wishzy_duplicate_post")
+        }
+      } catch (e) {
+        console.error("Failed to parse duplication data", e)
+      }
+    }
+  }, [isDuplicate])
 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const [uploading, setUploading] = React.useState(false)
@@ -78,7 +105,7 @@ export default function Page() {
 
   React.useEffect(() => {
     setPrimaryAction({
-      label: creating ? "Đang lưu..." : "Bản lưu",
+      label: creating ? "Đang tạo..." : "Tạo bài viết",
       variant: "default",
       disabled: !canSave || creating,
       onClick: handleSave,
@@ -88,7 +115,7 @@ export default function Page() {
   }, [setPrimaryAction, creating, canSave, handleSave])
 
   return (
-    <div className="relative">
+    <div className="relative px-4">
       <div className="mb-4 flex items-center gap-4">
         <BackButton fallbackHref={`/admin/posts`} disabled={creating} />
         <div className="flex flex-col">
@@ -101,7 +128,7 @@ export default function Page() {
         <div className="lg:col-span-2 space-y-6">
           <div className="rounded-lg border bg-card p-4 space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tiêu đề bài viết</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Tiêu đề bài viết</label>
               <Input
                 placeholder="Nhập tiêu đề..."
                 value={title}
@@ -110,7 +137,7 @@ export default function Page() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Mô tả ngắn</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Mô tả ngắn</label>
               <Textarea
                 placeholder="Nhập mô tả ngắn cho bài viết..."
                 value={description}
@@ -122,7 +149,7 @@ export default function Page() {
 
           <div className="rounded-lg border bg-card p-4 space-y-2">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium">Nội dung bài viết</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Nội dung bài viết</label>
             </div>
             <PostEditor value={content} onChange={setContent} />
           </div>
@@ -134,14 +161,32 @@ export default function Page() {
               <label className="text-sm font-medium uppercase text-muted-foreground text-[10px] tracking-wider">Cấu hình</label>
 
               <div>
-                <div className="text-[13px] mb-1.5 ml-0.5">Trạng thái hiển thị</div>
-                <Select value={isActive ? "active" : "hidden"} onValueChange={(v) => setIsActive(v === "active")}>
-                  <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Công khai</SelectItem>
-                    <SelectItem value="hidden">Lưu nháp / Ẩn</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="text-[13px] mb-2 ml-0.5">Trạng thái bài viết</div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <div className="flex flex-col gap-0.5">
+                    <Label htmlFor="post-status" className="text-sm font-semibold cursor-pointer">
+                      {isActive ? "Công khai" : "Lưu nháp / Ẩn"}
+                    </Label>
+                    <span className="text-[10px] text-muted-foreground">
+                      {isActive ? "Mọi người đều có thể xem bài viết này" : "Chỉ bạn mới có thể xem và chỉnh sửa"}
+                    </span>
+                  </div>
+                  <Switch
+                    id="post-status"
+                    checked={isActive}
+                    onCheckedChange={setIsActive}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <div className="text-[13px] mb-1.5 ml-0.5">Người đăng</div>
+                <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50 border border-transparent">
+                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-3 w-3 text-primary" />
+                  </div>
+                  <span className="text-xs font-medium">{currentUser?.fullName || "N/A"}</span>
+                </div>
               </div>
 
               <div className="pt-2">
@@ -228,7 +273,6 @@ export default function Page() {
         </div>
       </div>
 
-      <LoadingOverlay show={creating} />
     </div>
   )
 }

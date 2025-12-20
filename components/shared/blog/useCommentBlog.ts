@@ -8,6 +8,15 @@ export const useCommentBlogList = (blogId: string, params?: { page?: number; lim
         queryKey: [...QUERY_KEY, "blog", blogId, params],
         queryFn: () => commentBlogService.listByBlog(blogId, params),
         enabled: !!blogId,
+        select: (res: any) => res?.data ?? res,
+    });
+};
+
+export const useCommentBlogListAll = (params?: { page?: number; limit?: number }) => {
+    return useQuery({
+        queryKey: [...QUERY_KEY, "all", params],
+        queryFn: () => commentBlogService.listAll(params),
+        select: (res: any) => res?.data ?? res,
     });
 };
 
@@ -16,7 +25,8 @@ export const useCreateCommentBlog = () => {
     return useMutation({
         mutationFn: (data: CreateCommentBlogDto) => commentBlogService.create(data),
         onSuccess: (_data, variables) => {
-            queryClient.invalidateQueries({ queryKey: [...QUERY_KEY, "blog", variables.blogId] });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+            queryClient.invalidateQueries({ queryKey: ["blogs", variables.blogId] });
         },
     });
 };
@@ -36,7 +46,8 @@ export const useDeleteCommentBlog = (blogId: string) => {
     return useMutation({
         mutationFn: (id: string) => commentBlogService.remove(id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [...QUERY_KEY, "blog", blogId] });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+            queryClient.invalidateQueries({ queryKey: ["blogs", blogId] });
         },
     });
 };

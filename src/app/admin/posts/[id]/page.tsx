@@ -1,5 +1,7 @@
 "use client"
 
+import { cn } from "@/lib/utils"
+
 import * as React from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -20,8 +22,13 @@ import { notify } from "@/components/shared/admin/Notifications"
 import { categoryBlogService } from "@/services/category-blog"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
-import { MessageSquare, Heart, Clock as ClockIcon, Calendar as CalendarIcon, Eye as EyeIcon } from "lucide-react"
+import { MessageSquare, Heart, Clock as ClockIcon, Calendar as CalendarIcon, Eye as EyeIcon, User } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import Switch from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { useDeleteCommentBlog, useCreateCommentBlog } from "@/components/shared/blog/useCommentBlog"
+import { EyeOff, Reply, Send, X, Loader2 } from "lucide-react"
+import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
 
 export default function Page() {
     const router = useRouter()
@@ -48,7 +55,30 @@ export default function Page() {
         })
     }, [])
 
-    // Sync state with fetching data
+    // Comment management states
+    const [replyingTo, setReplyingTo] = React.useState<string | null>(null)
+    const [replyContent, setReplyContent] = React.useState("")
+    const [hidingComment, setHidingComment] = React.useState<{ id: string } | null>(null)
+
+    const { mutate: deleteComment, isPending: isHidingComment } = useDeleteCommentBlog(id as string)
+    const { mutate: createReply, isPending: isReplying } = useCreateCommentBlog()
+
+    const handleReply = (parentId: string) => {
+        if (!replyContent.trim() || isReplying) return
+        createReply({
+            blogId: id as string,
+            content: replyContent.trim(),
+            parentId
+        }, {
+            onSuccess: () => {
+                setReplyingTo(null)
+                setReplyContent("")
+                notify({ title: "Đã gửi phản hồi", variant: "success" })
+                refetch()
+            }
+        })
+    }
+
     React.useEffect(() => {
         if (post) {
             setTitle(post.title || "")
@@ -106,7 +136,7 @@ export default function Page() {
 
     React.useEffect(() => {
         setPrimaryAction({
-            label: updating ? "Đang lưu..." : "Lưu thay đổi",
+            label: updating ? "Đang cập nhật..." : "Cập nhật bài viết",
             variant: "default",
             disabled: !canSave || updating,
             onClick: handleSave,
@@ -118,7 +148,7 @@ export default function Page() {
     if (loading) return <LoadingOverlay show />
 
     return (
-        <div className="relative">
+        <div className="relative px-4">
             <div className="mb-4 flex items-center gap-4">
                 <BackButton fallbackHref={`/admin/posts`} disabled={updating} />
                 <div className="flex flex-col">
@@ -135,7 +165,7 @@ export default function Page() {
                 <div className="lg:col-span-2 space-y-6">
                     <div className="rounded-lg border bg-card p-4 space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Tiêu đề bài viết</label>
+                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Tiêu đề bài viết</label>
                             <Input
                                 placeholder="Nhập tiêu đề..."
                                 value={title}
@@ -144,7 +174,7 @@ export default function Page() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Mô tả ngắn</label>
+                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Mô tả ngắn</label>
                             <Textarea
                                 placeholder="Nhập mô tả ngắn cho bài viết..."
                                 value={description}
@@ -156,46 +186,160 @@ export default function Page() {
 
                     <div className="rounded-lg border bg-card p-4 space-y-2">
                         <div className="flex items-center justify-between mb-2">
-                            <label className="text-sm font-medium">Nội dung bài viết</label>
+                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Nội dung bài viết</label>
                         </div>
                         <PostEditor value={content} onChange={setContent} />
                     </div>
 
                     {/* Comments Section */}
-                    <div className="rounded-lg border bg-card p-4 space-y-4">
-                        <div className="flex items-center gap-2 border-b pb-3">
-                            <MessageSquare className="h-5 w-5 text-primary" />
-                            <h2 className="font-semibold text-base">Bình luận ({post?.comments?.length || 0})</h2>
+                    <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/20">
+                            <div className="flex items-center gap-3">
+                                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                                    <MessageSquare className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-base leading-none">Bình luận</h2>
+                                    <p className="text-[11px] text-muted-foreground mt-1">Tổng cộng {post?.comments?.length || 0} đóng góp từ cộng đồng</p>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="divide-y divide-border/50 max-h-[700px] overflow-y-auto custom-scrollbar">
                             {!post?.comments?.length ? (
-                                <div className="text-center py-10 text-muted-foreground italic text-sm">
-                                    Chưa có bình luận nào cho bài viết này.
+                                <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                                    <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                                        <MessageSquare className="h-6 w-6 text-muted-foreground/30" />
+                                    </div>
+                                    <p className="text-sm text-muted-foreground italic">Chưa có bình luận nào cho bài viết này.</p>
                                 </div>
                             ) : (
                                 post.comments.map((comment) => (
-                                    <div key={comment.id} className="flex gap-3 group">
-                                        <Avatar className="h-8 w-8 border">
-                                            <AvatarImage src={comment.user?.avatar} />
-                                            <AvatarFallback className="text-[10px]">{comment.user?.fullName?.split(' ').pop()?.charAt(0) || 'U'}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-1 bg-muted/30 hover:bg-muted/50 transition-colors p-3 rounded-2xl rounded-tl-none border border-transparent hover:border-border">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-sm font-semibold text-primary">{comment.user?.fullName || "Người dùng Wishzy"}</span>
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
-                                                    {format(new Date(comment.createdAt), "dd MMM yyyy", { locale: vi })}
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                                                {comment.content}
-                                            </p>
-                                            <div className="mt-2 flex items-center gap-3">
-                                                <button className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-red-500 transition-colors">
-                                                    <Heart className="h-3 w-3" />
-                                                    {comment.likes || 0}
-                                                </button>
-                                                <button className="text-[10px] text-muted-foreground hover:underline font-medium">Phản hồi</button>
+                                    <div key={comment.id} className="p-5 hover:bg-muted/5 transition-colors group">
+                                        <div className="flex gap-4">
+                                            <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+                                                <AvatarImage src={comment.user?.avatar} />
+                                                <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
+                                                    {comment.user?.fullName?.split(' ').pop()?.charAt(0) || 'U'}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between gap-2 mb-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-bold text-foreground truncate">{comment.user?.fullName || "Người dùng Wishzy"}</span>
+                                                        <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+                                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                            {format(new Date(comment.createdAt), "dd MMM yyyy 'lúc' HH:mm", { locale: vi })}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                                                            onClick={() => setHidingComment({ id: comment.id })}
+                                                            title="Ẩn bình luận"
+                                                        >
+                                                            <EyeOff className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="text-sm text-muted-foreground leading-relaxed bg-muted/30 rounded-lg p-3 mt-1 border border-border/20">
+                                                    {comment.content}
+                                                </div>
+                                                <div className="mt-2.5 flex items-center gap-4">
+                                                    <button className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground hover:text-red-500 transition-all">
+                                                        <Heart className="h-3.5 w-3.5" />
+                                                        <span>{comment.likes || 0}</span>
+                                                    </button>
+                                                    <button
+                                                        className={cn(
+                                                            "flex items-center gap-1.5 text-[11px] font-semibold transition-all",
+                                                            replyingTo === comment.id ? "text-primary" : "text-muted-foreground hover:text-primary"
+                                                        )}
+                                                        onClick={() => {
+                                                            if (replyingTo === comment.id) {
+                                                                setReplyingTo(null)
+                                                                setReplyContent("")
+                                                            } else {
+                                                                setReplyingTo(comment.id)
+                                                                setReplyContent("")
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Reply className="h-3.5 w-3.5" />
+                                                        Phản hồi
+                                                    </button>
+                                                </div>
+
+                                                {/* Inline Reply Form */}
+                                                {replyingTo === comment.id && (
+                                                    <div className="mt-4 flex gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                        <Avatar className="h-8 w-8 border">
+                                                            <AvatarFallback className="text-[10px]">AD</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex-1 relative">
+                                                            <Textarea
+                                                                placeholder="Nhập nội dung phản hồi..."
+                                                                value={replyContent}
+                                                                onChange={(e) => setReplyContent(e.target.value)}
+                                                                className="text-sm min-h-[80px] pr-12 bg-background shadow-sm"
+                                                                autoFocus
+                                                            />
+                                                            <div className="absolute bottom-2 right-2 flex items-center gap-2">
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-8 w-8 rounded-full"
+                                                                    onClick={() => setReplyingTo(null)}
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    size="icon"
+                                                                    disabled={!replyContent.trim() || isReplying}
+                                                                    className="h-8 w-8 rounded-full"
+                                                                    onClick={() => handleReply(comment.id)}
+                                                                >
+                                                                    {isReplying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Nested Replies */}
+                                                {comment.replies && comment.replies.length > 0 && (
+                                                    <div className="mt-4 space-y-4 pl-4 border-l-2 border-muted/50">
+                                                        {comment.replies.map((reply) => (
+                                                            <div key={reply.id} className="flex gap-3 group/reply">
+                                                                <Avatar className="h-8 w-8 border">
+                                                                    <AvatarImage src={reply.user?.avatar} />
+                                                                    <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-bold">
+                                                                        {reply.user?.fullName?.split(' ').pop()?.charAt(0) || 'U'}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center justify-between mb-0.5">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-[13px] font-bold text-foreground">{reply.user?.fullName || "Người dùng Wishzy"}</span>
+                                                                            <span className="text-[10px] text-muted-foreground">
+                                                                                {format(new Date(reply.createdAt), "dd MMM HH:mm", { locale: vi })}
+                                                                            </span>
+                                                                        </div>
+                                                                        <button
+                                                                            className="p-1 opacity-0 group-hover/reply:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                                                                            onClick={() => setHidingComment({ id: reply.id })}
+                                                                        >
+                                                                            <EyeOff className="h-3 w-3" />
+                                                                        </button>
+                                                                    </div>
+                                                                    <div className="text-[13px] text-muted-foreground bg-muted/20 rounded-lg p-2.5 border border-border/10">
+                                                                        {reply.content}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -211,14 +355,35 @@ export default function Page() {
                             <label className="text-sm font-medium uppercase text-muted-foreground text-[10px] tracking-wider">Cấu hình</label>
 
                             <div>
-                                <div className="text-[13px] mb-1.5 ml-0.5">Trạng thái hiển thị</div>
-                                <Select value={isActive ? "active" : "hidden"} onValueChange={(v) => setIsActive(v === "active")}>
-                                    <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="active">Công khai</SelectItem>
-                                        <SelectItem value="hidden">Lưu nháp / Ẩn</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <div className="text-[13px] mb-2 ml-0.5">Trạng thái bài viết</div>
+                                <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/40 shadow-sm">
+                                    <div className="flex flex-col gap-0.5">
+                                        <Label htmlFor="post-status-edit" className="text-sm font-bold cursor-pointer">
+                                            {isActive ? "Công khai" : "Lưu nháp / Ẩn"}
+                                        </Label>
+                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                            {isActive ? "Mọi người đều có thể xem bài viết này" : "Chỉ bạn mới có thể xem bài viết"}
+                                        </span>
+                                    </div>
+                                    <Switch
+                                        id="post-status-edit"
+                                        checked={isActive}
+                                        onCheckedChange={setIsActive}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <div className="text-[13px] mb-1.5 ml-0.5">Người đăng</div>
+                                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-muted/40 border border-border/40 shadow-sm">
+                                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0">
+                                        <User className="h-4 w-4" />
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-[13px] font-bold truncate leading-tight">{post?.author?.fullName || "N/A"}</span>
+                                        <span className="text-[10px] text-muted-foreground truncate">{post?.author?.email || "No email"}</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="pt-2">
@@ -305,7 +470,25 @@ export default function Page() {
                 </div>
             </div>
 
-            <LoadingOverlay show={updating} />
+            <ConfirmDialog
+                open={!!hidingComment}
+                onOpenChange={(open) => !open && setHidingComment(null)}
+                title="Ẩn bình luận"
+                description="Bạn có chắc chắn muốn ẩn bình luận này? Hành động này sẽ xoá bình luận khỏi bài viết."
+                confirmText={isHidingComment ? "Đang ẩn..." : "Ẩn bình luận"}
+                confirmVariant="destructive"
+                loading={isHidingComment}
+                onConfirm={() => {
+                    if (!hidingComment) return
+                    deleteComment(hidingComment.id, {
+                        onSuccess: () => {
+                            setHidingComment(null)
+                            notify({ title: "Đã ẩn bình luận", variant: "success" })
+                            refetch()
+                        }
+                    })
+                }}
+            />
         </div>
     )
 }
