@@ -70,7 +70,6 @@ export function PostEditor({ value, onChange }: Props) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-muted-foreground">Nội dung bài viết</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
