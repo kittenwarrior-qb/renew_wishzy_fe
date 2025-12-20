@@ -41,6 +41,7 @@ export interface AdminQuiz {
   totalAttempts?: number;
   shareCount?: number;
   createdAt: string | Date;
+  entityId?: string; // Lecture ID when quiz is attached to a lecture
 }
 
 export interface AdminQuizListResponse {
@@ -69,6 +70,7 @@ export interface CreateAdminQuizRequest {
   isFree?: boolean;
   price?: number;
   timeLimit?: number;
+  entityId?: string; // Lecture ID when creating quiz for a lecture
   questions: AdminQuizQuestionInput[];
 }
 
