@@ -184,7 +184,7 @@ export default function InstructorAppSidebar() {
       collapsible: false,
       items: [
         {
-          label: "Đánh giá & Phản hồi",
+          label: "Xem đánh giá",
           href: `${base}/feedbacks`,
           icon: <Star className="h-[18px] w-[18px]" />,
           isActiveKey: "feedbacks",

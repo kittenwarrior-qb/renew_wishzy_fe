@@ -7,7 +7,6 @@ import { CourseSidebar } from '@/components/shared/learning/CourseSidebar';
 import { VideoPlayer } from '@/components/shared/learning/VideoPlayer';
 import { LectureInfo } from '@/components/shared/learning/LectureInfo';
 import { LearningComment } from '@/components/shared/learning/LearningComment';
-import CourseComment from '@/components/shared/course/CourseComment';
 import { useChapterListForEnrolled } from '@/components/shared/chapter/useChapter';
 import { useCourseDetail } from '@/components/shared/course/useCourse';
 import { enrollmentService } from '@/services/enrollment';
@@ -405,29 +404,11 @@ export default function LearningPage() {
               {/* Learning Comments (Q&A) */}
               <div className="border-t pt-6">
                 <LearningComment 
-                  courseId={courseId} 
+                  courseId={courseId}
+                  lectureId={lectureId}
                   isEnrolled={!!enrollmentId}
                 />
               </div>
-
-              {/* Course Feedback - Only show on last lecture when course is completed */}
-              {(() => {
-                const isLastLecture = allLectures.length > 0 && 
-                  allLectures[allLectures.length - 1].lecture.id === lectureId;
-                const totalLectures = allLectures.length;
-                const completedCount = completedLectureIds.length;
-                const progress = totalLectures > 0 ? (completedCount / totalLectures) * 100 : 0;
-                
-                return isLastLecture && (
-                  <div className="border-t pt-6">
-                    <CourseComment 
-                      courseId={courseId} 
-                      isEnrolled={!!enrollmentId}
-                      progress={progress}
-                    />
-                  </div>
-                );
-              })()}
             </div>
           </main>
         </div>

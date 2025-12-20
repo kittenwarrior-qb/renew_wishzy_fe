@@ -14,9 +14,8 @@ import api from "@/src/services/api"
 interface Comment {
   id: string
   userId: string
-  courseId: string
+  lectureId: string
   content: string
-  rating: number
   like: number
   dislike: number
   createdAt: string
@@ -31,17 +30,18 @@ interface Comment {
 
 interface LearningCommentProps {
   courseId: string
+  lectureId: string
   isEnrolled: boolean
 }
 
-export function LearningComment({ courseId, isEnrolled }: LearningCommentProps) {
+export function LearningComment({ courseId, lectureId, isEnrolled }: LearningCommentProps) {
   const [newComment, setNewComment] = useState("")
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
   const queryClient = useQueryClient()
   const { user } = useAppStore()
 
-  // Fetch comments (without rating filter)
+  // Fetch comments for this lecture (NOT feedbacks!)
   const { data: commentsData, isLoading } = useQueryHook<{
     items: Comment[]
     pagination: {
@@ -51,27 +51,28 @@ export function LearningComment({ courseId, isEnrolled }: LearningCommentProps) 
       totalPage: number
     }
   }>(
-    ['learning-comments', courseId, page.toString()],
+    ['lecture-comments', lectureId, page.toString()],
     async () => {
-      const res = await api.get(`/feedbacks/course/${courseId}`, {
-        params: { page, limit, type: 'comment' }
+      const res = await api.get(`/comments/lecture/${lectureId}`, {
+        params: { page, limit }
       })
       return res.data?.data || res.data || { items: [], pagination: { totalItems: 0, currentPage: 1, itemsPerPage: 10, totalPage: 0 } }
-    }
+    },
+    { enabled: !!lectureId }
   )
 
   const createCommentMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!user?.id) throw new Error("User not authenticated")
-      const res = await api.post('/feedbacks', {
-        courseId,
-        content,
-        rating: 0 // 0 = comment, not feedback
+      if (!lectureId) throw new Error("Lecture ID is required")
+      const res = await api.post('/comments', {
+        lectureId,
+        content
       })
       return res.data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['learning-comments', courseId] })
+      queryClient.invalidateQueries({ queryKey: ['lecture-comments', lectureId] })
       setNewComment("")
       toast.success("Bình luận của bạn đã được gửi!")
     },
@@ -83,21 +84,21 @@ export function LearningComment({ courseId, isEnrolled }: LearningCommentProps) 
   })
 
   const likeCommentMutation = useMutation({
-    mutationFn: (commentId: string) => api.patch(`/feedbacks/${commentId}/like`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['learning-comments', courseId] }),
+    mutationFn: (commentId: string) => api.patch(`/comments/${commentId}/like`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lecture-comments', lectureId] }),
     onError: () => toast.error("Có lỗi xảy ra!")
   })
 
   const dislikeCommentMutation = useMutation({
-    mutationFn: (commentId: string) => api.patch(`/feedbacks/${commentId}/dislike`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['learning-comments', courseId] }),
+    mutationFn: (commentId: string) => api.patch(`/comments/${commentId}/dislike`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lecture-comments', lectureId] }),
     onError: () => toast.error("Có lỗi xảy ra!")
   })
 
   const deleteCommentMutation = useMutation({
-    mutationFn: (commentId: string) => api.delete(`/feedbacks/${commentId}`),
+    mutationFn: (commentId: string) => api.delete(`/comments/${commentId}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['learning-comments', courseId] })
+      queryClient.invalidateQueries({ queryKey: ['lecture-comments', lectureId] })
       toast.success("Đã xóa bình luận!")
     },
     onError: () => toast.error("Có lỗi xảy ra!")
