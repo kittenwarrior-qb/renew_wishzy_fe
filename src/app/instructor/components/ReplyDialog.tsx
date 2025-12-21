@@ -73,18 +73,6 @@ export function ReplyDialog({
     ));
   };
 
-  const getReplyTemplate = () => {
-    if (type === 'feedback') {
-      if (item?.rating && item.rating >= 4) {
-        return "Cảm ơn bạn đã đánh giá tích cực! Tôi rất vui khi biết bạn hài lòng với khóa học. Chúc bạn học tập hiệu quả!";
-      } else {
-        return "Cảm ơn bạn đã phản hồi. Tôi sẽ cải thiện nội dung khóa học dựa trên góp ý của bạn. Nếu có thắc mắc gì, hãy liên hệ với tôi nhé!";
-      }
-    } else {
-      return "Cảm ơn bạn đã đặt câu hỏi. Tôi sẽ trả lời chi tiết để giúp bạn hiểu rõ hơn về vấn đề này.";
-    }
-  };
-
   if (!item) return null;
 
   return (
@@ -135,38 +123,17 @@ export function ReplyDialog({
 
           {/* Reply Form */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Phản hồi của bạn</label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setReplyContent(getReplyTemplate())}
-                disabled={isSubmitting}
-              >
-                Sử dụng mẫu
-              </Button>
-            </div>
+            <label className="text-sm font-medium">Phản hồi của bạn</label>
             <Textarea
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
-              placeholder={getReplyTemplate()}
+              placeholder="Nhập nội dung phản hồi..."
               rows={4}
               className="resize-none"
             />
             <div className="text-xs text-muted-foreground">
               {replyContent.length}/500 ký tự
             </div>
-          </div>
-
-          {/* Tips */}
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <h4 className="text-sm font-medium mb-2">💡 Gợi ý phản hồi hiệu quả:</h4>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Cảm ơn học viên đã dành thời gian phản hồi</li>
-              <li>• Trả lời cụ thể và hữu ích</li>
-              <li>• Khuyến khích học viên tiếp tục học tập</li>
-              <li>• Giữ tông giọi thân thiện và chuyên nghiệp</li>
-            </ul>
           </div>
         </div>
 

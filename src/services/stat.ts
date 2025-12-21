@@ -17,6 +17,18 @@ export const statService = {
     // Vậy response.data.data sẽ là InstructorStatsResponse
     return response.data.data
   },
+
+  async getDashboardSummary(): Promise<{
+    totalStudents: number;
+    totalInstructors: number;
+    totalCourses: number;
+    todayOrders: number;
+    todayRevenue: number;
+  }> {
+    const response = await api.get("/stat/dashboard-summary");
+    return response.data?.data ?? response.data;
+  },
+
   async getRevenue(params: { mode: RevenueMode; startDate?: string; endDate?: string }): Promise<RevenueApiResponse> {
     const response = await api.get("/stat/revenue", {
       params,
@@ -48,6 +60,21 @@ export const statService = {
     sortBy?: TopInstructorsSortBy;
   }): Promise<TopInstructorsResponse> {
     const response = await api.get("/stat/top-instructors", { params });
+    return response.data?.data ?? response.data;
+  },
+
+  async getTopCoursesByRevenue(limit: number = 10): Promise<{
+    data: {
+      courseId: string;
+      courseName: string;
+      thumbnail: string | null;
+      instructorName: string;
+      totalStudents: number;
+      totalRevenue: number;
+    }[];
+    total: number;
+  }> {
+    const response = await api.get("/stat/top-courses-by-revenue", { params: { limit } });
     return response.data?.data ?? response.data;
   },
 }
