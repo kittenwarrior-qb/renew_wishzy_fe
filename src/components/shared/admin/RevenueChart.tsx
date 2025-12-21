@@ -110,16 +110,21 @@ export function RevenueChart({ data }: RevenueChartProps) {
         {currentData && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
             <div>
-              <p className="text-xs text-muted-foreground">Tổng doanh thu</p>
-              <p className="text-lg font-bold">{formatVND(currentData.totalRevenue)}</p>
+              <p className="text-xs text-muted-foreground">Doanh thu hệ thống</p>
+              <p className="text-lg font-bold">{formatVND(currentData.grossRevenue || currentData.totalRevenue)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Tổng doanh thu</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Doanh thu thực nhận</p>
+              <p className="text-lg font-bold text-primary">{formatVND(currentData.totalRevenue)}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {currentData.instructorPercentage ? `${100 - currentData.instructorPercentage}% từ GV + 100% từ Admin` : 'Sau chia'}
+              </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Đơn hàng</p>
               <p className="text-lg font-bold">{currentData.totalOrders.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Khóa học bán</p>
-              <p className="text-lg font-bold">{currentData.totalCourses.toLocaleString()}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Tổng số đơn</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Tăng trưởng</p>
@@ -131,6 +136,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 {currentData.growthRate >= 0 ? "+" : ""}
                 {currentData.growthRate.toFixed(1)}%
               </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">So với kỳ trước</p>
             </div>
           </div>
         )}

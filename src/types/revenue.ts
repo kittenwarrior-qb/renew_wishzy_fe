@@ -72,14 +72,20 @@ export interface RevenueApiDataPoint {
   day?: number
   startDate?: string
   endDate?: string
-  revenue: number
+  revenue: number // For instructor: their share, For admin: net revenue
+  grossRevenue?: number // Total revenue before split (for admin view)
+  netRevenue?: number // Net revenue after split (for admin view, same as revenue)
   orderCount: number
   courseSoldCount: number
 }
 
 export interface RevenueApiResponse {
   mode: RevenueMode
-  totalRevenue: number
+  totalRevenue: number // For instructor: their share, For admin: net revenue (systemRevenue)
+  grossRevenue?: number // Total revenue before split
+  systemRevenue?: number // Admin's net revenue (admin % from instructor courses + 100% from admin courses)
+  instructorRevenue?: number // Total instructor revenue (instructor % from their courses)
+  instructorPercentage?: number // Percentage instructors receive
   monthlyRevenue: number
   totalOrders: number
   totalStudents: number
