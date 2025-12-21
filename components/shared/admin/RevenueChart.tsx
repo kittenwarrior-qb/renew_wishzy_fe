@@ -71,12 +71,13 @@ const getSafeChartData = (data: RevenueApiResponse | null, mode: string): ChartD
     }
 
     // Format labels based on the selected mode
-    const formatLabel = (period: string): string => {
+    const formatLabel = (item: RevenueApiDataPoint): string => {
+        const period = item.period;
         if (!period) return '';
 
         try {
             if (mode === 'month') {
-                // For month view, show as YYYY-MM
+                // For month view, show as Th1/25
                 const parts = period.split('-');
                 if (parts.length < 2) return period;
 
@@ -85,15 +86,31 @@ const getSafeChartData = (data: RevenueApiResponse | null, mode: string): ChartD
                 const monthNames = ['Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6', 'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12'];
                 return `${monthNames[monthIndex] || month}/${String(year).slice(-2)}`;
 
-            } else if (mode === 'week' || mode === 'day') {
-                // For day/week view, show as DD/MM
+            } else if (mode === 'week') {
+                // For week view, show date range like "08/09-14/09"
+                // Use startDate and endDate from API response
+                if (item.startDate && item.endDate) {
+                    const formatDateShort = (dateStr: string) => {
+                        const parts = dateStr.split('-');
+                        if (parts.length < 3) return dateStr;
+                        const [, month, day] = parts;
+                        return `${day}/${month}`;
+                    };
+                    return `${formatDateShort(item.startDate)}-${formatDateShort(item.endDate)}`;
+                }
+                // Fallback to period if startDate/endDate not available
+                return `Tuần ${period.split('-')[1] || period}`;
+
+            } else if (mode === 'day') {
+                // For day view, show as DD/MM
                 const parts = period.split('-');
                 if (parts.length < 3) return period;
 
-                const [year, month, day] = parts;
+                const [, month, day] = parts;
                 const paddedDay = String(day || '').padStart(2, '0');
                 const paddedMonth = String(month || '').padStart(2, '0');
                 return `${paddedDay}/${paddedMonth}`;
+
             } else if (mode === 'year') {
                 return period;
             }
@@ -105,7 +122,7 @@ const getSafeChartData = (data: RevenueApiResponse | null, mode: string): ChartD
     };
 
     return {
-        labels: data.details.map((item: RevenueApiDataPoint) => formatLabel(item.period)),
+        labels: data.details.map((item: RevenueApiDataPoint) => formatLabel(item)),
         datasets: [{
             label: 'Doanh thu',
             data: data.details.map((item: RevenueApiDataPoint) => item.revenue),
@@ -243,6 +260,12 @@ export function RevenueChart({ data: propsData, onModeChange }: RevenueChartProp
         },
         barPercentage: 0.7,
         categoryPercentage: 0.8,
+        // Limit bar width when there are few data points
+        datasets: {
+            bar: {
+                maxBarThickness: 80,
+            }
+        }
     };
 
     const modeLabels: Record<RevenueMode, string> = {

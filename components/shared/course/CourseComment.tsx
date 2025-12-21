@@ -17,8 +17,7 @@ interface CommentWithUser extends CommentType {
     name: string
     avatar?: string
   }
-  isLiked?: boolean
-  isDisliked?: boolean
+  userReaction?: 'like' | 'dislike' | null
 }
 
 interface CourseCommentProps {
@@ -93,23 +92,41 @@ const CourseComment = ({ courseId, isEnrolled = false, progress = 0 }: CourseCom
 
   // Like comment mutation
   const likeCommentMutation = useMutation({
-    mutationFn: (commentId: string) => commentService.like(commentId),
+    mutationFn: (commentId: string) => {
+      if (!user?.id) {
+        throw new Error("User not authenticated")
+      }
+      return commentService.like(commentId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feedbacks', courseId] })
     },
-    onError: () => {
-      toast.error("Có lỗi xảy ra. Vui lòng thử lại!")
+    onError: (error: any) => {
+      if (error?.message === "User not authenticated" || error?.response?.status === 401) {
+        toast.error("Bạn cần đăng nhập để thích đánh giá")
+      } else {
+        toast.error("Có lỗi xảy ra. Vui lòng thử lại!")
+      }
     }
   })
 
   // Dislike comment mutation
   const dislikeCommentMutation = useMutation({
-    mutationFn: (commentId: string) => commentService.dislike(commentId),
+    mutationFn: (commentId: string) => {
+      if (!user?.id) {
+        throw new Error("User not authenticated")
+      }
+      return commentService.dislike(commentId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feedbacks', courseId] })
     },
-    onError: () => {
-      toast.error("Có lỗi xảy ra. Vui lòng thử lại!")
+    onError: (error: any) => {
+      if (error?.message === "User not authenticated" || error?.response?.status === 401) {
+        toast.error("Bạn cần đăng nhập để không thích đánh giá")
+      } else {
+        toast.error("Có lỗi xảy ra. Vui lòng thử lại!")
+      }
     }
   })
 
@@ -405,12 +422,12 @@ const CourseComment = ({ courseId, isEnrolled = false, progress = 0 }: CourseCom
                             onClick={() => handleLikeComment(comment.id)}
                             disabled={likeCommentMutation.isPending}
                             className={`flex items-center gap-1 text-xs font-medium transition-colors rounded px-2 py-1 ${
-                              comment.isLiked 
+                              comment.userReaction === 'like' 
                                 ? 'text-blue-600 bg-blue-50' 
                                 : 'text-muted-foreground hover:text-blue-600 hover:bg-blue-50'
                             }`}
                           >
-                            <ThumbsUp className={`w-3.5 h-3.5 ${comment.isLiked ? 'fill-current' : ''}`} />
+                            <ThumbsUp className={`w-3.5 h-3.5 ${comment.userReaction === 'like' ? 'fill-current' : ''}`} />
                             <span>{comment.like > 0 ? comment.like : 'Thích'}</span>
                           </button>
 
@@ -418,12 +435,12 @@ const CourseComment = ({ courseId, isEnrolled = false, progress = 0 }: CourseCom
                             onClick={() => handleDislikeComment(comment.id)}
                             disabled={dislikeCommentMutation.isPending}
                             className={`flex items-center gap-1 text-xs font-medium transition-colors rounded px-2 py-1 ${
-                              comment.isDisliked 
+                              comment.userReaction === 'dislike' 
                                 ? 'text-red-600 bg-red-50' 
                                 : 'text-muted-foreground hover:text-red-600 hover:bg-red-50'
                             }`}
                           >
-                            <ThumbsDown className={`w-3.5 h-3.5 ${comment.isDisliked ? 'fill-current' : ''}`} />
+                            <ThumbsDown className={`w-3.5 h-3.5 ${comment.userReaction === 'dislike' ? 'fill-current' : ''}`} />
                             <span>{comment.dislike > 0 ? comment.dislike : 'Không thích'}</span>
                           </button>
                           
