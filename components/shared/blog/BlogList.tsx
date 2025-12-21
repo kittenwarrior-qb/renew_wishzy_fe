@@ -60,7 +60,6 @@ const BlogList = ({ limit = 3 }: BlogListProps) => {
                 category={blog.category?.name || "Tin tức"}
                 description={blog.description || ""}
                 date={format(new Date(blog.createdAt), "dd MMM, yyyy", { locale: vi })}
-                views={blog.views}
               />
             ))}
           </div>

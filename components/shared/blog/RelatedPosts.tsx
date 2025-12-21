@@ -15,18 +15,21 @@ import { Calendar } from "lucide-react";
 
 interface RelatedPostsProps {
     currentPostId: string;
+    categoryId?: string;
     className?: string;
     limit?: number;
 }
 
 export const RelatedPosts = ({
     currentPostId,
+    categoryId,
     className = "",
     limit = 10
 }: RelatedPostsProps) => {
     const { data, isLoading } = usePostList({
         limit: limit + 1, // Fetch one extra in case current is included
-        isActive: true
+        isActive: true,
+        categoryId
     })
 
     const relatedPosts = (data?.items || [])
