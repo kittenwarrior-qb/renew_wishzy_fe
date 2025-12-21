@@ -1,5 +1,8 @@
 // Students API Service - Using real backend endpoints
 import { api } from '../lib/api';
+import { logger } from '@/utils/logger';
+import { apiLogger } from '@/utils/apiLogger';
+import { transformPagination } from './instructorApiHelpers';
 
 export interface Enrollment {
   id: string;
@@ -103,7 +106,13 @@ export const studentsApi = {
         sortOrder: params.sortOrder,
       };
 
+      const startTime = performance.now();
+      apiLogger.logRequest('/instructor/enrollments', 'GET', backendParams);
+      
       const response = await api.get('/instructor/enrollments', { params: backendParams });
+
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse('/instructor/enrollments', response.data, duration);
 
       // Backend returns: { success, data: { items, pagination, statistics }, message }
       const backendData = response.data?.data?.data;
@@ -112,6 +121,8 @@ export const studentsApi = {
       const backendStatistics = backendData?.statistics || {};
 
       // Group enrollments by userId to aggregate data per student
+      // Note: API returns enrollments (1 student can have multiple enrollments)
+      // We need to group by userId to get unique students
       const studentsMap = new Map<string, any>();
 
       enrollments.forEach((enrollment: Enrollment) => {
@@ -188,23 +199,27 @@ export const studentsApi = {
         totalCertificatesEarned: 0 // Not available from BE
       }));
 
+      // Calculate correct pagination based on unique students, not enrollments
+      const totalUniqueStudents = transformedStudents.length;
+      const correctedPagination = {
+        page: params.page || 1,
+        limit: params.limit || 10,
+        total: totalUniqueStudents, // Use unique students count, not enrollments count
+        totalPages: Math.ceil(totalUniqueStudents / (params.limit || 10)),
+        hasNext: (params.page || 1) < Math.ceil(totalUniqueStudents / (params.limit || 10)),
+        hasPrev: (params.page || 1) > 1
+      };
+
       return {
         success: true,
         data: {
           items: transformedStudents,
-          pagination: {
-            page: pagination.page || params.page || 1,
-            limit: pagination.limit || params.limit || 10,
-            total: pagination.total || transformedStudents.length,
-            totalPages: pagination.totalPage || Math.ceil(transformedStudents.length / (params.limit || 10)),
-            hasNext: pagination.hasNext || false,
-            hasPrev: pagination.hasPrev || false,
-          },
+          pagination: correctedPagination, // Use corrected pagination
           statistics: {
-            totalStudents: backendStatistics.totalStudents || transformedStudents.length,
+            totalStudents: totalUniqueStudents, // Use unique students count
             activeStudents: backendStatistics.activeStudents || transformedStudents.filter(s => s.status === 'active').length,
             averageProgress: Math.round(backendStatistics.averageProgress || 0),
-            totalEnrollments: enrollments.length, // Total number of enrollments
+            totalEnrollments: enrollments.length, // Keep original enrollments count for reference
             completionRate: enrollments.length > 0
               ? Math.round((enrollments.filter((e: Enrollment) => e.status === 'completed').length / enrollments.length) * 100)
               : 0
@@ -212,7 +227,8 @@ export const studentsApi = {
         },
       };
     } catch (error) {
-      console.error('Error fetching students:', error);
+      apiLogger.logError('/instructor/enrollments', error, 'GET');
+      logger.apiError('/instructor/enrollments', error);
       throw error;
     }
   },
@@ -221,10 +237,18 @@ export const studentsApi = {
   getStudentProgress: async (studentId: string, courseId?: string) => {
     try {
       const params = courseId ? { courseId } : {};
+      apiLogger.logRequest(`/enrollments/user/${studentId}`, 'GET', params);
+      const startTime = performance.now();
+      
       const response = await api.get(`/enrollments/user/${studentId}`, { params });
+      
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse(`/enrollments/user/${studentId}`, response.data, duration);
+      
       return response.data;
     } catch (error) {
-      console.error('Error fetching student progress:', error);
+      apiLogger.logError(`/enrollments/user/${studentId}`, error, 'GET');
+      logger.apiError(`/enrollments/user/${studentId}`, error);
       throw error;
     }
   },
@@ -232,6 +256,7 @@ export const studentsApi = {
   // Send message to student (placeholder - would need messaging system)
   sendMessageToStudent: async (studentId: string, message: string) => {
     try {
+      apiLogger.logRequest(`/instructor/students/${studentId}/message`, 'POST', { message });
       // This would need a messaging/notification system
       // For now, just return success
       return {
@@ -240,7 +265,8 @@ export const studentsApi = {
         message: 'Message sent successfully',
       };
     } catch (error) {
-      console.error('Error sending message:', error);
+      apiLogger.logError(`/instructor/students/${studentId}/message`, error, 'POST');
+      logger.apiError(`/instructor/students/${studentId}/message`, error);
       throw error;
     }
   },

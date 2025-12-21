@@ -9,6 +9,7 @@ import { useCourseDetail } from "@/components/shared/course/useCourse"
 import { useChapterList, useCreateChapter } from "@/components/shared/chapter/useChapter"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { AdminCourseChapters } from "@/components/shared/course/AdminCourseChapters"
+import { CourseDocuments } from "@/components/shared/course/CourseDocuments"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -82,7 +83,10 @@ export default function CourseDetailPage() {
                 {loadingChapters ? (
                     <div className="text-sm text-muted-foreground">Đang tải chương...</div>
                 ) : (
-                    <AdminCourseChapters chapters={chapters as any} courseId={courseId} />
+                    <>
+                        <AdminCourseChapters chapters={chapters as any} courseId={courseId} />
+                        <CourseDocuments courseId={courseId} courseName={course?.name || "Khóa học"} />
+                    </>
                 )}
             </div>
 

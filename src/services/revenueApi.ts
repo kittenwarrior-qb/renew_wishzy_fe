@@ -1,5 +1,8 @@
 // Revenue API Service - Using real backend endpoints
 import { api } from '../lib/api';
+import { logger } from '@/utils/logger';
+import { apiLogger } from '@/utils/apiLogger';
+import { transformPagination, safeNumber } from './instructorApiHelpers';
 
 export interface Order {
   id: string;
@@ -74,13 +77,18 @@ export const revenueApi = {
       };
 
       // Get orders for current instructor (paginated)
+      const startTime = performance.now();
+      apiLogger.logRequest('/orders/instructor-revenue', 'GET', backendParams);
+      
       const response = await api.get('/orders/instructor-revenue', { params: backendParams });
 
-      console.log('Revenue API response:', response.data);
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse('/orders/instructor-revenue', response.data, duration);
 
       // Backend returns: { items: Order[], pagination: {...}, message: string }
-      const orders = response.data?.data?.items || [];
-      const pagination = response.data?.pagination || {};
+      const responseData = response.data?.data || response.data;
+      const orders = responseData?.items || [];
+      const pagination = responseData?.pagination || {};
 
       // Calculate statistics from current page orders and pagination info
       // Use pagination.total for accurate total counts
@@ -141,7 +149,8 @@ export const revenueApi = {
             };
           }
         } catch (error) {
-          console.warn('Failed to fetch all orders for accurate statistics:', error);
+          apiLogger.logError('/orders/instructor-revenue (all)', error, 'GET');
+          logger.warn('Failed to fetch all orders for accurate statistics', error);
         }
       }
 
@@ -176,14 +185,7 @@ export const revenueApi = {
         success: true,
         data: {
           items: transformedOrders, // Return transformed items for table
-          pagination: {
-            page: pagination.page || params.page || 1,
-            limit: pagination.limit || params.limit || 10,
-            total: pagination.total || 0,
-            totalPages: pagination.totalPage || 0,
-            hasNext: pagination.hasNext || false,
-            hasPrev: pagination.hasPrev || false,
-          },
+          pagination: transformPagination(pagination, params),
           statistics: {
             totalRevenue: finalStats.totalRevenue,
             totalOrders,
@@ -196,7 +198,8 @@ export const revenueApi = {
         },
       };
     } catch (error) {
-      console.error('Error fetching revenue:', error);
+      apiLogger.logError('/orders/instructor-revenue', error, 'GET');
+      logger.apiError('/orders/instructor-revenue', error);
       throw error;
     }
   },
@@ -204,13 +207,21 @@ export const revenueApi = {
   // Export revenue report
   exportRevenueReport: async (params: RevenueQuery, format: 'csv' | 'xlsx' = 'xlsx'): Promise<Blob> => {
     try {
+      apiLogger.logRequest('/orders/export', 'GET', { ...params, format });
+      const startTime = performance.now();
+      
       const response = await api.get('/orders/export', {
         params: { ...params, format },
         responseType: 'blob'
       });
+      
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse('/orders/export', { type: 'blob', size: response.data.size }, duration);
+      
       return response.data;
     } catch (error) {
-      console.error('Error exporting revenue report:', error);
+      apiLogger.logError('/orders/export', error, 'GET');
+      logger.apiError('/orders/export', error);
       throw error;
     }
   },

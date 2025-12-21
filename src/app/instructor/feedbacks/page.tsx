@@ -16,6 +16,7 @@ import {
   useInstructorFeedbacks
 } from "@/hooks/useInstructorApi";
 import type { Feedback, FeedbackListQuery } from "@/types/instructor";
+import { apiLogger } from "@/utils/apiLogger";
 
 export default function FeedbacksPage() {
   const [page, setPage] = React.useState<number>(1);
@@ -40,6 +41,28 @@ export default function FeedbacksPage() {
   const feedbacks = feedbacksData?.data?.items || [];
   const pagination = feedbacksData?.data?.pagination;
   const statistics = feedbacksData?.data?.statistics;
+
+  // Log API data for debugging
+  React.useEffect(() => {
+    if (feedbacksData) {
+      apiLogger.logApiCall({
+        endpoint: '/feedbacks/instructor/my-courses',
+        method: 'GET',
+        params: queryParams,
+        response: feedbacksData,
+        level: 'success',
+      });
+    }
+    if (isError) {
+      apiLogger.logApiCall({
+        endpoint: '/feedbacks/instructor/my-courses',
+        method: 'GET',
+        params: queryParams,
+        error,
+        level: 'error',
+      });
+    }
+  }, [feedbacksData, isError, error, queryParams]);
 
   const totalFeedbacks = statistics?.totalFeedbacks || 0;
   

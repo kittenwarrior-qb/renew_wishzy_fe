@@ -16,6 +16,7 @@ import {
 import { Eye, Users, GraduationCap, BookOpen, Clock, Inbox, Mail } from "lucide-react";
 import { useInstructorStudents } from "@/hooks/useInstructorApi";
 import type { StudentListQuery } from "@/types/instructor";
+import { apiLogger } from "@/utils/apiLogger";
 
 export default function StudentsPage() {
   const [page, setPage] = React.useState<number>(1);
@@ -35,12 +36,32 @@ export default function StudentsPage() {
 
   // API hooks
   const { data: studentsData, isPending, isFetching } = useInstructorStudents(queryParams);
-  console.log("ccc", studentsData)
-
+  
   // Extract data from API response
   const students = studentsData?.data?.items || [];
   const pagination = studentsData?.data?.pagination;
   const statistics = studentsData?.data?.statistics;
+
+  // Log API data for debugging
+  React.useEffect(() => {
+    if (studentsData) {
+      const enrollmentsCount = statistics?.totalEnrollments || 0;
+      const studentsCount = statistics?.totalStudents || 0;
+      
+      console.log('📊 Students API Debug:');
+      console.log('👥 Unique Students:', studentsCount);
+      console.log('📚 Total Enrollments:', enrollmentsCount);
+      console.log('📋 Items in table:', students.length);
+      
+      apiLogger.logApiCall({
+        endpoint: '/instructor/enrollments',
+        method: 'GET',
+        params: queryParams,
+        response: studentsData,
+        level: 'success',
+      });
+    }
+  }, [studentsData, queryParams, students.length, statistics]);
 
   const totalStudents = statistics?.totalStudents || 0;
   const activeStudents = statistics?.activeStudents || 0;
@@ -104,17 +125,20 @@ export default function StudentsPage() {
       key: 'progress',
       label: 'Tiến độ',
       type: 'short',
-      render: (row: any) => (
-        <div className="flex items-center space-x-2">
-          <div className="w-16 bg-secondary rounded-full h-2">
-            <div 
-              className="bg-primary h-2 rounded-full transition-all"
-              style={{ width: `${row.averageProgress}%` }}
-            />
+      render: (row: any) => {
+        const progress = Math.max(0, Math.min(100, row.averageProgress || 0));
+        return (
+          <div className="flex items-center space-x-2">
+            <div className="w-16 bg-secondary rounded-full h-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <span className="text-sm font-medium">{progress}%</span>
           </div>
-          <span className="text-sm font-medium">{row.averageProgress}%</span>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'lastActivity',
@@ -345,7 +369,7 @@ export default function StudentsPage() {
                           <div className="w-full bg-secondary rounded-full h-2">
                             <div
                               className="bg-primary h-2 rounded-full transition-all"
-                              style={{ width: `${enrollment.progress}%` }}
+                              style={{ width: `${Math.max(0, Math.min(100, enrollment.progress || 0))}%` }}
                             />
                           </div>
                         </div>

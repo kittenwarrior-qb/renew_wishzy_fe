@@ -58,6 +58,18 @@ export default function InstructorCommentsPage() {
   const { data: commentsData, isPending, isFetching, isError } = useInstructorComments(queryParams)
   const { mutate: replyToComment, isPending: isReplying } = useReplyToComment()
 
+  // Log API data for debugging
+  // React.useEffect(() => {
+  //   if (commentsData) {
+  //     apiLogger.logApiCall({
+  //       endpoint: '/comments/instructor/my-courses',
+  //       method: 'GET',
+  //       params: queryParams,
+  //       response: commentsData,
+  //       level: 'success',
+  //     });
+  //   }
+  // }, [commentsData, queryParams]);
   // Fetch replies when viewing a comment
   const { data: repliesData, refetch: refetchReplies, isLoading: repliesLoading } = useQuery({
     queryKey: ['comment-replies', selectedComment?.id],

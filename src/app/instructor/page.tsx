@@ -9,7 +9,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EngagementOverview } from "./components/EngagementOverview";
-import { QuickActions } from "./components/QuickActions";
 import { useInstructorComments, useInstructorFeedbacks } from "@/hooks/useInstructorApi";
 
 const InstructorDashboard = () => {
@@ -36,13 +35,72 @@ const InstructorDashboard = () => {
     return num.toString();
   };
 
-  // Top 5 courses by revenue
+  // Top 5 courses by revenue (with fallback to student count for free courses)
   const topCoursesByRevenue = useMemo(() => {
     if (!stats?.courses) return [];
     return [...stats.courses]
-      .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
+      .sort((a, b) => {
+        // Primary sort: by revenue (descending)
+        const revenueA = a.revenue || 0;
+        const revenueB = b.revenue || 0;
+        
+        if (revenueA !== revenueB) {
+          return revenueB - revenueA;
+        }
+        
+        // Secondary sort: if revenue is same (especially for free courses), sort by student count
+        const studentsA = a.studentCount || 0;
+        const studentsB = b.studentCount || 0;
+        
+        if (studentsA !== studentsB) {
+          return studentsB - studentsA;
+        }
+        
+        // Tertiary sort: by average rating
+        const ratingA = a.averageRating || 0;
+        const ratingB = b.averageRating || 0;
+        return ratingB - ratingA;
+      })
       .slice(0, 5);
   }, [stats]);
+
+  // Debug: Compare revenue sources
+  const debugRevenueComparison = useMemo(() => {
+    if (!revenueStats || !stats) return null;
+    
+    const chartTotal = revenueStats.totalRevenue || 0; // Gross revenue
+    const chartInstructorRevenue = revenueStats.instructorRevenue || 0; // Net revenue from chart
+    const topCoursesTotal = topCoursesByRevenue.reduce((sum, course) => sum + (course.revenue || 0), 0);
+    const allCoursesTotal = stats.courses?.reduce((sum, course) => sum + (course.revenue || 0), 0) || 0;
+    const instructorPercentage = revenueStats.instructorPercentage || 70;
+    
+    console.log('🔍 Revenue Comparison Debug:');
+    console.log('📊 Chart Total (Gross):', formatCurrency(chartTotal));
+    console.log('💰 Chart Instructor Revenue (Net):', formatCurrency(chartInstructorRevenue));
+    console.log('🏆 Top 5 Courses Total (Net):', formatCurrency(topCoursesTotal));
+    console.log('📚 All Courses Total (Net):', formatCurrency(allCoursesTotal));
+    console.log('📈 Revenue Mode:', revenueMode);
+    console.log('📅 Revenue Period:', revenueStats.startDate, '-', revenueStats.endDate);
+    console.log('💼 Instructor Percentage:', instructorPercentage + '%');
+    console.log('⚠️ Expected Net from Chart:', formatCurrency(chartTotal * instructorPercentage / 100));
+    
+    // Debug ratings
+    console.log('⭐ Top 5 Courses Ratings:');
+    topCoursesByRevenue.forEach((course, idx) => {
+      console.log(`  ${idx + 1}. ${course.courseName}: ${course.averageRating || 0} sao`);
+    });
+    
+    return {
+      chartTotal,
+      chartInstructorRevenue,
+      topCoursesTotal,
+      allCoursesTotal,
+      instructorPercentage,
+      expectedNetFromChart: chartTotal * instructorPercentage / 100,
+      difference: Math.abs(chartInstructorRevenue - allCoursesTotal),
+      percentageDiff: allCoursesTotal > 0 ? ((Math.abs(chartInstructorRevenue - allCoursesTotal) / allCoursesTotal) * 100).toFixed(1) : 0
+    };
+  }, [revenueStats, stats, topCoursesByRevenue, revenueMode]);
 
   // Prepare chart data for revenue
   const chartData = useMemo(() => {
@@ -110,18 +168,36 @@ const InstructorDashboard = () => {
         <p className="text-muted-foreground">Thống kê hoạt động giảng dạy</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <Card 
           className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
           onClick={() => router.push('/instructor/courses')}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Tổng doanh thu</CardTitle>
+            <CardTitle className="text-sm font-medium">Doanh thu GROSS</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(revenueStats?.totalRevenue || 0)}</div>
+            <p className="text-xs text-muted-foreground">
+              Theo biểu đồ ({revenueMode}) - Chưa trừ phí
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+          onClick={() => router.push('/instructor/courses')}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Tổng doanh thu (NET)</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats?.totalRevenue || 0)}</div>
-            <p className="text-xs text-muted-foreground">Từ các khoá học</p>
+            <p className="text-xs text-muted-foreground">
+              Sau trừ phí hệ thống ({stats?.instructorPercentage || 70}%)
+            </p>
           </CardContent>
         </Card>
 
@@ -221,7 +297,7 @@ const InstructorDashboard = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5" />
-                <CardTitle>Biểu đồ doanh thu</CardTitle>
+                <CardTitle>Biểu đồ doanh thu (GROSS)</CardTitle>
               </div>
               <Select value={revenueMode} onValueChange={(v: any) => setRevenueMode(v)}>
                 <SelectTrigger className="w-32">
@@ -236,7 +312,31 @@ const InstructorDashboard = () => {
               </Select>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {/* Summary Stats */}
+            {revenueStats && !loadingRevenue && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="text-xs text-muted-foreground">Tổng doanh thu</p>
+                  <p className="text-lg font-bold">{formatCurrency(revenueStats.totalRevenue)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Đơn hàng</p>
+                  <p className="text-lg font-bold">{revenueStats.totalOrders.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Khóa học bán</p>
+                  <p className="text-lg font-bold">{revenueStats.totalCourses.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Tăng trưởng</p>
+                  <p className={`text-lg font-bold ${revenueStats.growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {revenueStats.growthRate >= 0 ? '+' : ''}{revenueStats.growthRate.toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+            )}
+
             {loadingRevenue ? (
               <div className="space-y-3">
                 {[1, 2, 3, 4].map((i) => (
@@ -265,8 +365,8 @@ const InstructorDashboard = () => {
                                 : 'bg-gradient-to-t from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70'
                             }`}
                             style={{ 
-                              height: `${Math.max(item.percentage * 0.85, 12)}%`,
-                              minHeight: '12px'
+                              height: `${Math.max(item.percentage, 8)}%`,
+                              minHeight: '20px'
                             }}
                           />
                           {/* Base line */}
@@ -305,24 +405,77 @@ const InstructorDashboard = () => {
               <Trophy className="h-5 w-5 text-yellow-500" />
               <CardTitle>Top 5 khoá học</CardTitle>
             </div>
-            <p className="text-sm text-muted-foreground">Xếp hạng theo doanh thu</p>
+            <p className="text-sm text-muted-foreground">
+              Xếp hạng theo doanh thu, sau đó theo số học viên (bao gồm khóa học miễn phí)
+            </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {/* Summary Stats for Top 5 */}
+            {topCoursesByRevenue.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="text-xs text-muted-foreground">Tổng doanh thu NET</p>
+                  <p className="text-lg font-bold">
+                    {formatCurrency(topCoursesByRevenue.reduce((sum, course) => sum + (course.revenue || 0), 0))}
+                  </p>
+                </div>
+                {/* <div>
+                  <p className="text-xs text-muted-foreground">Tổng học viên</p>
+                  <p className="text-lg font-bold">
+                    {topCoursesByRevenue.reduce((sum, course) => sum + (course.studentCount || 0), 0).toLocaleString()}
+                  </p>
+                </div> */}
+                <div>
+                  <p className="text-xs text-muted-foreground">Khóa học</p>
+                  <p className="text-lg font-bold">
+                    {topCoursesByRevenue.length}
+                    <span className="text-sm text-muted-foreground ml-1">
+                      ({topCoursesByRevenue.filter(c => c.revenue && c.revenue > 0).length} có phí)
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Đánh giá TB</p>
+                  <p className="text-lg font-bold text-yellow-600">
+                    {(() => {
+                      const coursesWithRating = topCoursesByRevenue.filter(c => c.averageRating && c.averageRating > 0);
+                      if (coursesWithRating.length === 0) return '0.0';
+                      const avgRating = coursesWithRating.reduce((sum, course) => sum + (course.averageRating || 0), 0) / coursesWithRating.length;
+                      return avgRating.toFixed(1);
+                    })()}
+                    <span className="text-xs text-muted-foreground ml-1">/ 5.0</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
             {topCoursesByRevenue.length > 0 ? (
               <div className="space-y-6">
                 {/* Chart Style Display */}
                 <div className="relative bg-gradient-to-t from-muted/20 to-transparent rounded-lg p-4">
                   <div className="flex items-end justify-between gap-2 h-48 overflow-x-auto">
                     {topCoursesByRevenue.map((course, idx) => {
-                      const maxRevenue = topCoursesByRevenue[0]?.revenue || 1;
-                      const percentage = (course.revenue || 0) / maxRevenue * 100;
-                      const isTop3 = idx < 3;
+                      // For revenue-based courses, use revenue for percentage
+                      // For free courses, use student count for percentage
+                      const hasRevenue = course.revenue && course.revenue > 0;
+                      
+                      let percentage;
+                      if (hasRevenue) {
+                        const maxRevenue = topCoursesByRevenue.find(c => c.revenue && c.revenue > 0)?.revenue || 1;
+                        percentage = (course.revenue || 0) / maxRevenue * 100;
+                      } else {
+                        const maxStudents = Math.max(...topCoursesByRevenue.map(c => c.studentCount || 0));
+                        percentage = maxStudents > 0 ? (course.studentCount || 0) / maxStudents * 100 : 0;
+                      }
 
                       return (
                         <div key={course.courseId} className="flex flex-col items-center gap-1 flex-1 group">
                           {/* Revenue on hover */}
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold bg-primary text-primary-foreground px-2 py-1 rounded shadow-lg whitespace-nowrap">
-                            {formatCurrency(course.revenue || 0)}
+                            {course.revenue && course.revenue > 0 
+                              ? formatCurrency(course.revenue) 
+                              : `Miễn phí • ${course.studentCount} học viên`
+                            }
                           </div>
                           
                           {/* Bar with rank icon */}
@@ -340,11 +493,13 @@ const InstructorDashboard = () => {
                                   ? 'bg-gradient-to-t from-gray-400 to-gray-300 shadow-md'
                                   : idx === 2
                                   ? 'bg-gradient-to-t from-amber-600 to-amber-500 shadow-md'
-                                  : 'bg-gradient-to-t from-primary to-primary/80'
+                                  : course.revenue && course.revenue > 0
+                                  ? 'bg-gradient-to-t from-primary to-primary/80'
+                                  : 'bg-gradient-to-t from-green-500 to-green-400' // Free course
                               }`}
                               style={{ 
-                                height: `${Math.max(percentage * 0.85, 16)}%`,
-                                minHeight: '16px'
+                                height: `${Math.max(percentage, 8)}%`,
+                                minHeight: '20px'
                               }}
                             />
                             {/* Base line */}

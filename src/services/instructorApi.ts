@@ -3,6 +3,9 @@
 
 import { api } from '../lib/api';
 import { mockInstructorApi, USE_MOCK_INSTRUCTOR_API } from './mockApi';
+import { logger } from '@/utils/logger';
+import { apiLogger } from '@/utils/apiLogger';
+import { transformPagination, transformResponse, safeNumber, clamp } from './instructorApiHelpers';
 import type {
   // Comments
   CommentListQuery,
@@ -47,24 +50,23 @@ export const commentsApi = {
         // Backend doesn't support search and status yet, so we filter client-side if needed
       };
 
+      const startTime = performance.now();
+      apiLogger.logRequest('/comments/instructor/my-courses', 'GET', backendParams);
+      
       const response = await api.get('/comments/instructor/my-courses', { params: backendParams });
       
-      console.log('Comments API response:', response.data);
-      console.log('Backend params sent:', backendParams);
-      console.log('API endpoint called:', '/comments/instructor/my-courses');
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse('/comments/instructor/my-courses', response.data, duration);
       
-      // Backend returns: { success: boolean, data: { items: Comment[], pagination: {...}, statistics: {...} }, message: string }
+      // Backend returns: { message: string, items: Comment[], pagination: {...}, statistics: {...} }
       // Handle different possible response structures
       const responseData = response.data?.data || response.data;
       const comments = responseData?.items || responseData || [];
       const pagination = responseData?.pagination || {};
       const statistics = responseData?.statistics || {};
       
-      console.log('Extracted comments array:', comments);
-      console.log('Comments array length:', comments.length);
-      
       if (comments.length === 0) {
-        console.warn('No comments received from backend');
+        logger.debug('No comments received from backend');
         return {
           success: true,
           data: {
@@ -75,15 +77,11 @@ export const commentsApi = {
         };
       }
       
-      // Temporarily disable course mapping to focus on displaying comments
-      // TODO: Re-enable when backend provides course info in comments
+      // Get course names if needed
       let coursesMap: Record<string, { id: string; name: string }> = {};
-      
-      console.log('Skipping course mapping - will show "Unknown Course" for now');
 
       // Apply client-side filtering if needed
       let filteredComments = [...comments];
-      console.log('Before client-side filtering:', filteredComments.length);
       
       if (params.search) {
         const search = params.search.toLowerCase();
@@ -91,27 +89,15 @@ export const commentsApi = {
           comment.content?.toLowerCase().includes(search) ||
           comment.user?.fullName?.toLowerCase().includes(search)
         );
-        console.log('After search filtering:', filteredComments.length);
       }
       
       if (params.status && params.status !== 'all') {
         filteredComments = filteredComments.filter(comment => comment.status === params.status);
-        console.log('After status filtering:', filteredComments.length);
       }
 
       // Transform backend data to match frontend expectations
       const transformedComments = filteredComments
         .map(comment => {
-          // Log raw comment structure to understand backend response
-          console.log('Raw comment from backend:', {
-            id: comment.id,
-            lectureId: comment.lectureId,
-            lecture: comment.lecture,
-            course: comment.course,
-            courseId: comment.courseId,
-            user: comment.user
-          });
-          
           // Try multiple possible paths for course info
           let courseId = comment.lecture?.chapter?.course?.id || 
                         comment.course?.id || 
@@ -128,7 +114,6 @@ export const commentsApi = {
           
           // If we still don't have course info, try to extract from lecture path
           if (!courseId || !courseName) {
-            // Check if lecture has course reference
             const lectureCourseId = comment.lecture?.courseId || 
                                    comment.lecture?.course?.id ||
                                    comment.lecture?.chapter?.courseId;
@@ -139,12 +124,11 @@ export const commentsApi = {
             }
           }
           
-          // Final fallback - always provide a course name
+          // Final fallback
           if (!courseName) {
             courseName = 'Unknown Course';
           }
           
-          // Ensure we always have a courseId (use lectureId as fallback)
           if (!courseId) {
             courseId = comment.lectureId || comment.lecture?.id || 'unknown';
           }
@@ -168,19 +152,6 @@ export const commentsApi = {
                               comment.lectureName || 
                               'Unknown Lecture';
           
-          console.log('Processed comment data:', {
-            commentId: comment.id,
-            lectureId: comment.lectureId,
-            lectureName: comment.lecture?.name,
-            courseId,
-            courseName,
-            studentName,
-            userId: comment.userId || comment.user?.id,
-            lectureTitle,
-            hasContent: !!comment.content,
-            mappingUsed: courseId ? (comment.course?.id ? 'direct' : 'mapped') : 'none'
-          });
-          
           return {
             id: comment.id,
             content: comment.content || '',
@@ -196,48 +167,24 @@ export const commentsApi = {
             status: comment.status || 'pending',
             repliesCount: comment.repliesCount || comment.replies?.length || 0,
             lastReplyAt: comment.lastReplyAt || null,
-            isInappropriate: false, // Backend doesn't have this field yet
+            isInappropriate: false,
             parentCommentId: comment.parentId || comment.parentCommentId || null,
           };
         })
         .filter(comment => {
           // Only filter out comments that are completely invalid
-          // Don't filter based on course info - allow "Unknown Course"
           const isValid = comment.id && comment.content && comment.studentName;
-          
           if (!isValid) {
-            console.warn('Filtering out invalid comment:', {
-              id: comment.id,
-              hasContent: !!comment.content,
-              hasStudentName: !!comment.studentName,
-              comment: comment
-            });
-          } else {
-            console.log('Valid comment passed filter:', {
-              id: comment.id,
-              courseName: comment.courseName,
-              studentName: comment.studentName
-            });
+            logger.warn('Filtering out invalid comment', { id: comment.id });
           }
-          
           return isValid;
         });
-
-      console.log('Final transformed comments:', transformedComments);
-      console.log('Transformed comments count:', transformedComments.length);
       
       return {
         success: true,
         data: {
           items: transformedComments,
-          pagination: {
-            page: pagination.currentPage || params.page || 1,
-            limit: pagination.itemsPerPage || params.limit || 10,
-            total: pagination.totalItems || transformedComments.length,
-            totalPages: pagination.totalPage || Math.ceil(transformedComments.length / (params.limit || 10)),
-            hasNext: (pagination.currentPage || 1) * (pagination.itemsPerPage || 10) < (pagination.totalItems || transformedComments.length),
-            hasPrev: (pagination.currentPage || 1) > 1,
-          },
+          pagination: transformPagination(pagination, params),
           statistics: {
             totalComments: statistics.totalComments || transformedComments.length,
             pendingComments: statistics.pendingComments || transformedComments.filter(c => c.status === 'pending').length,
@@ -247,7 +194,8 @@ export const commentsApi = {
         },
       };
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      apiLogger.logError('/comments/instructor/my-courses', error, 'GET');
+      logger.apiError('/comments/instructor/my-courses', error);
       // Fallback to mock data if API fails
       if (USE_MOCK_INSTRUCTOR_API) {
         return mockInstructorApi.getComments(params);
@@ -259,12 +207,19 @@ export const commentsApi = {
   // Get comment details with replies
   getCommentDetail: async (commentId: string): Promise<CommentDetailResponse> => {
     try {
+      apiLogger.logRequest(`/comments/${commentId}`, 'GET');
+      const startTime = performance.now();
+      
       const response = await api.get(`/comments/${commentId}`);
       const comment = response.data;
       
       // Get replies
+      apiLogger.logRequest(`/comments/${commentId}/replies`, 'GET');
       const repliesResponse = await api.get(`/comments/${commentId}/replies`);
       const replies = repliesResponse.data?.items || [];
+      
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse(`/comments/${commentId}`, { comment, replies }, duration);
       
       return {
         success: true,
@@ -301,7 +256,8 @@ export const commentsApi = {
         },
       };
     } catch (error) {
-      console.error('Error fetching comment detail:', error);
+      apiLogger.logError(`/comments/${commentId}`, error, 'GET');
+      logger.apiError(`/comments/${commentId}`, error);
       throw error;
     }
   },
@@ -309,14 +265,22 @@ export const commentsApi = {
   // Reply to comment
   replyToComment: async (commentId: string, data: ReplyCommentRequest): Promise<ApiResponse<any>> => {
     try {
+      apiLogger.logRequest(`/comments/${commentId}/reply`, 'POST', data);
+      const startTime = performance.now();
+      
       const response = await api.post(`/comments/${commentId}/reply`, data);
+      
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse(`/comments/${commentId}/reply`, response.data, duration);
+      
       return {
         success: true,
-        data: response.data,
-        message: 'Phản hồi đã được gửi thành công'
+        data: response.data?.data || response.data,
+        message: response.data?.message || 'Phản hồi đã được gửi thành công'
       };
     } catch (error) {
-      console.error('Error replying to comment:', error);
+      apiLogger.logError(`/comments/${commentId}/reply`, error, 'POST');
+      logger.apiError(`/comments/${commentId}/reply`, error);
       if (USE_MOCK_INSTRUCTOR_API) {
         return mockInstructorApi.replyToComment(commentId, data);
       }
@@ -327,14 +291,22 @@ export const commentsApi = {
   // Update comment status
   updateCommentStatus: async (commentId: string, data: UpdateCommentStatusRequest): Promise<ApiResponse<any>> => {
     try {
+      apiLogger.logRequest(`/comments/${commentId}/status`, 'PATCH', data);
+      const startTime = performance.now();
+      
       const response = await api.patch(`/comments/${commentId}/status`, data);
+      
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse(`/comments/${commentId}/status`, response.data, duration);
+      
       return {
         success: true,
-        data: response.data,
-        message: 'Trạng thái bình luận đã được cập nhật'
+        data: response.data?.data || response.data,
+        message: response.data?.message || 'Trạng thái bình luận đã được cập nhật'
       };
     } catch (error) {
-      console.error('Error updating comment status:', error);
+      apiLogger.logError(`/comments/${commentId}/status`, error, 'PATCH');
+      logger.apiError(`/comments/${commentId}/status`, error);
       if (USE_MOCK_INSTRUCTOR_API) {
         return mockInstructorApi.updateCommentStatus(commentId, data);
       }
@@ -345,14 +317,22 @@ export const commentsApi = {
   // Delete comment
   deleteComment: async (commentId: string): Promise<ApiResponse<any>> => {
     try {
+      apiLogger.logRequest(`/comments/${commentId}`, 'DELETE');
+      const startTime = performance.now();
+      
       const response = await api.delete(`/comments/${commentId}`);
+      
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse(`/comments/${commentId}`, response.data, duration);
+      
       return {
         success: true,
-        data: response.data,
-        message: 'Bình luận đã được xóa thành công'
+        data: response.data?.data || response.data,
+        message: response.data?.message || 'Bình luận đã được xóa thành công'
       };
     } catch (error) {
-      console.error('Error deleting comment:', error);
+      apiLogger.logError(`/comments/${commentId}`, error, 'DELETE');
+      logger.apiError(`/comments/${commentId} (delete)`, error);
       if (USE_MOCK_INSTRUCTOR_API) {
         return mockInstructorApi.deleteComment(commentId);
       }
@@ -374,13 +354,18 @@ export const feedbacksApi = {
         // Backend doesn't support search and ratingRange yet, so we filter client-side if needed
       };
 
+      const startTime = performance.now();
+      apiLogger.logRequest('/feedbacks/instructor/my-courses', 'GET', backendParams);
+      
       const response = await api.get('/feedbacks/instructor/my-courses', { params: backendParams });
       
-      console.log('Feedbacks API response:', response.data);
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse('/feedbacks/instructor/my-courses', response.data, duration);
       
-      // Backend returns: { success: boolean, data: { items: Feedback[], pagination: {...} }, message: string }
-      const feedbacks = response.data?.data?.items || [];
-      const pagination = response.data?.data?.pagination || {};
+      // Backend returns: { message: string, items: Feedback[], pagination: {...} }
+      const responseData = response.data?.data || response.data;
+      const feedbacks = responseData?.items || [];
+      const pagination = responseData?.pagination || {};
       
       // Apply client-side filtering if needed
       let filteredFeedbacks = [...feedbacks];
@@ -424,57 +409,49 @@ export const feedbacksApi = {
       // Calculate statistics
       // Validate and clamp ratings to 1-5 range
       const validFeedbacks = feedbacks.filter((f: any) => {
-        const rating = Number(f.rating);
-        return !isNaN(rating) && rating >= 1 && rating <= 5;
+        const rating = safeNumber(f.rating);
+        return rating >= 1 && rating <= 5;
       });
       
       const totalFeedbacks = validFeedbacks.length;
       const averageRating = totalFeedbacks > 0 
         ? validFeedbacks.reduce((acc: number, f: any) => {
-            const rating = Number(f.rating);
-            // Clamp rating to 1-5 range
-            const clampedRating = Math.max(1, Math.min(5, rating));
-            return acc + clampedRating;
+            const rating = clamp(safeNumber(f.rating), 1, 5);
+            return acc + rating;
           }, 0) / totalFeedbacks 
         : 0;
       
       // Clamp averageRating to 0-5 range
-      const clampedAverageRating = Math.max(0, Math.min(5, averageRating));
+      const clampedAverageRating = clamp(averageRating, 0, 5);
       
       const ratingDistribution = {
-        1: validFeedbacks.filter((f: any) => Math.round(Number(f.rating)) === 1).length,
-        2: validFeedbacks.filter((f: any) => Math.round(Number(f.rating)) === 2).length,
-        3: validFeedbacks.filter((f: any) => Math.round(Number(f.rating)) === 3).length,
-        4: validFeedbacks.filter((f: any) => Math.round(Number(f.rating)) === 4).length,
-        5: validFeedbacks.filter((f: any) => Math.round(Number(f.rating)) === 5).length,
+        1: validFeedbacks.filter((f: any) => Math.round(safeNumber(f.rating)) === 1).length,
+        2: validFeedbacks.filter((f: any) => Math.round(safeNumber(f.rating)) === 2).length,
+        3: validFeedbacks.filter((f: any) => Math.round(safeNumber(f.rating)) === 3).length,
+        4: validFeedbacks.filter((f: any) => Math.round(safeNumber(f.rating)) === 4).length,
+        5: validFeedbacks.filter((f: any) => Math.round(safeNumber(f.rating)) === 5).length,
       };
 
       return {
         success: true,
         data: {
           items: transformedFeedbacks,
-          pagination: {
-            page: pagination.currentPage || params.page || 1,
-            limit: pagination.itemsPerPage || params.limit || 10,
-            total: pagination.totalItems || totalFeedbacks,
-            totalPages: pagination.totalPage || Math.ceil(totalFeedbacks / (params.limit || 10)),
-            hasNext: (pagination.currentPage || 1) * (pagination.itemsPerPage || 10) < (pagination.totalItems || totalFeedbacks),
-            hasPrev: (pagination.currentPage || 1) > 1,
-          },
+          pagination: transformPagination(pagination, params),
           statistics: {
             totalFeedbacks,
             averageRating: Math.round(clampedAverageRating * 10) / 10,
             ratingDistribution,
             highRatings: validFeedbacks.filter((f: any) => {
-              const rating = Number(f.rating);
-              return !isNaN(rating) && rating >= 4 && rating <= 5;
+              const rating = safeNumber(f.rating);
+              return rating >= 4 && rating <= 5;
             }).length,
-            needReply: validFeedbacks.filter((f: any) => !f.isReplied).length, // All need reply since backend doesn't have replies yet
+            needReply: validFeedbacks.filter((f: any) => !f.isReplied).length,
           },
         },
       };
     } catch (error) {
-      console.error('Error fetching feedbacks:', error);
+      apiLogger.logError('/feedbacks/instructor/my-courses', error, 'GET');
+      logger.apiError('/feedbacks/instructor/my-courses', error);
       // Fallback to mock data if API fails
       if (USE_MOCK_INSTRUCTOR_API) {
         return mockInstructorApi.getFeedbacks(params);
@@ -491,7 +468,7 @@ export const feedbacksApi = {
     }
     
     // TODO: Implement when backend has reply functionality
-    console.log('Reply to feedback not implemented in backend yet:', { feedbackId, data });
+    logger.warn('Reply to feedback not implemented in backend yet', { feedbackId });
     return {
       success: true,
       data: { message: 'Reply functionality coming soon' },
@@ -502,15 +479,23 @@ export const feedbacksApi = {
   // Mark feedback as helpful - use existing like functionality
   markFeedbackHelpful: async (feedbackId: string): Promise<ApiResponse<any>> => {
     try {
+      apiLogger.logRequest(`/feedbacks/${feedbackId}/like`, 'PATCH');
+      const startTime = performance.now();
+      
       // Use existing like endpoint
       const response = await api.patch(`/feedbacks/${feedbackId}/like`);
+      
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse(`/feedbacks/${feedbackId}/like`, response.data, duration);
+      
       return {
         success: true,
         data: response.data,
         message: 'Đã đánh dấu hữu ích'
       };
     } catch (error) {
-      console.error('Error marking feedback helpful:', error);
+      apiLogger.logError(`/feedbacks/${feedbackId}/like`, error, 'PATCH');
+      logger.apiError(`/feedbacks/${feedbackId}/like`, error);
       if (USE_MOCK_INSTRUCTOR_API) {
         return mockInstructorApi.markFeedbackHelpful(feedbackId);
       }
@@ -532,13 +517,18 @@ export const documentsApi = {
         // Backend doesn't support search and fileType yet, so we filter client-side if needed
       };
 
+      const startTime = performance.now();
+      apiLogger.logRequest('/documents/instructor/my-courses', 'GET', backendParams);
+      
       const response = await api.get('/documents/instructor/my-courses', { params: backendParams });
       
-      console.log('Documents API response:', response.data);
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse('/documents/instructor/my-courses', response.data, duration);
       
-      // Backend returns: { success: boolean, data: { items: Document[], pagination: {...} }, message: string }
-      const documents = response.data?.data?.items || [];
-      const pagination = response.data?.data?.pagination || {};
+      // Backend returns: { message: string, items: Document[], pagination: {...} }
+      const responseData = response.data?.data || response.data;
+      const documents = responseData?.items || [];
+      const pagination = responseData?.pagination || {};
       
       // Get unique course IDs from documents where entityType is 'course'
       const courseIds = [...new Set(
@@ -560,9 +550,8 @@ export const documentsApi = {
             acc[course.id] = course.name || 'Unknown Course';
             return acc;
           }, {});
-          console.log('📚 Course names map:', courseNamesMap);
         } catch (error) {
-          console.warn('Failed to fetch course names:', error);
+          logger.warn('Failed to fetch course names', error);
         }
       }
       
@@ -649,14 +638,7 @@ export const documentsApi = {
             ...doc,
             downloadCount: 0, // Added to satisfy Document type requirements
           })),
-          pagination: {
-            page: pagination.currentPage || params.page || 1,
-            limit: pagination.itemsPerPage || params.limit || 10,
-            total: pagination.totalItems || totalDocuments,
-            totalPages: pagination.totalPage || Math.ceil(totalDocuments / (params.limit || 10)),
-            hasNext: (pagination.currentPage || 1) * (pagination.itemsPerPage || 10) < (pagination.totalItems || totalDocuments),
-            hasPrev: (pagination.currentPage || 1) > 1,
-          },
+          pagination: transformPagination(pagination, params),
           statistics: {
             totalDocuments,
             totalDownloads,
@@ -670,7 +652,8 @@ export const documentsApi = {
         },
       };
     } catch (error) {
-      console.error('Error fetching documents:', error);
+      apiLogger.logError('/documents/instructor/my-courses', error, 'GET');
+      logger.apiError('/documents/instructor/my-courses', error);
       // Fallback to mock data if API fails
       if (USE_MOCK_INSTRUCTOR_API) {
         return mockInstructorApi.getDocuments(params);
@@ -685,6 +668,14 @@ export const documentsApi = {
     onProgress?: (progress: number) => void
   ): Promise<ApiResponse<any>> => {
     try {
+      apiLogger.logRequest('/documents', 'POST', {
+        courseId: data.courseId,
+        lectureId: data.lectureId,
+        fileName: data.file.name,
+        fileSize: data.file.size,
+      });
+      const startTime = performance.now();
+      
       const formData = new FormData();
       formData.append('file', data.file);
       formData.append('entityId', data.courseId); // Backend uses entityId
@@ -704,13 +695,17 @@ export const documentsApi = {
         },
       });
       
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse('/documents', response.data, duration);
+      
       return {
         success: true,
         data: response.data,
         message: 'Tài liệu đã được tải lên thành công'
       };
     } catch (error) {
-      console.error('Error uploading document:', error);
+      apiLogger.logError('/documents', error, 'POST');
+      logger.apiError('/documents (upload)', error);
       throw error;
     }
   },
@@ -718,14 +713,22 @@ export const documentsApi = {
   // Delete document - use existing documents API
   deleteDocument: async (documentId: string): Promise<ApiResponse<any>> => {
     try {
+      apiLogger.logRequest(`/documents/${documentId}`, 'DELETE');
+      const startTime = performance.now();
+      
       const response = await api.delete(`/documents/${documentId}`);
+      
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse(`/documents/${documentId}`, response.data, duration);
+      
       return {
         success: true,
         data: response.data,
         message: 'Tài liệu đã được xóa thành công'
       };
     } catch (error) {
-      console.error('Error deleting document:', error);
+      apiLogger.logError(`/documents/${documentId}`, error, 'DELETE');
+      logger.apiError(`/documents/${documentId} (delete)`, error);
       throw error;
     }
   },
@@ -733,18 +736,26 @@ export const documentsApi = {
   // Update document - use existing documents API
   updateDocument: async (documentId: string, data: Partial<UploadDocumentRequest>): Promise<ApiResponse<any>> => {
     try {
+      apiLogger.logRequest(`/documents/${documentId}`, 'PATCH', data);
+      const startTime = performance.now();
+      
       const updateData: any = {};
       if (data.name) updateData.name = data.name;
       if (data.description) updateData.descriptions = data.description; // Backend uses 'descriptions'
       
       const response = await api.patch(`/documents/${documentId}`, updateData);
+      
+      const duration = Math.round(performance.now() - startTime);
+      apiLogger.logResponse(`/documents/${documentId}`, response.data, duration);
+      
       return {
         success: true,
         data: response.data,
         message: 'Tài liệu đã được cập nhật thành công'
       };
     } catch (error) {
-      console.error('Error updating document:', error);
+      apiLogger.logError(`/documents/${documentId}`, error, 'PATCH');
+      logger.apiError(`/documents/${documentId} (update)`, error);
       throw error;
     }
   }
@@ -806,7 +817,7 @@ export const salesApi = {
   }): Promise<ApiResponse<any>> => {
     try {
       // For now, we'll use a mock implementation since the backend endpoint might not exist yet
-      console.log('Creating/updating sale:', { courseId, saleData });
+      logger.debug('Creating/updating sale', { courseId });
       
       // TODO: Replace with actual API call when backend endpoint is ready
       // const response = await api.post(`/courses/${courseId}/sale`, saleData);
@@ -824,7 +835,7 @@ export const salesApi = {
         message: 'Sale đã được tạo/cập nhật thành công'
       };
     } catch (error) {
-      console.error('Error creating/updating sale:', error);
+      logger.apiError(`/courses/${courseId}/sale (create/update)`, error);
       throw error;
     }
   },
@@ -832,7 +843,7 @@ export const salesApi = {
   // Delete sale for a course
   deleteSale: async (courseId: string): Promise<ApiResponse<any>> => {
     try {
-      console.log('Deleting sale for course:', courseId);
+      logger.debug('Deleting sale for course', { courseId });
       
       // TODO: Replace with actual API call when backend endpoint is ready
       // const response = await api.delete(`/courses/${courseId}/sale`);
@@ -844,7 +855,7 @@ export const salesApi = {
         message: 'Sale đã được xóa thành công'
       };
     } catch (error) {
-      console.error('Error deleting sale:', error);
+      logger.apiError(`/courses/${courseId}/sale (delete)`, error);
       throw error;
     }
   },
@@ -852,7 +863,7 @@ export const salesApi = {
   // Get sale details for a course
   getSale: async (courseId: string): Promise<ApiResponse<any>> => {
     try {
-      console.log('Getting sale for course:', courseId);
+      logger.debug('Getting sale for course', { courseId });
       
       // TODO: Replace with actual API call when backend endpoint is ready
       // const response = await api.get(`/courses/${courseId}/sale`);
@@ -864,7 +875,7 @@ export const salesApi = {
         message: 'Không có sale nào cho khóa học này'
       };
     } catch (error) {
-      console.error('Error getting sale:', error);
+      logger.apiError(`/courses/${courseId}/sale (get)`, error);
       throw error;
     }
   }
