@@ -1,34 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay";
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ReplyDialog } from "../components/ReplyDialog";
 import { 
-  MoreHorizontal, 
   Star, 
-  TrendingUp,
   MessageSquare,
-  ThumbsUp,
-  MessageCircle,
-  Inbox
+  Inbox,
+  ThumbsUp
 } from "lucide-react";
 
 import { 
-  useInstructorFeedbacks, 
-  useReplyToFeedback, 
-  useMarkFeedbackHelpful 
+  useInstructorFeedbacks
 } from "@/hooks/useInstructorApi";
 import type { Feedback, FeedbackListQuery } from "@/types/instructor";
 import { apiLogger } from "@/utils/apiLogger";
@@ -38,8 +23,6 @@ export default function FeedbacksPage() {
   const [limit, setLimit] = React.useState<number>(10);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [ratingFilter, setRatingFilter] = React.useState<"all" | "high" | "low">("all");
-  const [courseFilter, setCourseFilter] = React.useState("");
-  const [selectedFeedback, setSelectedFeedback] = React.useState<Feedback | null>(null);
 
   // Build query parameters
   const queryParams: FeedbackListQuery = React.useMemo(() => ({
@@ -47,15 +30,12 @@ export default function FeedbacksPage() {
     limit,
     search: searchTerm || undefined,
     ratingRange: ratingFilter === "all" ? undefined : ratingFilter,
-    courseId: courseFilter || undefined,
     sortBy: 'createdAt',
     sortOrder: 'desc'
-  }), [page, limit, searchTerm, ratingFilter, courseFilter]);
+  }), [page, limit, searchTerm, ratingFilter]);
 
-  // API Hooks
+  // API Hooks - read only, no reply needed
   const { data: feedbacksData, isPending, isFetching, isError, error } = useInstructorFeedbacks(queryParams);
-  const { mutate: replyToFeedback, isPending: isReplying } = useReplyToFeedback();
-  const { mutate: markHelpful, isPending: isMarkingHelpful } = useMarkFeedbackHelpful();
 
   // Extract data from API response
   const feedbacks = feedbacksData?.data?.items || [];
@@ -86,30 +66,22 @@ export default function FeedbacksPage() {
 
   const totalFeedbacks = statistics?.totalFeedbacks || 0;
   
-  // Calculate averageRating with validation and fallback
-  // If statistics.averageRating is invalid (> 5), recalculate from items
+  // Calculate averageRating with validation
   let averageRating = statistics?.averageRating || 0;
   if (averageRating > 5 || averageRating < 0 || isNaN(averageRating)) {
-    // Fallback: calculate from feedbacks items
     const validFeedbacks = feedbacks.filter(f => {
       const rating = Number(f.rating);
       return !isNaN(rating) && rating >= 1 && rating <= 5;
     });
     if (validFeedbacks.length > 0) {
       averageRating = validFeedbacks.reduce((acc, f) => {
-        const rating = Number(f.rating);
-        const clampedRating = Math.max(1, Math.min(5, rating));
-        return acc + clampedRating;
+        return acc + Math.max(1, Math.min(5, Number(f.rating)));
       }, 0) / validFeedbacks.length;
     } else {
       averageRating = 0;
     }
   }
-  // Clamp to 0-5 range
   averageRating = Math.max(0, Math.min(5, averageRating));
-  
-  const highRatings = statistics?.highRatings || 0;
-  const needReply = statistics?.needReply || 0;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -142,109 +114,161 @@ export default function FeedbacksPage() {
     }
   };
 
-  const handleReply = (feedback: Feedback) => {
-    setSelectedFeedback(feedback);
-  };
-
-  const submitReply = (content: string) => {
-    if (!selectedFeedback || !content.trim()) return;
-    
-    replyToFeedback(
-      { feedbackId: selectedFeedback.id, data: { content: content.trim() } },
-      {
-        onSuccess: () => {
-          setSelectedFeedback(null);
-        }
-      }
-    );
-  };
-
-  const handleMarkHelpful = (feedbackId: string) => {
-    markHelpful(feedbackId);
-  };
+  const columns: Column<Feedback>[] = [
+    {
+      key: 'rating',
+      label: 'Đánh giá',
+      type: 'text',
+      render: (row: Feedback) => (
+        <div className="max-w-[350px] space-y-2">
+          <div className="flex items-center space-x-1">
+            {renderStars(row.rating)}
+            <span className="text-sm font-medium ml-2">{row.rating}/5</span>
+          </div>
+          <p className="text-sm line-clamp-2">{row.comment}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'student',
+      label: 'Học viên',
+      type: 'text',
+      render: (row: Feedback) => (
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+            <span className="text-sm font-medium text-primary">
+              {row.studentName?.charAt(0) || 'U'}
+            </span>
+          </div>
+          <span className="text-sm">{row.studentName}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'courseName',
+      label: 'Khóa học',
+      type: 'short',
+      render: (row: Feedback) => (
+        <span className="text-sm line-clamp-2">{row.courseName}</span>
+      ),
+    },
+    {
+      key: 'createdAt',
+      label: 'Thời gian',
+      type: 'short',
+      render: (row: Feedback) => (
+        <span className="text-sm text-muted-foreground">{formatDate(row.createdAt)}</span>
+      ),
+    },
+    {
+      key: 'helpful',
+      label: 'Hữu ích',
+      type: 'short',
+      render: (row: Feedback) => (
+        <div className="flex items-center space-x-1">
+          <ThumbsUp className="h-3 w-3" />
+          <span className="text-sm">{row.helpfulCount || 0}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Mức độ',
+      type: 'short',
+      render: (row: Feedback) => getRatingBadge(row.rating),
+    },
+  ];
 
   return (
-    <div className="relative">
+    <div className="relative p-4 md:p-6">
+      <div className="mb-4">
+        <h1 className="text-lg font-semibold">Xem đánh giá khóa học</h1>
+        <p className="text-sm text-muted-foreground">Đánh giá từ học viên về các khóa học của bạn (chỉ xem)</p>
+      </div>
+
       {/* Stats Cards */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-card text-card-foreground rounded-lg border p-4">
-          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="text-sm font-medium">Tổng đánh giá</div>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="text-2xl font-bold">{totalFeedbacks}</div>
-          <p className="text-xs text-muted-foreground">Từ học viên</p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {isPending ? (
+          [1, 2, 3].map((i) => (
+            <div key={i} className="bg-card rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="h-4 bg-muted rounded w-24 mb-2 animate-pulse" />
+                  <div className="h-8 bg-muted rounded w-16 animate-pulse" />
+                </div>
+                <div className="h-8 w-8 bg-muted rounded animate-pulse" />
+              </div>
+            </div>
+          ))
+        ) : (
+          <>
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Tổng đánh giá</p>
+                  <p className="text-2xl font-bold">{totalFeedbacks}</p>
+                </div>
+                <MessageSquare className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </div>
 
-        <div className="bg-card text-card-foreground rounded-lg border p-4">
-          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="text-sm font-medium">Điểm trung bình</div>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="text-2xl font-bold">{averageRating.toFixed(1)}</div>
-          <div className="flex items-center mt-1">
-            {renderStars(Math.max(0, Math.min(5, Math.round(averageRating))))}
-          </div>
-        </div>
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Điểm trung bình</p>
+                  <p className="text-2xl font-bold">{averageRating.toFixed(1)}/5</p>
+                </div>
+                <Star className="h-8 w-8 text-yellow-400" />
+              </div>
+            </div>
 
-        <div className="bg-card text-card-foreground rounded-lg border p-4">
-          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="text-sm font-medium">Đánh giá cao</div>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="text-2xl font-bold">{highRatings}</div>
-          <p className="text-xs text-muted-foreground">
-            4-5 sao ({Math.round((highRatings / totalFeedbacks) * 100)}%)
-          </p>
-        </div>
-
-        <div className="bg-card text-card-foreground rounded-lg border p-4">
-          <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="text-sm font-medium">Cần phản hồi</div>
-            <MessageCircle className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="text-2xl font-bold">{needReply}</div>
-          <p className="text-xs text-muted-foreground">Chưa phản hồi</p>
-        </div>
-      </div> */}
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Đánh giá cao (4-5 sao)</p>
+                  <p className="text-2xl font-bold">{statistics?.highRatings || 0}</p>
+                </div>
+                <ThumbsUp className="h-8 w-8 text-green-500" />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Search and Filters */}
       <div className="mb-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="flex flex-wrap gap-4 items-end">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tìm kiếm đánh giá
-              </label>
-              <Input 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
-                placeholder="Nhập nội dung đánh giá để tìm kiếm..." 
-                className="h-9 w-52" 
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lọc theo mức đánh giá
-              </label>
-              <Select value={ratingFilter} onValueChange={(value) => setRatingFilter(value as "all" | "high" | "low")}>
-                <SelectTrigger className="h-9 w-48">
-                  <SelectValue placeholder="Chọn mức đánh giá" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả đánh giá</SelectItem>
-                  <SelectItem value="high">Đánh giá cao (4-5 sao)</SelectItem>
-                  <SelectItem value="low">Cần cải thiện (1-3 sao)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="flex flex-wrap gap-4 items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tìm kiếm đánh giá
+            </label>
+            <Input 
+              value={searchTerm} 
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} 
+              placeholder="Nhập nội dung đánh giá..." 
+              className="h-9 w-52" 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Lọc theo mức đánh giá
+            </label>
+            <Select value={ratingFilter} onValueChange={(value) => { setRatingFilter(value as "all" | "high" | "low"); setPage(1); }}>
+              <SelectTrigger className="h-9 w-48">
+                <SelectValue placeholder="Chọn mức đánh giá" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả đánh giá</SelectItem>
+                <SelectItem value="high">Đánh giá cao (4-5 sao)</SelectItem>
+                <SelectItem value="low">Cần cải thiện (1-3 sao)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
 
+      {/* Table */}
       <div className="relative min-h-[300px]">
-        <LoadingOverlay show={isPending || isFetching} />
-
         {isError ? (
           <div className="py-16 text-center">
             <div className="text-sm text-destructive mb-2">Lỗi tải dữ liệu</div>
@@ -252,150 +276,32 @@ export default function FeedbacksPage() {
               {error?.message || 'Không thể kết nối đến server'}
             </div>
           </div>
-        ) : feedbacks.length === 0 ? (
+        ) : feedbacks.length === 0 && !isPending ? (
           <div className="py-16 flex items-center justify-center">
             <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
               <Inbox className="h-10 w-10 text-muted-foreground/60" />
-              <span>Không có dữ liệu</span>
+              <span>Chưa có đánh giá nào</span>
             </div>
           </div>
         ) : (
-          (() => {
-            const columns: Column<Feedback>[] = [
-              {
-                key: 'rating',
-                label: 'Đánh giá',
-                type: 'text',
-                render: (row: Feedback) => (
-                  <div className="max-w-[350px] space-y-2">
-                    <div className="flex items-center space-x-1">
-                      {renderStars(row.rating)}
-                      <span className="text-sm font-medium ml-2">{row.rating}/5</span>
-                    </div>
-                    <p className="text-sm line-clamp-2">{row.comment}</p>
-                  </div>
-                ),
+          <DynamicTable
+            columns={columns}
+            data={feedbacks}
+            loading={isPending || isFetching}
+            pagination={{
+              totalItems: pagination?.total || 0,
+              currentPage: pagination?.page || page,
+              itemsPerPage: pagination?.limit || limit,
+              onPageChange: (p) => setPage(p),
+              pageSizeOptions: [10, 20, 50],
+              onPageSizeChange: (sz) => {
+                setLimit(sz)
+                setPage(1)
               },
-              {
-                key: 'student',
-                label: 'Học viên',
-                type: 'text',
-                render: (row: Feedback) => (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">
-                        {row.studentName.charAt(0)}
-                      </span>
-                    </div>
-                    <span className="text-sm">{row.studentName}</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'courseName',
-                label: 'Khóa học',
-                type: 'short',
-                render: (row: Feedback) => (
-                  <span className="text-sm">{row.courseName}</span>
-                ),
-              },
-              {
-                key: 'createdAt',
-                label: 'Thời gian',
-                type: 'short',
-                render: (row: Feedback) => (
-                  <span className="text-sm text-muted-foreground">{formatDate(row.createdAt)}</span>
-                ),
-              },
-              {
-                key: 'helpful',
-                label: 'Hữu ích',
-                type: 'short',
-                render: (row: Feedback) => (
-                  <div className="flex items-center space-x-1">
-                    <ThumbsUp className="h-3 w-3" />
-                    <span className="text-sm">{row.helpfulCount}</span>
-                  </div>
-                ),
-              },
-              {
-                key: 'status',
-                label: 'Trạng thái',
-                type: 'short',
-                render: (row: Feedback) => (
-                  <div className="flex flex-col space-y-1">
-                    {getRatingBadge(row.rating)}
-                    {row.isReplied ? (
-                      <Badge variant="outline" className="text-xs">Đã phản hồi</Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs">Chưa phản hồi</Badge>
-                    )}
-                  </div>
-                ),
-              },
-              {
-                key: 'actions',
-                label: 'Hành động',
-                type: 'action',
-                render: (row: Feedback) => (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" disabled={isReplying || isMarkingHelpful}>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleReply(row)}>
-                        {row.isReplied ? "Xem phản hồi" : "Phản hồi"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleMarkHelpful(row.id)}>
-                        Đánh dấu hữu ích
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>Báo cáo</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ),
-              },
-            ];
-            return (
-              <DynamicTable
-                columns={columns}
-                data={feedbacks}
-                loading={isPending || isFetching}
-                pagination={{
-                  totalItems: pagination?.total || 0,
-                  currentPage: pagination?.page || page,
-                  itemsPerPage: pagination?.limit || limit,
-                  onPageChange: (p) => setPage(p),
-                  pageSizeOptions: [10, 20, 50],
-                  onPageSizeChange: (sz) => {
-                    setLimit(sz)
-                    setPage(1)
-                  },
-                }}
-              />
-            )
-          })()
+            }}
+          />
         )}
       </div>
-
-      {/* Reply Dialog */}
-      <ReplyDialog
-        open={!!selectedFeedback}
-        onOpenChange={() => setSelectedFeedback(null)}
-        type="feedback"
-        item={selectedFeedback ? {
-          id: selectedFeedback.id,
-          comment: selectedFeedback.comment,
-          rating: selectedFeedback.rating,
-          studentName: selectedFeedback.studentName,
-          studentAvatar: selectedFeedback.studentAvatar,
-          courseName: selectedFeedback.courseName,
-          createdAt: selectedFeedback.createdAt,
-        } : null}
-        onSubmit={submitReply}
-        isSubmitting={isReplying}
-      />
     </div>
   );
 }

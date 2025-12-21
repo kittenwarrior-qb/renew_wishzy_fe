@@ -36,6 +36,11 @@ export const commentBlogService = {
         return res.data;
     },
 
+    async listAll(params?: { page?: number; limit?: number }) {
+        const res = await api.get<PaginationResponse<CommentBlog>>(BASE, { params });
+        return res.data;
+    },
+
     async create(data: CreateCommentBlogDto) {
         const res = await api.post<CommentBlog>(BASE, data);
         return res.data;

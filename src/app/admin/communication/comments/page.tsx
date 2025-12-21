@@ -1,245 +1,474 @@
 "use client"
 
 import * as React from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
 import DynamicTable, { type Column } from "@/components/shared/common/DynamicTable"
-import QueryController from "@/components/shared/common/QueryController"
-import { AdminDataErrorState } from "@/components/shared/admin/AdminDataErrorState"
-import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useAdminCommentList, type AdminComment } from "@/components/shared/comment/useAdminComment"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  MoreHorizontal,
+  MessageCircle,
+  Inbox,
+  Clock,
+  MessageSquare,
+  Eye
+} from "lucide-react"
+import {
+  useInstructorComments,
+  useReplyToComment,
+} from "@/hooks/useInstructorApi"
+import type { Comment, CommentListQuery } from "@/types/instructor"
+import { useQuery } from "@tanstack/react-query"
+import api from "@/services/api"
 
-export default function Page() {
-  const params = useParams<{ locale: string }>()
-  const locale = params?.locale || "vi"
+export default function AdminCommentsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const [page, setPage] = React.useState<number>(Number(searchParams.get("page") || 1))
   const [limit, setLimit] = React.useState<number>(Number(searchParams.get("limit") || 10))
+  const [searchTerm, setSearchTerm] = React.useState("")
 
-  const [filter, setFilter] = React.useState<{ courseId?: string }>(() => ({
-    courseId: searchParams.get("courseId") || "",
-  }))
+  // Selected comment for reply or view
+  const [selectedComment, setSelectedComment] = React.useState<Comment | null>(null)
+  const [dialogMode, setDialogMode] = React.useState<'view' | 'reply'>('view')
+  const [replyContent, setReplyContent] = React.useState("")
 
-  React.useEffect(() => {
-    const qs = new URLSearchParams()
-    if (filter.courseId) qs.set("courseId", filter.courseId)
-    if (page !== 1) qs.set("page", String(page))
-    if (limit !== 10) qs.set("limit", String(limit))
-
-    const href = `/admin/communication/comments${qs.toString() ? `?${qs.toString()}` : ""}`
-    const current = `${window.location.pathname}${window.location.search}`
-    if (current !== href) router.replace(href)
-  }, [filter, page, limit, router])
-
-  const { data, isPending, isFetching, isError, refetch } = useAdminCommentList({
+  // Build query parameters
+  const queryParams: CommentListQuery = React.useMemo(() => ({
     page,
     limit,
-    courseId: filter.courseId || undefined,
+    search: searchTerm || undefined,
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  }), [page, limit, searchTerm])
+
+  // API Hooks - reuse instructor hooks (backend handles role-based filtering)
+  const { data: commentsData, isPending, isFetching, isError } = useInstructorComments(queryParams)
+  const { mutate: replyToComment, isPending: isReplying } = useReplyToComment()
+
+  // Fetch replies when viewing a comment
+  const { data: repliesData, refetch: refetchReplies, isLoading: repliesLoading } = useQuery({
+    queryKey: ['comment-replies', selectedComment?.id],
+    queryFn: async () => {
+      if (!selectedComment?.id) return []
+      console.log('Fetching replies for comment:', selectedComment.id)
+      const response = await api.get(`/comments/${selectedComment.id}/replies`)
+      console.log('Replies response:', response.data)
+      
+      // Handle different response formats
+      const items = response.data?.items || response.data?.data?.items || response.data || []
+      console.log('Extracted replies:', items)
+      return items
+    },
+    enabled: !!selectedComment?.id,
+    staleTime: 0, // Always refetch to get latest replies
   })
 
-  const items = data?.data ?? []
-  const total = data?.total ?? 0
-  const currentPage = data?.page ?? page
-  const pageSize = data?.limit ?? limit
-  const baseIndex = (currentPage - 1) * pageSize
+  // Extract data from API response
+  const comments = commentsData?.data?.items || []
+  const pagination = commentsData?.data?.pagination
+  const statistics = commentsData?.data?.statistics
 
-  const [detail, setDetail] = React.useState<AdminComment | null>(null)
-  const [openDetail, setOpenDetail] = React.useState(false)
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
 
-  const columns: Column<AdminComment & any>[] = [
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "replied":
+        return <Badge className="bg-green-100 text-green-800">Đã phản hồi</Badge>
+      case "pending":
+        return <Badge variant="secondary">Chờ phản hồi</Badge>
+      case "resolved":
+        return <Badge className="bg-blue-100 text-blue-800">Đã giải quyết</Badge>
+      default:
+        return <Badge variant="outline">Không xác định</Badge>
+    }
+  }
+
+  const handleView = (comment: Comment) => {
+    setSelectedComment(comment)
+    setDialogMode('view')
+    setReplyContent("")
+  }
+
+  const handleReply = (comment: Comment) => {
+    setSelectedComment(comment)
+    setDialogMode('reply')
+    setReplyContent("")
+  }
+
+  const submitReply = () => {
+    if (!selectedComment || !replyContent.trim()) return
+
+    replyToComment(
+      { commentId: selectedComment.id, data: { content: replyContent.trim() } },
+      {
+        onSuccess: () => {
+          setReplyContent("")
+          setSelectedComment(null) // Close modal
+          // No reload, just close
+        }
+      }
+    )
+  }
+
+  const handleCloseDialog = () => {
+    setSelectedComment(null)
+    setReplyContent("")
+  }
+
+  const columns: Column<Comment>[] = [
     {
-      key: "stt",
-      title: "STT",
-      align: "center",
-      type: "short",
-      width: 70,
-      render: (_v: unknown, _r: AdminComment, i: number) => baseIndex + i + 1,
-    },
-    {
-      key: "courseId",
-      title: "Khoá học",
-      render: (row: AdminComment) => (
-        <Link
-          href={`/course-detail/${row.courseId}`}
-          className="text-xs text-primary hover:underline"
-        >
-          {row.courseId}
-        </Link>
+      key: 'content',
+      label: 'Bình luận',
+      type: 'text',
+      render: (row: Comment) => (
+        <div className="max-w-[300px]">
+          <p className="text-sm line-clamp-2">{row.content}</p>
+        </div>
       ),
     },
     {
-      key: "userId",
-      title: "Người dùng",
-      render: (row: AdminComment) => (
-        <span className="text-xs text-muted-foreground">{row.userId}</span>
+      key: 'student',
+      label: 'Học viên',
+      type: 'text',
+      render: (row: Comment) => (
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+            <span className="text-sm font-medium text-primary">
+              {row.studentName?.charAt(0) || 'U'}
+            </span>
+          </div>
+          <span className="text-sm">{row.studentName || 'Unknown'}</span>
+        </div>
       ),
     },
     {
-      key: "rating",
-      title: "Đánh giá",
-      type: "short",
-      align: "center",
-      render: (row: AdminComment) => (row.rating != null ? row.rating.toFixed(1) : "-") as any,
-    },
-    {
-      key: "content",
-      title: "Nội dung",
-      render: (row: AdminComment) => (
-        <TruncateTooltipWrapper className="max-w-[320px]">
-          {row.content}
-        </TruncateTooltipWrapper>
+      key: 'courseName',
+      label: 'Khóa học',
+      type: 'short',
+      render: (row: Comment) => (
+        <span className="text-sm text-muted-foreground line-clamp-1">{row.courseName || 'Unknown Course'}</span>
       ),
     },
     {
-      key: "likes",
-      title: "Like",
-      type: "short",
-      align: "center",
-      render: (row: AdminComment) => row.likes,
-    },
-    {
-      key: "dislikes",
-      title: "Dislike",
-      type: "short",
-      align: "center",
-      render: (row: AdminComment) => row.dislikes,
-    },
-    {
-      key: "createdAt",
-      title: "Thời gian",
-      type: "short",
-      align: "center",
-      render: (row: AdminComment) => (
-        <span className="text-xs text-muted-foreground">
-          {new Date(row.createdAt).toLocaleString("vi-VN")}
-        </span>
+      key: 'lectureTitle',
+      label: 'Bài giảng',
+      type: 'short',
+      render: (row: Comment) => (
+        <span className="text-sm">{row.lectureTitle || 'Unknown Lecture'}</span>
       ),
     },
     {
-      key: "actions",
-      title: "Hành động",
-      type: "action",
-      align: "center",
-      render: (row: AdminComment) => (
-        <button
-          type="button"
-          className="h-8 px-3 inline-flex items-center justify-center rounded border text-xs hover:bg-accent cursor-pointer"
-          onClick={() => {
-            setDetail(row)
-            setOpenDetail(true)
-          }}
-        >
-          Xem
-        </button>
+      key: 'createdAt',
+      label: 'Thời gian',
+      type: 'short',
+      render: (row: Comment) => (
+        <span className="text-sm text-muted-foreground">{formatDate(row.createdAt)}</span>
+      ),
+    },
+    {
+      key: 'repliesCount',
+      label: 'Phản hồi',
+      type: 'short',
+      render: (row: Comment) => (
+        <div className="flex items-center space-x-1 text-sm">
+          <MessageCircle className="h-3 w-3" />
+          <span>{row.repliesCount || 0}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Trạng thái',
+      type: 'short',
+      render: (row: Comment) => getStatusBadge(row.status),
+    },
+    {
+      key: 'actions',
+      label: 'Hành động',
+      type: 'action',
+      render: (row: Comment) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" disabled={isReplying}>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleView(row)}>
+              <Eye className="h-4 w-4 mr-2" />
+              Xem chi tiết
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleReply(row)}>
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Phản hồi
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
   ]
 
   return (
     <div className="relative p-4 md:p-6">
-      <div className="mb-3">
-        <h1 className="text-lg font-semibold mb-2">Bình luận (Giao tiếp)</h1>
+      <div className="mb-4">
+        <h1 className="text-lg font-semibold">Bình luận trong khóa học</h1>
+        <p className="text-sm text-muted-foreground">Quản lý và phản hồi bình luận của học viên</p>
       </div>
 
-      <LoadingOverlay show={isPending || isFetching} />
-
-      <QueryController
-        initial={{ courseId: filter.courseId || "" }}
-        debounceMs={300}
-        onChange={(q) => {
-          setFilter(q as any)
-          setPage(1)
-        }}
-      >
-        {({ query, setQuery, reset }) => (
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <input
-              value={query.courseId || ""}
-              onChange={(e) => setQuery({ courseId: e.target.value })}
-              placeholder="Lọc theo ID khoá học..."
-              className="h-9 rounded border px-3 text-sm w-64"
-            />
-            <button
-              type="button"
-              className="h-9 px-3 border rounded text-sm"
-              onClick={reset}
-            >
-              Reset
-            </button>
-          </div>
-        )}
-      </QueryController>
-
-      {isError ? (
-        <AdminDataErrorState
-          title="Không thể tải danh sách bình luận"
-          onRetry={() => refetch()}
-        />
-      ) : (
-        <DynamicTable
-          columns={columns}
-          data={items as any}
-          loading={isPending || isFetching}
-          pagination={{
-            totalItems: total,
-            currentPage,
-            itemsPerPage: pageSize,
-            onPageChange: (np) => setPage(np),
-            pageSizeOptions: [10, 20, 50],
-            onPageSizeChange: (sz) => {
-              setLimit(sz)
-              setPage(1)
-            },
-          }}
-        />
-      )}
-
-      <Dialog
-        open={openDetail}
-        onOpenChange={(open) => {
-          setOpenDetail(open)
-          if (!open) setDetail(null)
-        }}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Chi tiết bình luận</DialogTitle>
-          </DialogHeader>
-          {detail ? (
-            <div className="space-y-3 text-sm">
-              <div>
-                <span className="font-medium">Khoá học:</span>{" "}
-                <Link
-                  href={`/course-detail/${detail.courseId}`}
-                  className="text-primary hover:underline break-all"
-                >
-                  {detail.courseId}
-                </Link>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        {isPending ? (
+          // Skeleton for initial load
+          <>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-card rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="h-4 bg-muted rounded w-24 mb-2 animate-pulse" />
+                    <div className="h-8 bg-muted rounded w-16 animate-pulse" />
+                  </div>
+                  <div className="h-8 w-8 bg-muted rounded animate-pulse" />
+                </div>
               </div>
-              <div>
-                <span className="font-medium">Người dùng:</span>{" "}
-                <span className="text-muted-foreground break-all">{detail.userId}</span>
-              </div>
-              <div>
-                <span className="font-medium">Đánh giá:</span>{" "}
-                <span>{detail.rating}</span>
-              </div>
-              <div>
-                <span className="font-medium">Thời gian:</span>{" "}
-                <span className="text-muted-foreground">
-                  {new Date(detail.createdAt).toLocaleString("vi-VN")}
-                </span>
-              </div>
-              <div className="pt-2 border-t">
-                <div className="font-medium mb-1">Nội dung</div>
-                <p className="whitespace-pre-wrap text-sm">{detail.content}</p>
+            ))}
+          </>
+        ) : (
+          <>
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Tổng bình luận</p>
+                  <p className="text-2xl font-bold">{statistics?.totalComments || 0}</p>
+                </div>
+                <MessageSquare className="h-8 w-8 text-muted-foreground" />
               </div>
             </div>
-          ) : null}
+
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Chờ phản hồi</p>
+                  <p className="text-2xl font-bold">{statistics?.pendingComments || 0}</p>
+                </div>
+                <Clock className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </div>
+
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Đã phản hồi</p>
+                  <p className="text-2xl font-bold">{statistics?.repliedComments || 0}</p>
+                </div>
+                <MessageCircle className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </div>
+
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Đã giải quyết</p>
+                  <p className="text-2xl font-bold">{statistics?.resolvedComments || 0}</p>
+                </div>
+                <Eye className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Search Filter */}
+      <div className="mb-4">
+        <div className="flex flex-wrap gap-4 items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tìm kiếm bình luận
+            </label>
+            <Input
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1) }}
+              placeholder="Nhập nội dung bình luận để tìm kiếm..."
+              className="h-9 w-64"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="relative min-h-[300px]">
+        {isError ? (
+          <div className="py-16 text-center text-sm text-destructive">Lỗi tải dữ liệu</div>
+        ) : comments.length === 0 ? (
+          <div className="py-16 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+              <Inbox className="h-10 w-10 text-muted-foreground/60" />
+              <span>Không có bình luận</span>
+            </div>
+          </div>
+        ) : (
+          <DynamicTable
+            columns={columns}
+            data={comments}
+            loading={isPending || isFetching}
+            pagination={{
+              totalItems: pagination?.total || 0,
+              currentPage: pagination?.page || page,
+              itemsPerPage: pagination?.limit || limit,
+              onPageChange: (p) => setPage(p),
+              pageSizeOptions: [10, 20, 50],
+              onPageSizeChange: (sz) => {
+                setLimit(sz)
+                setPage(1)
+              },
+            }}
+          />
+        )}
+      </div>
+
+      {/* View/Reply Dialog */}
+      <Dialog open={!!selectedComment} onOpenChange={(open) => !open && handleCloseDialog()}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {dialogMode === 'reply' ? (
+                <>
+                  <MessageCircle className="h-5 w-5" />
+                  Phản hồi bình luận
+                </>
+              ) : (
+                <>
+                  <Eye className="h-5 w-5" />
+                  Chi tiết bình luận
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedComment && (
+            <div className="space-y-4">
+              {/* Original Comment */}
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-primary">
+                        {selectedComment.studentName?.charAt(0) || 'U'}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">{selectedComment.studentName}</div>
+                      <div className="text-xs text-muted-foreground">{selectedComment.courseName}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(selectedComment.status)}
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {formatDate(selectedComment.createdAt)}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed">{selectedComment.content}</p>
+                {selectedComment.lectureTitle && (
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Bài giảng: {selectedComment.lectureTitle}
+                  </div>
+                )}
+              </div>
+
+              {/* Replies Section (only in view mode) */}
+              {dialogMode === 'view' && repliesData && repliesData.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Các phản hồi ({repliesData.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {repliesData.map((reply: any) => (
+                      <div key={reply.id} className="bg-blue-50 p-3 rounded-lg border-l-2 border-blue-500">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-medium text-blue-700">
+                                {reply.user?.fullName?.charAt(0) || 'A'}
+                              </span>
+                            </div>
+                            <span className="text-xs font-medium">{reply.user?.fullName || 'Admin'}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(reply.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-sm leading-relaxed text-gray-700">{reply.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Reply Form (only in reply mode) */}
+              {dialogMode === 'reply' && (
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">Phản hồi của bạn</label>
+                  <Textarea
+                    value={replyContent}
+                    onChange={(e) => setReplyContent(e.target.value)}
+                    placeholder="Nhập nội dung phản hồi..."
+                    rows={4}
+                    className="resize-none"
+                  />
+                  <div className="text-xs text-muted-foreground">
+                    {replyContent.length}/500 ký tự
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseDialog} disabled={isReplying}>
+              {dialogMode === 'view' ? 'Đóng' : 'Hủy'}
+            </Button>
+            {dialogMode === 'view' ? (
+              <Button onClick={() => setDialogMode('reply')}>
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Phản hồi
+              </Button>
+            ) : (
+              <Button
+                onClick={submitReply}
+                disabled={!replyContent.trim() || isReplying || replyContent.length > 500}
+              >
+                {isReplying ? 'Đang gửi...' : 'Gửi phản hồi'}
+              </Button>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

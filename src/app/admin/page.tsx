@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { Users, GraduationCap, BookOpen, TrendingUp } from "lucide-react"
+import { Users, GraduationCap, BookOpen, ShoppingCart } from "lucide-react"
 import { useDashboardData } from "@/hooks/useDashboardData"
 import { StatsCard } from "@/components/shared/admin/StatsCard"
 import { RevenueChart, type RevenueData, type TimeRange } from "@/components/shared/admin/RevenueChart"
 import { TopStudents } from "@/components/shared/admin/TopStudents"
-import { TopInstructors } from "@/components/shared/admin/TopInstructors"
+import { TopCoursesByRevenue } from "@/components/shared/admin/TopCoursesByRevenue"
 import { TopCourses } from "@/components/shared/admin/TopCourses"
 import { formatVND } from "@/lib/format"
 
@@ -16,11 +16,12 @@ export default function AdminDashboard() {
   const {
     hotCourses: apiHotCourses,
     topStudents,
-    topInstructors,
+    topCoursesByRevenue,
     isLoading,
     isError,
     totalStats,
     chartData,
+    refetch,
   } = useDashboardData()
 
   const stats = [
@@ -30,12 +31,6 @@ export default function AdminDashboard() {
       icon: <Users />,
       iconBgColor: 'bg-purple-100',
       iconColor: 'text-purple-600',
-      trend: {
-        value: totalStats.growthRate !== undefined
-          ? `${totalStats.growthRate > 0 ? '+' : ''}${totalStats.growthRate}% so với tháng trước`
-          : 'Đang cập nhật',
-        isPositive: (totalStats.growthRate ?? 0) >= 0
-      },
       format: (val: number) => val.toLocaleString(),
       loading: isLoading
     },
@@ -45,10 +40,6 @@ export default function AdminDashboard() {
       icon: <GraduationCap />,
       iconBgColor: 'bg-red-100',
       iconColor: 'text-red-600',
-      trend: {
-        value: "Đang cập nhật",
-        isPositive: true
-      },
       format: (val: number) => val.toLocaleString(),
       loading: isLoading
     },
@@ -58,29 +49,20 @@ export default function AdminDashboard() {
       icon: <BookOpen />,
       iconBgColor: 'bg-green-100',
       iconColor: 'text-green-600',
-      trend: {
-        value: "Đang cập nhật",
-        isPositive: true
-      },
       format: (val: number) => val.toLocaleString(),
       loading: isLoading
     },
     {
-      title: "Doanh thu",
-      value: totalStats.totalRevenue,
-      icon: <TrendingUp />,
+      title: "Đơn hàng hôm nay",
+      value: totalStats.todayOrders,
+      icon: <ShoppingCart />,
       iconBgColor: 'bg-blue-100',
       iconColor: 'text-blue-600',
-      trend: {
-        value: totalStats.growthRate !== undefined
-          ? `${totalStats.growthRate > 0 ? '+' : ''}${totalStats.growthRate}% so với tháng trước`
-          : 'Đang cập nhật',
-        isPositive: (totalStats.growthRate ?? 0) >= 0
-      },
-      format: (val: number) => formatVND(val),
+      format: (val: number) => val.toLocaleString(),
       loading: isLoading
     }
   ]
+
 
   return (
     <div className="space-y-6 px-4 py-2">
@@ -94,14 +76,12 @@ export default function AdminDashboard() {
             icon={stat.icon}
             iconBgColor={stat.iconBgColor}
             iconColor={stat.iconColor}
-            trend={stat.trend}
             isLoading={stat.loading}
           />
         ))}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="text-lg font-semibold mb-4">Thống kê doanh thu</h3>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
         <RevenueChart
           data={{
             day: chartData?.day || null,
@@ -111,12 +91,13 @@ export default function AdminDashboard() {
             loading: isLoading,
             error: isError ? 'Có lỗi khi tải dữ liệu biểu đồ' : null
           }}
+          onModeChange={refetch.revenue}
         />
       </div>
 
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4">
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <TopCourses
               hotCourses={apiHotCourses?.data}
               total={apiHotCourses?.total}
@@ -127,8 +108,8 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TopInstructors
-            instructors={topInstructors}
+          <TopCoursesByRevenue
+            courses={topCoursesByRevenue}
             isLoading={isLoading}
             isError={isError}
           />
