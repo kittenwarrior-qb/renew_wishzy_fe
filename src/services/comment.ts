@@ -12,7 +12,9 @@ export type Comment = {
   dislike: number;
   createdAt: string;
   updatedAt: string;
+  userReaction?: 'like' | 'dislike' | null;
 };
+
 
 export type CommentFilter = {
   page?: number;
