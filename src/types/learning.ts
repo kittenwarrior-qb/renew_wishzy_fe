@@ -21,6 +21,7 @@ export interface Lecture {
   order: number;
   orderIndex?: number;
   isCompleted?: boolean;
+  requiresQuiz?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

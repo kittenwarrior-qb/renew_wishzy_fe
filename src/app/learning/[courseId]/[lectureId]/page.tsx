@@ -7,7 +7,7 @@ import { CourseSidebar } from '@/components/shared/learning/CourseSidebar';
 import { VideoPlayer } from '@/components/shared/learning/VideoPlayer';
 import { LectureInfo } from '@/components/shared/learning/LectureInfo';
 import { LearningComment } from '@/components/shared/learning/LearningComment';
-import { useChapterListForEnrolled } from '@/components/shared/chapter/useChapter';
+import { useChapterList, useChapterListForEnrolled } from '@/components/shared/chapter/useChapter';
 import { useCourseDetail } from '@/components/shared/course/useCourse';
 import { enrollmentService } from '@/services/enrollment';
 import { usePrefetchLearning, usePrefetchAdjacentLectures } from '@/hooks/usePrefetchLearning';
@@ -113,6 +113,7 @@ export default function LearningPage() {
         chapterId: ch.id,
         order: lec.orderIndex || index,
         isCompleted: false,
+        requiresQuiz: lec.requiresQuiz || false,
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
@@ -301,9 +302,6 @@ export default function LearningPage() {
         // Auto navigate to next lecture after a short delay
         setTimeout(() => {
           if (nextLecture) {
-            toast.info('Đang chuyển sang bài tiếp theo...', {
-              duration: 1500,
-            });
             // Set flag to skip lock check when navigating after completion
             isNavigatingAfterCompletionRef.current = true;
             // Pre-set the lastCheckedLectureId to the next lecture to prevent double-check
@@ -381,7 +379,7 @@ export default function LearningPage() {
                       <p className="text-sm text-gray-400">Please enroll in this course first</p>
                     </div>
                   </div>
-                ) : lecture ? (
+                ) : lecture && !lecture.requiresQuiz ? (
                   <>
                     <VideoPlayer
                       enrollmentId={enrollmentId}
@@ -412,6 +410,32 @@ export default function LearningPage() {
                   }}
                   courseId={courseId}
                   isEnrolled={!!enrollmentId}
+                  enrollmentId={enrollmentId || undefined}
+                  isQuizLecture={lecture.requiresQuiz}
+                  onQuizComplete={(allPassed) => {
+                    if (allPassed && lectureId && !completedLectureIds.includes(lectureId)) {
+                      // Quiz completed - mark lecture as completed
+                      const newCompletedLectures = [...completedLectureIds, lectureId];
+                      setCompletedLectureIds(newCompletedLectures);
+                      completedLectureIdsRef.current = newCompletedLectures;
+                      
+                      // Check if all lectures are completed
+                      const totalLectures = allLectures.length;
+                      if (newCompletedLectures.length === totalLectures) {
+                        toast.success('🎓 Chúc mừng! Bạn đã hoàn thành khóa học!', {
+                          description: 'Chứng chỉ của bạn đã được tạo.',
+                          duration: 5000,
+                        });
+                      } else if (nextLecture) {
+                        // Auto navigate to next lecture
+                        setTimeout(() => {
+                          isNavigatingAfterCompletionRef.current = true;
+                          lastCheckedLectureIdRef.current = nextLecture.lecture.id;
+                          router.push(`/learning/${courseId}/${nextLecture.lecture.id}`);
+                        }, 2000);
+                      }
+                    }
+                  }}
                 />
               )}
 

@@ -13,6 +13,7 @@ export type ChapterLecture = {
   isPreview?: boolean;
   orderIndex: number;
   fileUrl?: string | null;
+  requiresQuiz?: boolean;
 };
 
 export type Chapter = {
