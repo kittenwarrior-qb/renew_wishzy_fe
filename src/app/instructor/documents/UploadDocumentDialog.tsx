@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ import { Upload, File, X } from "lucide-react";
 import { uploadDocument } from "@/services/uploads";
 import { notify } from "@/components/shared/admin/Notifications";
 import { api } from "@/lib/api";
+import { apiLogger } from "@/utils/apiLogger";
 
 interface UploadDocumentDialogProps {
   open: boolean;
@@ -29,6 +31,7 @@ export function UploadDocumentDialog({
   onOpenChange,
   onUploadSuccess,
 }: UploadDocumentDialogProps) {
+  const queryClient = useQueryClient();
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [selectedCourseId, setSelectedCourseId] = React.useState<string>("");
   const [documentDescription, setDocumentDescription] = React.useState<string>("");
@@ -58,7 +61,7 @@ export function UploadDocumentDialog({
       const coursesData = response.data?.data?.items || [];
       setCourses(coursesData);
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      apiLogger.logError('/courses/instructor/my-courses', error, 'GET');
       notify({
         title: "Lỗi",
         description: "Không thể tải danh sách khóa học",
@@ -166,6 +169,21 @@ export function UploadDocumentDialog({
         variant: "success"
       });
 
+      // Invalidate all documents queries to refresh both documents page and course detail page
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["instructor", "documents"] });
+      
+      // Invalidate course documents for the specific course
+      queryClient.invalidateQueries({ 
+        queryKey: ["documents", "course", selectedCourseId],
+      });
+      
+      // Also invalidate lecture documents for all lectures in the course (if needed)
+      queryClient.invalidateQueries({ 
+        queryKey: ["documents", "lecture"],
+        exact: false 
+      });
+
       // Reset form
       handleReset();
       onOpenChange(false);
@@ -176,7 +194,7 @@ export function UploadDocumentDialog({
       }
 
     } catch (error: any) {
-      console.error('Error uploading document:', error);
+      apiLogger.logError('/documents (upload)', error, 'POST');
       notify({
         title: "Lỗi upload",
         description: error?.message || "Không thể tải lên tài liệu",

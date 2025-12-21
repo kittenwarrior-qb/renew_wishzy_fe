@@ -1,21 +1,15 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useDebounce } from './useDebounce';
 import { Course, useCourseList, useInstructorSearch, Instructor } from '@/components/shared/course/useCourse';
+import { useQuizzes, Quiz } from '@/src/hooks/useQuizzes';
 import { Loader2, BookOpen, User, FileText, Search } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
 
-
-interface Exam {
-  id: string;
-  title: string;
-  duration: number;
-  questionCount: number;
-}
 
 
 interface SearchHeaderDropdownProps {
@@ -28,26 +22,9 @@ export const SearchHeaderDropdown = ({ query, isOpen, onClose }: SearchHeaderDro
   const debouncedQuery = useDebounce(query, 300);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  
-  const [exams, setExams] = useState<Exam[]>([]);
-  
-  useEffect(() => {
-    if (debouncedQuery.length > 2 && isOpen) {
-      const mockExams: Exam[] = [
-        { id: '1', title: 'Kiểm tra giữa kỳ JavaScript', duration: 60, questionCount: 30 },
-        { id: '2', title: 'Bài kiểm tra React Hooks', duration: 45, questionCount: 20 },
-        { id: '3', title: 'Lập giá cuối kỳ TypeScript', duration: 90, questionCount: 40 }
-      ];
-      
-      const filteredExams = mockExams
-        .filter(exam => exam.title.toLowerCase().includes(debouncedQuery.toLowerCase()))
-        .slice(0, 5);
-      
-      setExams(filteredExams);
-    } else {
-      setExams([]);
-    }
-  }, [debouncedQuery, isOpen]);
+
+  // Fetch quizzes using real API
+  const { data: quizResults, isLoading: isLoadingQuizzes } = useQuizzes(1, 5, true);
 
   const { data: courseResults, isLoading: isLoadingCourses } = useCourseList({
     name: debouncedQuery,
@@ -84,18 +61,21 @@ export const SearchHeaderDropdown = ({ query, isOpen, onClose }: SearchHeaderDro
   // Only use the results when the query is valid
   const courses = debouncedQuery.length > 2 ? (courseResults?.data || []) : [];
   const instructors = debouncedQuery.length > 2 ? (instructorResults?.data || []) : [];
-  const isLoading = (debouncedQuery.length > 2) && (isLoadingCourses || isLoadingInstructors);
-  const noResults = debouncedQuery.length > 2 && !isLoading && courses.length === 0 && instructors.length === 0 && exams.length === 0;
   
-  const totalResults = courses.length + instructors.length + exams.length;
+  // Filter quizzes by search query (case insensitive)
+  const quizzes = debouncedQuery.length > 2 && quizResults?.data 
+    ? quizResults.data.filter((quiz: Quiz) => 
+        quiz.title.toLowerCase().includes(debouncedQuery.toLowerCase())
+      ).slice(0, 5)
+    : [];
+  
+  const isLoading = (debouncedQuery.length > 2) && (isLoadingCourses || isLoadingInstructors || isLoadingQuizzes);
+  const noResults = debouncedQuery.length > 2 && !isLoading && courses.length === 0 && instructors.length === 0 && quizzes.length === 0;
+  
+  const totalResults = courses.length + instructors.length + quizzes.length;
   
   const handleViewAllResults = () => {
-    // Get current locale from URL path
-    const pathSegments = window.location.pathname.split('/');
-    const locale = pathSegments[1] === 'vi' || pathSegments[1] === 'en' ? pathSegments[1] : 'vi';
-    
-    // Navigate to search page with query
-    router.push(`/${locale}/search?search=${encodeURIComponent(debouncedQuery.trim())}`);
+    router.push(`/search?search=${encodeURIComponent(debouncedQuery.trim())}`);
     onClose();
   };
 
@@ -240,16 +220,16 @@ export const SearchHeaderDropdown = ({ query, isOpen, onClose }: SearchHeaderDro
         </div>
       )}
 
-      {exams.length > 0 && (
+      {quizzes.length > 0 && (
         <div>
           <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">
-            Bài kiểm tra ({exams.length})
+            Bài kiểm tra ({quizzes.length})
           </div>
           <ul>
-            {exams.map((exam) => (
-              <li key={exam.id}>
+            {quizzes.map((quiz: Quiz) => (
+              <li key={quiz.id}>
                 <Link 
-                  href={`/exams/${exam.id}`}
+                  href={`/quiz/${quiz.id}`}
                   className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   onClick={onClose}
                 >
@@ -258,11 +238,16 @@ export const SearchHeaderDropdown = ({ query, isOpen, onClose }: SearchHeaderDro
                       <FileText className="h-5 w-5 text-gray-400" />
                     </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">{exam.title}</h4>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">{quiz.title}</h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {exam.duration} phút • {exam.questionCount} câu hỏi
+                      {quiz.timeLimit ? `${quiz.timeLimit} phút` : 'Không giới hạn'} • {quiz.questions?.length || 0} câu hỏi
                     </p>
+                    {quiz.creator && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        {quiz.creator.fullName}
+                      </p>
+                    )}
                   </div>
                 </Link>
               </li>
