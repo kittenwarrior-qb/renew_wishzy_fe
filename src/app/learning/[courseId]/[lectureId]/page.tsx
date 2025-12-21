@@ -8,7 +8,7 @@ import { VideoPlayer } from '@/components/shared/learning/VideoPlayer';
 import { LectureInfo } from '@/components/shared/learning/LectureInfo';
 import { LearningComment } from '@/components/shared/learning/LearningComment';
 import CourseComment from '@/components/shared/course/CourseComment';
-import { useChapterListForEnrolled } from '@/components/shared/chapter/useChapter';
+import { useChapterList, useChapterListForEnrolled } from '@/components/shared/chapter/useChapter';
 import { useCourseDetail } from '@/components/shared/course/useCourse';
 import { enrollmentService } from '@/services/enrollment';
 import { usePrefetchLearning, usePrefetchAdjacentLectures } from '@/hooks/usePrefetchLearning';
@@ -70,8 +70,22 @@ export default function LearningPage() {
   // Fetch course data
   const { data: courseData, isLoading: isCourseLoading } = useCourseDetail(courseId);
   
-  // Fetch chapters with lectures (use enrolled API to get full lecture data including fileUrl)
-  const { data: chaptersData, isLoading: isChaptersLoading } = useChapterListForEnrolled(courseId, !!enrollmentId);
+  // Try enrolled API first, fallback to public API if it fails
+  const { 
+    data: enrolledChaptersData, 
+    isLoading: isEnrolledChaptersLoading,
+    isError: isEnrolledChaptersError 
+  } = useChapterListForEnrolled(courseId);
+  
+  // Fallback to public API if enrolled API fails (e.g., endpoint not deployed yet)
+  const { 
+    data: publicChaptersData, 
+    isLoading: isPublicChaptersLoading 
+  } = useChapterList(courseId);
+  
+  // Use enrolled data if available, otherwise fallback to public data
+  const chaptersData = isEnrolledChaptersError ? publicChaptersData : enrolledChaptersData;
+  const isChaptersLoading = isEnrolledChaptersError ? isPublicChaptersLoading : isEnrolledChaptersLoading;
 
   // Process data to find current lecture and chapter
   const { lecture, chapter, course, allLectures } = useMemo((): {

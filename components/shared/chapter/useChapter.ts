@@ -66,7 +66,7 @@ export const useChapterList = (courseId?: string) => {
 };
 
 // Hook for enrolled users - returns full lecture data including fileUrl
-export const useChapterListForEnrolled = (courseId?: string, enabled = true) => {
+export const useChapterListForEnrolled = (courseId?: string) => {
   return useQuery<{ items: Chapter[] }>({
     queryKey: [ENDPOINT, "course", courseId, "enrolled"],
     queryFn: async () => {
@@ -75,9 +75,10 @@ export const useChapterListForEnrolled = (courseId?: string, enabled = true) => 
       );
       return result;
     },
-    enabled: !!courseId && enabled,
+    enabled: !!courseId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
+    retry: 1, // Only retry once if fails (e.g., not enrolled)
     select: (res: any): { items: Chapter[] } => {
       const payload = res?.data ?? res;
       const items = payload?.items ?? [];
