@@ -43,7 +43,7 @@ export type CourseFormValue = {
   notes?: string;
 };
 
-export type Course = CourseFormValue & { id: string };
+export type CourseFormData = CourseFormValue & { id: string };
 
 const formatVND = (n: number) => new Intl.NumberFormat("vi-VN").format(n);
 

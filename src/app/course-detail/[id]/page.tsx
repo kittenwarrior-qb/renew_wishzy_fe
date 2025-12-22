@@ -221,9 +221,10 @@ const CourseDetail = ({ params }: { params: Promise<{ id: string }> }) => {
                         {/* Course Description */}
                         <div className="border-b pb-6">
                             <h1 className="py-0 text-lg mb-2 font-semibold">Mô tả khoá học</h1>
-                            <p className="leading-relaxed">
-                                {course.description}
-                            </p>
+                            <div 
+                                className="leading-relaxed prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{ __html: course.description }}
+                            />
                         </div>
 
                         {/* Chapter */}
