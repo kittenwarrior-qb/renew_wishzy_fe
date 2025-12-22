@@ -13,7 +13,8 @@ import { useSeoScore } from "@/hooks/useSeoScore"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { BackButton } from "@/components/shared/common/BackButton"
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
-import { Image as ImageIcon, User } from "lucide-react"
+import { Image as ImageIcon, User, Sparkles, Zap } from "lucide-react"
+import { AiBlogAssistant } from "@/components/shared/post/AiBlogAssistant"
 import { uploadImage } from "@/services/uploads"
 import UploadProgressOverlay from "@/components/shared/upload/UploadProgressOverlay"
 import { notify } from "@/components/shared/admin/Notifications"
@@ -147,7 +148,9 @@ export default function Page() {
         <div className="flex items-center gap-4">
           <BackButton fallbackHref={`/admin/posts`} disabled={creating} className="h-10 w-10 rounded-xl bg-background shadow-sm border" />
           <div className="flex flex-col">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Viết bài mới</h1>
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">Viết bài mới</h1>
+            </div>
             <p className="text-sm text-muted-foreground">Soạn thảo nội dung và cấu hình bài viết blog của bạn.</p>
           </div>
         </div>
@@ -329,6 +332,13 @@ export default function Page() {
           </div>
         </aside>
       </div>
+      <AiBlogAssistant
+        title={title}
+        onSelectContent={setContent}
+        onSelectDescription={setDescription}
+        onSelectTitle={setTitle}
+        onSelectThumbnail={setImage}
+      />
     </div>
   )
 }

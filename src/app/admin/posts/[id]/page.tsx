@@ -27,8 +27,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import Switch from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { useDeleteCommentBlog, useCreateCommentBlog } from "@/components/shared/blog/useCommentBlog"
-import { EyeOff, Reply, Send, X, Loader2 } from "lucide-react"
+import { EyeOff, Reply, Send, X, Loader2, Sparkles } from "lucide-react"
 import { ConfirmDialog } from "@/components/shared/admin/ConfirmDialog"
+import { AiBlogAssistant } from "@/components/shared/post/AiBlogAssistant"
 
 export default function Page() {
     const router = useRouter()
@@ -153,7 +154,16 @@ export default function Page() {
                 <div className="flex items-center gap-4">
                     <BackButton fallbackHref={`/admin/posts`} disabled={updating} className="h-10 w-10 rounded-xl bg-background shadow-sm border" />
                     <div className="flex flex-col">
-                        <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa bài viết</h1>
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa bài viết</h1>
+                            <AiBlogAssistant
+                                title={title}
+                                onSelectContent={setContent}
+                                onSelectDescription={setDescription}
+                                onSelectTitle={setTitle}
+                                onSelectThumbnail={setImage}
+                            />
+                        </div>
                         <div className="flex flex-wrap items-center gap-4 mt-1">
                             <span className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
                                 <CalendarIcon className="h-3 w-3" />
