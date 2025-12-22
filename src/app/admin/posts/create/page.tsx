@@ -38,6 +38,10 @@ export default function Page() {
   const [categoryId, setCategoryId] = React.useState<string>("")
   const [categories, setCategories] = React.useState<any[]>([])
 
+  // Validation states
+  const [errors, setErrors] = React.useState<{ title?: string; content?: string }>({})
+  const [touched, setTouched] = React.useState<{ title?: boolean; content?: boolean }>({})
+
   React.useEffect(() => {
     categoryBlogService.list({ limit: 100 }).then((res: any) => {
       const payload = res?.data ?? res
@@ -89,10 +93,33 @@ export default function Page() {
 
   const { mutate: createPost, isPending: creating } = useCreatePost()
 
+  // Validation function
+  const validate = React.useCallback(() => {
+    const newErrors: { title?: string; content?: string } = {}
+    if (!title.trim()) newErrors.title = "Vui lòng nhập tiêu đề bài viết"
+    if (!content.trim()) newErrors.content = "Vui lòng nhập nội dung bài viết"
+    return newErrors
+  }, [title, content])
+
+  // Update errors when values change (only for touched fields)
+  React.useEffect(() => {
+    const newErrors = validate()
+    setErrors(prev => ({
+      title: touched.title ? newErrors.title : prev.title,
+      content: touched.content ? newErrors.content : prev.content,
+    }))
+  }, [title, content, touched, validate])
+
   const canSave = title.trim().length > 0 && content.trim().length > 0
 
   const handleSave = React.useCallback(() => {
-    if (!canSave || creating) return
+    // Mark all fields as touched to show all errors
+    setTouched({ title: true, content: true })
+    const validationErrors = validate()
+    setErrors(validationErrors)
+    
+    if (Object.keys(validationErrors).length > 0 || creating) return
+    
     createPost({
       title: title.trim(),
       content,
@@ -101,7 +128,7 @@ export default function Page() {
       isActive,
       categoryId: categoryId || undefined,
     }, { onSuccess: () => router.replace(`/admin/posts`) })
-  }, [canSave, creating, createPost, title, content, description, image, isActive, categoryId, router])
+  }, [validate, creating, createPost, title, content, description, image, isActive, categoryId, router])
 
   React.useEffect(() => {
     setPrimaryAction({
@@ -128,12 +155,17 @@ export default function Page() {
         <div className="lg:col-span-2 space-y-6">
           <div className="rounded-lg border bg-card p-4 space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Tiêu đề bài viết</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                Tiêu đề bài viết <span className="text-destructive">*</span>
+              </label>
               <Input
                 placeholder="Nhập tiêu đề..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                onBlur={() => setTouched(prev => ({ ...prev, title: true }))}
+                className={errors.title ? "border-destructive focus-visible:ring-destructive" : ""}
               />
+              {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
             </div>
 
             <div className="space-y-2">
@@ -149,9 +181,17 @@ export default function Page() {
 
           <div className="rounded-lg border bg-card p-4 space-y-2">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Nội dung bài viết</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                Nội dung bài viết <span className="text-destructive">*</span>
+              </label>
             </div>
-            <PostEditor value={content} onChange={setContent} />
+            <div 
+              className={errors.content ? "ring-1 ring-destructive rounded-md" : ""}
+              onBlur={() => setTouched(prev => ({ ...prev, content: true }))}
+            >
+              <PostEditor value={content} onChange={setContent} />
+            </div>
+            {errors.content && <p className="text-sm text-destructive mt-1">{errors.content}</p>}
           </div>
         </div>
 
