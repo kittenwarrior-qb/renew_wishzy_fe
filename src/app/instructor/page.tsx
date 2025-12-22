@@ -275,18 +275,41 @@ const InstructorDashboard = () => {
                   <th className="px-4 py-3 text-left">Tên khoá học</th>
                   <th className="px-4 py-3 text-center">Đánh giá</th>
                   <th className="px-4 py-3 text-center">Học viên</th>
+                  <th className="px-4 py-3 text-right">Giá gốc</th>
                   <th className="px-4 py-3 text-right">Doanh thu NET</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {stats?.courses?.map((course) => (
-                  <tr key={course.courseId} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-medium"><Link href={`/instructor/courses/${course.courseId}`} className="hover:text-primary transition-colors">{course.courseName}</Link></td>
-                    <td className="px-4 py-3 text-center"><div className="flex items-center justify-center gap-1"><Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /> {course.averageRating?.toFixed(1) || "0.0"}</div></td>
-                    <td className="px-4 py-3 text-center">{course.studentCount}</td>
-                    <td className="px-4 py-3 text-right font-bold text-primary">{formatCurrency(course.revenue || 0)}</td>
+                {stats?.courses?.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                      Chưa có khóa học nào
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  stats?.courses?.map((course) => (
+                    <tr key={course.courseId} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 font-medium">
+                        <Link href={`/instructor/courses/${course.courseId}`} className="hover:text-primary transition-colors">
+                          {course.courseName}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /> 
+                          {course.averageRating?.toFixed(1) || "0.0"}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">{course.studentCount}</td>
+                      <td className="px-4 py-3 text-right font-medium text-muted-foreground">
+                        {course?.grossRevenue && course?.grossRevenue > 0 ? formatCurrency(course?.grossRevenue) : 'Miễn phí'}
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-primary">
+                        {formatCurrency(course.revenue || 0)}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
