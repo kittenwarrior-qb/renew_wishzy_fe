@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ChevronRight, Play, CheckCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Play, CheckCircle, FileQuestion } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { enrollmentService } from '@/src/services/enrollment';
@@ -232,6 +232,12 @@ export function CourseSidebar({
                           )}>
                             {lecture.title}
                           </div>
+                          {lecture.requiresQuiz && !finishedLectures.includes(lecture.id) && (
+                            <div className="flex items-center gap-1 text-xs text-orange-500 mt-0.5">
+                              <FileQuestion className="w-3 h-3" />
+                              <span>Có bài kiểm tra</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
