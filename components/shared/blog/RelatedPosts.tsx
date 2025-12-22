@@ -102,7 +102,8 @@ export const RelatedPosts = ({
                                                     alt={post.author?.fullName || "Author"}
                                                     width={20}
                                                     height={20}
-                                                    className="rounded-full"
+                                                    unoptimized
+                                                    className="rounded-full mr-2"
                                                 />
                                                 {post.author?.fullName}
                                             </div>

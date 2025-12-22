@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Trash2, ArrowLeft } from "lucide-react";
 import { notify } from "@/components/shared/admin/Notifications";
 import Link from "next/link";
+import { apiLogger } from "@/utils/apiLogger";
 
 interface AnswerOption {
   optionText: string;
@@ -207,9 +208,9 @@ const EditQuizPage = () => {
           orderIndex: opt.orderIndex,
         })),
       })),
-    };
+    } as Partial<Quiz>;
 
-    console.log('Frontend payload:', JSON.stringify(payload, null, 2));
+    apiLogger.logRequest(`/quizzes/${quizId}`, 'PUT', payload);
 
     updateQuiz(
       { id: quizId, data: payload },

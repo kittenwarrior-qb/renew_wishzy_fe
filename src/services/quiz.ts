@@ -53,10 +53,31 @@ export const getQuizzes = async (page: number = 1, limit: number = 100): Promise
   limit: number;
   totalPages: number;
 }> => {
-  const response = await api.get("/quizzes", {
-    params: { page, limit, isPublic: true }
-  });
-  return response.data;
+  try {
+    const response = await api.get("/quizzes", {
+      params: { page, limit, isPublic: true }
+    });
+    
+    // Handle wrapped response: { success, data: {...}, message }
+    const root = response.data?.data || response.data || {};
+    
+    return {
+      data: root.data || root.items || [],
+      total: root.total || 0,
+      page: root.page || page,
+      limit: root.limit || limit,
+      totalPages: root.totalPages || 0,
+    };
+  } catch (error) {
+    console.error('Failed to fetch quizzes:', error);
+    return {
+      data: [],
+      total: 0,
+      page,
+      limit,
+      totalPages: 0,
+    };
+  }
 };
 
 // Lấy danh sách quiz attempts của user

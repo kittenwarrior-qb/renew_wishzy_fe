@@ -7,6 +7,9 @@ interface InstructorStats {
   totalCourses: number;
   totalFeedbacks: number;
   overallRating: number;
+  instructorPercentage?: number;
+  grossRevenue?: number;
+  netRevenue?: number;
   courses: {
     courseId: string;
     courseName: string;
@@ -14,6 +17,7 @@ interface InstructorStats {
     studentCount: number;
     commentCount: number;
     revenue: number;
+    grossRevenue?: number;
   }[];
 }
 
@@ -39,6 +43,9 @@ interface RevenueStats {
   totalCourses: number;
   averageRevenuePerCourse: number;
   growthRate: number;
+  instructorPercentage?: number;
+  systemRevenue?: number;
+  instructorRevenue?: number;
   details: RevenueDataPoint[];
   startDate?: string;
   endDate?: string;

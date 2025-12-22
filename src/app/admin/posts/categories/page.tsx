@@ -29,6 +29,8 @@ export default function Page() {
   // Form State
   const [name, setName] = React.useState("")
   const [description, setDescription] = React.useState("")
+  const [nameError, setNameError] = React.useState("")
+  const [nameTouched, setNameTouched] = React.useState(false)
 
   const [openDelete, setOpenDelete] = React.useState(false)
   const [targetDelete, setTargetDelete] = React.useState<{ id: string; name: string } | null>(null)
@@ -81,6 +83,8 @@ export default function Page() {
     setEditingId(null)
     setName("")
     setDescription("")
+    setNameError("")
+    setNameTouched(false)
     setOpenDialog(true)
   }
 
@@ -88,11 +92,20 @@ export default function Page() {
     setEditingId(c.id)
     setName(c.name)
     setDescription(c.description || "")
+    setNameError("")
+    setNameTouched(false)
     setOpenDialog(true)
   }
 
   const handleSave = () => {
-    if (!name.trim()) return
+    // Validate
+    setNameTouched(true)
+    if (!name.trim()) {
+      setNameError("Vui lòng nhập tên danh mục")
+      return
+    }
+    setNameError("")
+    
     const payload = { name, description }
 
     if (editingId) {
@@ -191,8 +204,23 @@ export default function Page() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tên danh mục</label>
-              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Nhập tên danh mục..." />
+              <label className="text-sm font-medium">
+                Tên danh mục <span className="text-destructive">*</span>
+              </label>
+              <Input 
+                value={name} 
+                onChange={e => {
+                  setName(e.target.value)
+                  if (nameTouched && e.target.value.trim()) setNameError("")
+                }}
+                onBlur={() => {
+                  setNameTouched(true)
+                  if (!name.trim()) setNameError("Vui lòng nhập tên danh mục")
+                }}
+                placeholder="Nhập tên danh mục..." 
+                className={nameError ? "border-destructive focus-visible:ring-destructive" : ""}
+              />
+              {nameError && <p className="text-sm text-destructive">{nameError}</p>}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Mô tả</label>

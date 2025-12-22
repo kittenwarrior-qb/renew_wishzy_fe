@@ -13,15 +13,15 @@ import { useSeoScore } from "@/hooks/useSeoScore"
 import { LoadingOverlay } from "@/components/shared/common/LoadingOverlay"
 import { BackButton } from "@/components/shared/common/BackButton"
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
-import { Image as ImageIcon } from "lucide-react"
+import { Image as ImageIcon, User } from "lucide-react"
 import { uploadImage } from "@/services/uploads"
 import UploadProgressOverlay from "@/components/shared/upload/UploadProgressOverlay"
 import { notify } from "@/components/shared/admin/Notifications"
 import { categoryBlogService } from "@/services/category-blog"
 import { useAppStore } from "@/stores/useAppStore"
-import { User } from "lucide-react"
 import Switch from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
 
 export default function Page() {
   const router = useRouter()
@@ -37,6 +37,10 @@ export default function Page() {
   const [image, setImage] = React.useState("")
   const [categoryId, setCategoryId] = React.useState<string>("")
   const [categories, setCategories] = React.useState<any[]>([])
+
+  // Validation states
+  const [errors, setErrors] = React.useState<{ title?: string; content?: string }>({})
+  const [touched, setTouched] = React.useState<{ title?: boolean; content?: boolean }>({})
 
   React.useEffect(() => {
     categoryBlogService.list({ limit: 100 }).then((res: any) => {
@@ -89,10 +93,33 @@ export default function Page() {
 
   const { mutate: createPost, isPending: creating } = useCreatePost()
 
+  // Validation function
+  const validate = React.useCallback(() => {
+    const newErrors: { title?: string; content?: string } = {}
+    if (!title.trim()) newErrors.title = "Vui lòng nhập tiêu đề bài viết"
+    if (!content.trim()) newErrors.content = "Vui lòng nhập nội dung bài viết"
+    return newErrors
+  }, [title, content])
+
+  // Update errors when values change (only for touched fields)
+  React.useEffect(() => {
+    const newErrors = validate()
+    setErrors(prev => ({
+      title: touched.title ? newErrors.title : prev.title,
+      content: touched.content ? newErrors.content : prev.content,
+    }))
+  }, [title, content, touched, validate])
+
   const canSave = title.trim().length > 0 && content.trim().length > 0
 
   const handleSave = React.useCallback(() => {
-    if (!canSave || creating) return
+    // Mark all fields as touched to show all errors
+    setTouched({ title: true, content: true })
+    const validationErrors = validate()
+    setErrors(validationErrors)
+
+    if (Object.keys(validationErrors).length > 0 || creating) return
+
     createPost({
       title: title.trim(),
       content,
@@ -101,7 +128,7 @@ export default function Page() {
       isActive,
       categoryId: categoryId || undefined,
     }, { onSuccess: () => router.replace(`/admin/posts`) })
-  }, [canSave, creating, createPost, title, content, description, image, isActive, categoryId, router])
+  }, [validate, creating, createPost, title, content, description, image, isActive, categoryId, router])
 
   React.useEffect(() => {
     setPrimaryAction({
@@ -135,13 +162,20 @@ export default function Page() {
             </div>
             <div className="p-6 space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium ml-1">Tiêu đề bài viết</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 ml-1">
+                  Tiêu đề bài viết <span className="text-destructive">*</span>
+                </label>
                 <Input
                   placeholder="Nhập tiêu đề thu hút người đọc..."
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="text-lg font-medium py-6 px-4 rounded-xl border-muted focus-visible:ring-primary/20"
+                  onBlur={() => setTouched(prev => ({ ...prev, title: true }))}
+                  className={cn(
+                    "text-lg font-medium py-6 px-4 rounded-xl border-muted focus-visible:ring-primary/20",
+                    errors.title && "border-destructive focus-visible:ring-destructive"
+                  )}
                 />
+                {errors.title && <p className="text-xs text-destructive ml-1">{errors.title}</p>}
               </div>
 
               <div className="space-y-2">
@@ -157,10 +191,6 @@ export default function Page() {
           </section>
 
           <section className="bg-card rounded-2xl border shadow-sm overflow-hidden min-h-[500px]">
-            <div className="px-6 py-4 border-b bg-muted/30 flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Soạn thảo bài viết</h2>
-              <span className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-full font-bold">LIVE EDITOR</span>
-            </div>
             <div className="p-1 sm:p-4 prose-none">
               <PostEditor value={content} onChange={setContent} />
             </div>

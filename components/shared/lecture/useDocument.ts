@@ -15,6 +15,16 @@ export function useDocumentsByLecture(lectureId: string | undefined) {
   });
 }
 
+// Fetch documents by course ID
+export function useDocumentsByCourse(courseId: string | undefined) {
+  return useQuery({
+    queryKey: ["documents", "course", courseId],
+    queryFn: () => documentService.getByEntity(courseId!, "course"),
+    enabled: !!courseId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
 // Create document mutation
 export function useCreateDocument() {
   const queryClient = useQueryClient();
@@ -22,8 +32,19 @@ export function useCreateDocument() {
   return useMutation({
     mutationFn: (data: CreateDocumentDto) => documentService.create(data),
     onSuccess: (_, variables) => {
+      // Invalidate based on entity type
+      if (variables.entityType === "course") {
+        queryClient.invalidateQueries({
+          queryKey: ["documents", "course", variables.entityId],
+        });
+      } else {
+        queryClient.invalidateQueries({
+          queryKey: ["documents", "lecture", variables.entityId],
+        });
+      }
+      // Also invalidate instructor documents list
       queryClient.invalidateQueries({
-        queryKey: ["documents", "lecture", variables.entityId],
+        queryKey: ["instructor", "documents"],
       });
       notify({ title: "Đã thêm tài liệu", variant: "success" });
     },
@@ -45,8 +66,16 @@ export function useUpdateDocument() {
     mutationFn: ({ id, lectureId, ...data }: UpdateDocumentDto & { id: string; lectureId: string }) =>
       documentService.update(id, data),
     onSuccess: (_, variables) => {
+      // Invalidate both lecture and course queries (lectureId might be courseId)
       queryClient.invalidateQueries({
         queryKey: ["documents", "lecture", variables.lectureId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["documents", "course", variables.lectureId],
+      });
+      // Also invalidate instructor documents list
+      queryClient.invalidateQueries({
+        queryKey: ["instructor", "documents"],
       });
       notify({ title: "Đã cập nhật tài liệu", variant: "success" });
     },
@@ -67,8 +96,16 @@ export function useDeleteDocument() {
   return useMutation({
     mutationFn: ({ id }: { id: string; lectureId: string }) => documentService.remove(id),
     onSuccess: (_, variables) => {
+      // Invalidate both lecture and course queries (lectureId might be courseId)
       queryClient.invalidateQueries({
         queryKey: ["documents", "lecture", variables.lectureId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["documents", "course", variables.lectureId],
+      });
+      // Also invalidate instructor documents list
+      queryClient.invalidateQueries({
+        queryKey: ["instructor", "documents"],
       });
       notify({ title: "Đã xoá tài liệu", variant: "success" });
     },

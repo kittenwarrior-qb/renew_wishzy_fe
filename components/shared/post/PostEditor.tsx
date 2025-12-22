@@ -27,7 +27,7 @@ export function PostEditor({ value, onChange }: Props) {
   if (!ready) {
     return (
       <textarea
-        className="w-full min-h-[280px] p-3 text-sm rounded-md border bg-background"
+        className="w-full min-h-[300px] p-4 text-base rounded-2xl border bg-background shadow-inner"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Nhập nội dung bài viết..."
@@ -53,7 +53,6 @@ export function PostEditor({ value, onChange }: Props) {
         editor.setData?.(next)
         onChange(next)
       } else {
-        // fallback nếu vì lý do nào đó editorRef chưa có
         const imgHtml = `<p><img src="${url}" alt="" /></p>`
         const next = value ? `${value}${imgHtml}` : imgHtml
         onChange(next)
@@ -68,48 +67,43 @@ export function PostEditor({ value, onChange }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="text-xs font-bold px-3 py-1.5 rounded-lg border-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-all flex items-center gap-1.5"
-            disabled={uploading}
-          >
-            {uploading ? "Đang tải ảnh..." : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
-                Chèn ảnh vào bài
-              </>
-            )}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={async (e) => {
-              const f = e.target.files?.[0]
-              if (f) await handleInsertImage(f)
-              e.target.value = "" // cho phép chọn lại cùng một file
-            }}
-          />
-        </div>
-        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
-          <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-          Sẵn sàng soạn thảo
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="text-[11px] font-bold px-4 py-2 rounded-xl border bg-background hover:bg-muted/50 transition-all flex items-center gap-2 shadow-sm"
+          disabled={uploading}
+        >
+          {uploading ? (
+            "Đang tải..."
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+              Tải ảnh lên
+            </>
+          )}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={async (e) => {
+            const f = e.target.files?.[0]
+            if (f) await handleInsertImage(f)
+            e.target.value = ""
+          }}
+        />
       </div>
 
-      <div className="w-full overflow-hidden rounded-xl border shadow-inner bg-background relative group">
+      <div className="w-full overflow-hidden rounded-2xl border shadow-sm bg-background relative">
         <style dangerouslySetInnerHTML={{
           __html: `
                     .ck-editor__editable {
                         min-height: 500px !important;
                         max-height: 1000px !important;
                         overflow-y: auto !important;
-                        resize: vertical !important;
                         padding: 2rem !important;
                         line-height: 1.8 !important;
                         font-family: inherit !important;
@@ -119,17 +113,16 @@ export function PostEditor({ value, onChange }: Props) {
                         border: none !important;
                     }
                     .ck.ck-editor__top {
-                        border-bottom: 1px solidhsl(var(--border)) !important;
+                        border-bottom: 1px solid hsl(var(--border)) !important;
                     }
                     .ck.ck-toolbar {
                         border: none !important;
-                        background:hsl(var(--muted)/0.3) !important;
+                        background: hsl(var(--muted)/0.3) !important;
                         padding: 0.5rem !important;
                     }
                     .ck-content {
                         font-size: 16px !important;
                     }
-                    /* Tùy chỉnh thanh cuộn cho editor */
                     .ck-editor__editable::-webkit-scrollbar {
                         width: 8px;
                     }
@@ -137,21 +130,22 @@ export function PostEditor({ value, onChange }: Props) {
                         background: transparent;
                     }
                     .ck-editor__editable::-webkit-scrollbar-thumb {
-                        background:hsl(var(--muted-foreground)/0.2);
+                        background: hsl(var(--muted-foreground)/0.2);
                         border-radius: 10px;
                     }
                     .ck-editor__editable::-webkit-scrollbar-thumb:hover {
-                        background:hsl(var(--muted-foreground)/0.4);
-                    }
-                    /* Cho phép cuộn ngang nếu nội dung quá rộng */
-                    .ck.ck-editor__main {
-                        overflow-x: auto !important;
-                        max-width: 100%;
+                        background: hsl(var(--muted-foreground)/0.4);
                     }
                 ` }} />
         <CKEditor
           editor={ClassicEditor}
           data={value}
+          config={{
+            toolbar: {
+              shouldNotGroupWhenFull: true
+            },
+            placeholder: 'Nhập nội dung bài viết...',
+          }}
           onReady={(editor: any) => {
             editorRef.current = editor
           }}

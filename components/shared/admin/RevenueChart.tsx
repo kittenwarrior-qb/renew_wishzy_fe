@@ -1,9 +1,6 @@
 'use client'
 
-import { useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { getDateRange } from '@/lib/format';
-import { format, subDays } from 'date-fns';
+import { useState } from 'react';
 import { RevenueMode } from '@/types/revenue';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -23,7 +20,6 @@ import {
     ChartData,
 } from 'chart.js';
 
-import { useDashboardData } from '@/hooks/useDashboardData';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Register ChartJS components
@@ -50,6 +46,7 @@ export interface RevenueChartProps {
         loading: boolean;
         error: string | null;
     };
+    onModeChange?: (mode: RevenueMode) => void;
 }
 
 export interface RevenueData {
@@ -74,12 +71,13 @@ const getSafeChartData = (data: RevenueApiResponse | null, mode: string): ChartD
     }
 
     // Format labels based on the selected mode
-    const formatLabel = (period: string): string => {
+    const formatLabel = (item: RevenueApiDataPoint): string => {
+        const period = item.period;
         if (!period) return '';
 
         try {
             if (mode === 'month') {
-                // For month view, show as YYYY-MM
+                // For month view, show as Th1/25
                 const parts = period.split('-');
                 if (parts.length < 2) return period;
 
@@ -88,15 +86,33 @@ const getSafeChartData = (data: RevenueApiResponse | null, mode: string): ChartD
                 const monthNames = ['Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6', 'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12'];
                 return `${monthNames[monthIndex] || month}/${String(year).slice(-2)}`;
 
-            } else if (mode === 'week' || mode === 'day') {
-                // For day/week view, show as DD/MM
+            } else if (mode === 'week') {
+                // For week view, show date range like "08/09-14/09"
+                // Use startDate and endDate from API response
+                if (item.startDate && item.endDate) {
+                    const formatDateShort = (dateStr: string) => {
+                        const parts = dateStr.split('-');
+                        if (parts.length < 3) return dateStr;
+                        const [, month, day] = parts;
+                        return `${day}/${month}`;
+                    };
+                    return `${formatDateShort(item.startDate)}-${formatDateShort(item.endDate)}`;
+                }
+                // Fallback to period if startDate/endDate not available
+                return `Tuần ${period.split('-')[1] || period}`;
+
+            } else if (mode === 'day') {
+                // For day view, show as DD/MM
                 const parts = period.split('-');
                 if (parts.length < 3) return period;
 
-                const [year, month, day] = parts;
+                const [, month, day] = parts;
                 const paddedDay = String(day || '').padStart(2, '0');
                 const paddedMonth = String(month || '').padStart(2, '0');
                 return `${paddedDay}/${paddedMonth}`;
+
+            } else if (mode === 'year') {
+                return period;
             }
         } catch (error) {
             console.error('Error formatting date:', error);
@@ -106,74 +122,47 @@ const getSafeChartData = (data: RevenueApiResponse | null, mode: string): ChartD
     };
 
     return {
-        labels: data.details.map((item: RevenueApiDataPoint) => formatLabel(item.period)),
+        labels: data.details.map((item: RevenueApiDataPoint) => formatLabel(item)),
         datasets: [{
             label: 'Doanh thu',
             data: data.details.map((item: RevenueApiDataPoint) => item.revenue),
             borderColor: 'rgba(99, 102, 241, 1)',
-            backgroundColor: 'rgba(99, 102, 241, 0.2)',
-            // @ts-ignore - tension is valid for line charts but not properly typed in Chart.js types
-            tension: 0.4,
-            fill: true
-        }]
+            backgroundColor: 'rgba(99, 102, 241, 0.6)',
+            borderRadius: 6,
+            borderSkipped: false,
+        } as any]
     };
 };
 
-export function RevenueChart({ data }: RevenueChartProps) {
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const pathname = usePathname();
+export function RevenueChart({ data: propsData, onModeChange }: RevenueChartProps) {
+    // Use local state for mode instead of URL - prevents page reload
+    const [mode, setMode] = useState<RevenueMode>('month');
+    
+    // Use data from props - no duplicate hook call needed
+    const currentData = propsData[mode] as RevenueApiResponse | null;
+    const { loading, error } = propsData;
 
-    // Get mode from URL or default to 'month'
-    const mode = (searchParams?.get('mode') as RevenueMode) || 'month';
-
-    // Get date range or default to current month
-    const today = useMemo(() => new Date(), []);
-    const startDate = searchParams?.get('startDate') ||
-        format(subDays(today, 30), 'yyyy-MM-dd');
-    const endDate = searchParams?.get('endDate') ||
-        format(today, 'yyyy-MM-dd');
-
-    const { chartData, refetch } = useDashboardData();
-    const currentData = chartData[mode as keyof typeof chartData] as RevenueApiResponse | null;
-    const { loading, error } = chartData;
-
-    // Memoize the refetch function
-    const refetchRevenue = useCallback(() => {
-        refetch.revenue(mode);
-    }, [refetch, mode]);
-
-    const handleTimeRangeChange = useCallback((value: string) => {
+    // Handle time range change - trigger lazy load if data doesn't exist
+    const handleTimeRangeChange = (value: string) => {
         const newMode = value as RevenueMode;
-        const params = new URLSearchParams(searchParams?.toString());
-
-        // Update mode
-        params.set('mode', newMode);
-
-        // Update dates based on mode
-        const { startDate, endDate } = getDateRange(newMode);
-        params.set('startDate', startDate);
-        params.set('endDate', endDate);
-
-        router.push(`${pathname}?${params.toString()}`);
-        refetch.revenue(newMode);
-    }, [refetch, searchParams, router, pathname, startDate, endDate]);
-
-    // Initial data fetch
-    useEffect(() => {
-        refetchRevenue();
-    }, [refetchRevenue]);
+        setMode(newMode);
+        
+        // If data for this mode doesn't exist, trigger lazy fetch
+        if (!propsData[newMode] && onModeChange) {
+            onModeChange(newMode);
+        }
+    };
 
     if (loading && !currentData) {
         return (
-            <Card className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <Card className="w-full border-0 shadow-none bg-transparent">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <Skeleton className="h-6 w-48" />
-                    <Skeleton className="h-10 w-96" />
+                    <Skeleton className="h-10 w-80" />
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[400px] w-full flex items-center justify-center">
-                        <Skeleton className="h-full w-full" />
+                    <div className="h-[350px] w-full flex items-center justify-center">
+                        <Skeleton className="h-full w-full rounded-xl" />
                     </div>
                 </CardContent>
             </Card>
@@ -182,43 +171,72 @@ export function RevenueChart({ data }: RevenueChartProps) {
 
     if (error) {
         return (
-            <Card className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
+            <Card className="w-full border-0 shadow-none bg-transparent">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                    <CardTitle className="text-base font-semibold">
                         Biểu đồ doanh thu
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[400px] w-full flex items-center justify-center text-red-500">
+                    <div className="h-[350px] w-full flex items-center justify-center text-red-500">
                         {error}
                     </div>
                 </CardContent>
             </Card>
         );
     }
+
     const options = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: 'top' as const,
+                display: false,
             },
             tooltip: {
                 mode: 'index' as const,
                 intersect: false,
+                backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                borderColor: 'rgba(99, 102, 241, 0.3)',
+                borderWidth: 1,
+                padding: 12,
+                cornerRadius: 8,
+                callbacks: {
+                    label: function(context: any) {
+                        return ` ${new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND',
+                            maximumFractionDigits: 0
+                        }).format(context.raw)}`;
+                    }
+                }
             },
         },
         scales: {
             y: {
                 beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.05)',
+                },
                 ticks: {
+                    color: '#6b7280',
+                    font: {
+                        size: 11,
+                    },
                     callback: function (value: number | string) {
-                        return new Intl.NumberFormat('vi-VN', {
-                            style: 'currency',
-                            currency: 'VND',
-                            maximumFractionDigits: 0
-                        }).format(Number(value));
+                        const num = Number(value);
+                        if (num >= 1000000) {
+                            return `${(num / 1000000).toFixed(1)}M`;
+                        } else if (num >= 1000) {
+                            return `${(num / 1000).toFixed(0)}K`;
+                        }
+                        return num.toLocaleString('vi-VN');
                     }
+                },
+                border: {
+                    display: false,
                 }
             },
             x: {
@@ -227,55 +245,73 @@ export function RevenueChart({ data }: RevenueChartProps) {
                     display: false,
                 },
                 ticks: {
-                    autoSkip: false,
-                    maxRotation: 45,
-                    minRotation: 45
+                    color: '#6b7280',
+                    font: {
+                        size: 11,
+                    },
+                    autoSkip: true,
+                    maxRotation: 0,
+                    minRotation: 0
+                },
+                border: {
+                    display: false,
                 }
             },
         },
-        barPercentage: 0.8,
-        categoryPercentage: 0.8
+        barPercentage: 0.7,
+        categoryPercentage: 0.8,
+        // Limit bar width when there are few data points
+        datasets: {
+            bar: {
+                maxBarThickness: 80,
+            }
+        }
+    };
+
+    const modeLabels: Record<RevenueMode, string> = {
+        day: 'theo ngày',
+        week: 'theo tuần', 
+        month: 'theo tháng',
+        year: 'theo năm'
     };
 
     return (
-        <Card className="w-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                    Biểu đồ doanh thu
-                </CardTitle>
+        <Card className="w-full border-0 shadow-none bg-transparent">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 px-0">
+                <div>
+                    <CardTitle className="text-base font-semibold text-foreground">
+                        Biểu đồ doanh thu
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Thống kê doanh thu {modeLabels[mode]}
+                    </p>
+                </div>
                 <Tabs value={mode} onValueChange={handleTimeRangeChange}>
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="day">Ngày</TabsTrigger>
-                        <TabsTrigger value="week">Tuần</TabsTrigger>
-                        <TabsTrigger value="month">Tháng</TabsTrigger>
-                        <TabsTrigger value="year">Năm</TabsTrigger>
+                    <TabsList className="bg-muted/50 p-1 h-10">
+                        <TabsTrigger value="day" className="text-sm px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            Ngày
+                        </TabsTrigger>
+                        <TabsTrigger value="week" className="text-sm px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            Tuần
+                        </TabsTrigger>
+                        <TabsTrigger value="month" className="text-sm px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            Tháng
+                        </TabsTrigger>
+                        <TabsTrigger value="year" className="text-sm px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            Năm
+                        </TabsTrigger>
                     </TabsList>
                 </Tabs>
             </CardHeader>
-            <CardContent>
-                <div className="h-[400px] w-full">
+            <CardContent className="px-0">
+                <div className="h-[350px] w-full">
                     {loading ? (
                         <div className="h-full w-full flex items-center justify-center">
-                            <Skeleton className="h-full w-full" />
+                            <Skeleton className="h-full w-full rounded-xl" />
                         </div>
                     ) : (
                         <Bar
-                            options={{
-                                ...options,
-                                plugins: {
-                                    ...options.plugins,
-                                    title: {
-                                        display: true,
-                                        text: `Doanh thu ${{ day: 'theo ngày', week: 'theo tuần', month: 'theo tháng', year: 'theo năm' }[mode]}`,
-                                        font: {
-                                            size: 16
-                                        },
-                                        padding: {
-                                            bottom: 20
-                                        }
-                                    }
-                                }
-                            }}
+                            options={options}
                             data={getSafeChartData(currentData, mode)}
                         />
                     )}

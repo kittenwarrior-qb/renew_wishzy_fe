@@ -18,9 +18,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Lecture, Chapter } from '@/src/types/learning';
 import { lectureService } from '@/src/services/lecture';
 import { lectureNoteService, LectureNote } from '@/src/services/lecture-note';
-import CourseComment from '@/components/shared/course/CourseComment';
 import { Trash2, Edit2 } from 'lucide-react';
 import { LectureDocumentsView } from '@/components/shared/learning/LectureDocumentsView';
+import { LectureQuizSection } from '@/components/shared/learning/LectureQuizSection';
 
 interface Instructor {
   id: string;
@@ -41,11 +41,14 @@ interface LectureInfoProps {
   courseId?: string;
   isEnrolled?: boolean;
   instructor?: Instructor;
+  enrollmentId?: string;
+  onQuizComplete?: (allPassed: boolean) => void;
+  isQuizLecture?: boolean;
 }
 
 
 
-export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnrolled = false, instructor }: LectureInfoProps) {
+export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnrolled = false, instructor, enrollmentId, onQuizComplete, isQuizLecture = false }: LectureInfoProps) {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [description, setDescription] = useState<string>(lecture.description || '');
   const [isLoadingDescription, setIsLoadingDescription] = useState(false);
@@ -215,16 +218,19 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
                 )}
               </div>
               <CardTitle className="text-xl mb-2">{lecture.title}</CardTitle>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  {lecture.duration ? formatDuration(lecture.duration) : 'N/A'}
+              {/* Only show duration and lesson number for video lectures */}
+              {!isQuizLecture && (
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    {lecture.duration ? formatDuration(lecture.duration) : 'N/A'}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <PlayCircle className="w-4 h-4" />
+                    Lesson {lecture.order}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <PlayCircle className="w-4 h-4" />
-                  Lesson {lecture.order}
-                </div>
-              </div>
+              )}
             </div>
             
           </div>
@@ -262,108 +268,115 @@ export function LectureInfo({ lecture, chapter, onSeekToTime, courseId, isEnroll
         )}
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Ghi chú của tôi</CardTitle>
-            <Button size="sm" variant="outline" onClick={handleAddNoteClick}>
-              <Plus className="w-4 h-4 mr-1" />
-              Thêm ghi chú
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {showAddNote && (
-            <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                  {formatTimestamp(currentTimestampSeconds)}
-                </Badge>
-                <span className="text-sm text-muted-foreground">Thời điểm hiện tại</span>
-              </div>
-              <textarea
-                value={noteContent}
-                onChange={(e) => setNoteContent(e.target.value)}
-                placeholder="Nhập ghi chú của bạn..."
-                className="w-full min-h-20 p-3 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                autoFocus
-              />
-              <div className="flex gap-2 justify-end">
-                <Button size="sm" variant="ghost" onClick={handleCancelNote}>
-                  Hủy
-                </Button>
-                <Button size="sm" onClick={handleSaveNote} disabled={!noteContent.trim()}>
-                  Lưu ghi chú
-                </Button>
-              </div>
+      {/* Notes Section - only show for video lectures, not quiz lectures */}
+      {!isQuizLecture && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Ghi chú của tôi</CardTitle>
+              <Button size="sm" variant="outline" onClick={handleAddNoteClick}>
+                <Plus className="w-4 h-4 mr-1" />
+                Thêm ghi chú
+              </Button>
             </div>
-          )}
-
-          {isLoadingNotes ? (
-            <p className="text-sm text-muted-foreground">Đang tải ghi chú...</p>
-          ) : notes.length > 0 ? (
-            <div className="space-y-3">
-              {notes.map((note) => (
-                <div 
-                  key={note.id} 
-                  className="flex gap-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
-                >
-                  <Badge 
-                    variant="secondary" 
-                    className="h-fit bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-primary hover:text-primary-foreground"
-                    onClick={() => handleNoteClick(note.timestampSeconds)}
-                  >
-                    {formatTimestamp(note.timestampSeconds)}
+          </CardHeader>
+          <CardContent>
+            {showAddNote && (
+              <div className="mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    {formatTimestamp(currentTimestampSeconds)}
                   </Badge>
-                  {editingNoteId === note.id ? (
-                    <div className="flex-1 space-y-2">
-                      <textarea
-                        value={editingContent}
-                        onChange={(e) => setEditingContent(e.target.value)}
-                        className="w-full min-h-16 p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                        autoFocus
-                      />
-                      <div className="flex gap-2 justify-end">
-                        <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
-                          Hủy
-                        </Button>
-                        <Button size="sm" onClick={() => handleUpdateNote(note.id)} disabled={!editingContent.trim()}>
-                          Lưu
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-sm flex-1 cursor-pointer" onClick={() => handleNoteClick(note.timestampSeconds)}>
-                        {note.content}
-                      </p>
-                      <div className="flex gap-1">
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleEditNote(note)}>
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDeleteNote(note.id)}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
+                  <span className="text-sm text-muted-foreground">Thời điểm hiện tại</span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Chưa có ghi chú nào. Nhấn "Thêm ghi chú" để tạo ghi chú mới.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+                <textarea
+                  value={noteContent}
+                  onChange={(e) => setNoteContent(e.target.value)}
+                  placeholder="Nhập ghi chú của bạn..."
+                  className="w-full min-h-20 p-3 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  autoFocus
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button size="sm" variant="ghost" onClick={handleCancelNote}>
+                    Hủy
+                  </Button>
+                  <Button size="sm" onClick={handleSaveNote} disabled={!noteContent.trim()}>
+                    Lưu ghi chú
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {isLoadingNotes ? (
+              <p className="text-sm text-muted-foreground">Đang tải ghi chú...</p>
+            ) : notes.length > 0 ? (
+              <div className="space-y-3">
+                {notes.map((note) => (
+                  <div 
+                    key={note.id} 
+                    className="flex gap-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+                  >
+                    <Badge 
+                      variant="secondary" 
+                      className="h-fit bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                      onClick={() => handleNoteClick(note.timestampSeconds)}
+                    >
+                      {formatTimestamp(note.timestampSeconds)}
+                    </Badge>
+                    {editingNoteId === note.id ? (
+                      <div className="flex-1 space-y-2">
+                        <textarea
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          className="w-full min-h-16 p-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                          autoFocus
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+                            Hủy
+                          </Button>
+                          <Button size="sm" onClick={() => handleUpdateNote(note.id)} disabled={!editingContent.trim()}>
+                            Lưu
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm flex-1 cursor-pointer" onClick={() => handleNoteClick(note.timestampSeconds)}>
+                          {note.content}
+                        </p>
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleEditNote(note)}>
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDeleteNote(note.id)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Chưa có ghi chú nào. Nhấn "Thêm ghi chú" để tạo ghi chú mới.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Lecture Documents */}
       <LectureDocumentsView lectureId={lecture.id} />
 
-      {/* Course Comments Section */}
-      {courseId && (
-        <CourseComment courseId={courseId} isEnrolled={isEnrolled} />
+      {/* Lecture Quiz Section */}
+      {enrollmentId && (
+        <LectureQuizSection
+          lectureId={lecture.id}
+          enrollmentId={enrollmentId}
+          onQuizComplete={onQuizComplete}
+        />
       )}
 
       {/* Instructor Section */}

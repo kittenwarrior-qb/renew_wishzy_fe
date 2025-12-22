@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,10 +22,11 @@ import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateToolt
 import { useAdminHeaderStore } from "@/src/stores/useAdminHeaderStore"
 import { SaleBadge } from "./components/SaleBadge"
 import { getSaleStatus, getDiscountPercentage } from "@/types/sale"
+import { apiLogger } from "@/utils/apiLogger"
 
 // Remove unused type
 
-export default function Page() {
+function CoursesPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAppStore()
@@ -611,7 +613,7 @@ export default function Page() {
                       setOpenSale(false);
                       
                     } catch (error) {
-                      console.error('Error deleting sale:', error);
+                      apiLogger.logError(`/courses/${saleTarget.id}/sale`, error, 'DELETE');
                       notify({ 
                         title: "Lỗi", 
                         description: "Không thể xóa sale. Vui lòng thử lại.",
@@ -654,7 +656,7 @@ export default function Page() {
                     // The useCourseList hook should automatically refetch
                     
                   } catch (error) {
-                    console.error('Error saving sale:', error);
+                    apiLogger.logError(`/courses/${saleTarget.id}/sale`, error, 'POST');
                     notify({ 
                       title: "Lỗi", 
                       description: "Không thể lưu sale. Vui lòng thử lại.",
@@ -671,6 +673,23 @@ export default function Page() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={
+      <div className="relative mx-auto max-w-[1600px] overflow-hidden px-4 py-4 md:px-6">
+        <div className="mb-4">
+          <div className="h-9 bg-muted animate-pulse rounded w-52" />
+        </div>
+        <div className="relative min-h-[300px]">
+          <LoadingOverlay show={true} />
+        </div>
+      </div>
+    }>
+      <CoursesPageContent />
+    </Suspense>
   )
 }
 

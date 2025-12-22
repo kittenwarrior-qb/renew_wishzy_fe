@@ -53,22 +53,10 @@ export function useDashboardData() {
         }
     }, []);
 
-    // Initial fetch for all time ranges
+    // Initial fetch for default mode only (lazy load others on demand)
     useEffect(() => {
-        const fetchAllRevenueData = async () => {
-            try {
-                await Promise.all([
-                    fetchRevenueData('day'),
-                    fetchRevenueData('week'),
-                    fetchRevenueData('month'),
-                    fetchRevenueData('year'),
-                ]);
-            } catch (error) {
-                console.error('Error fetching revenue data:', error);
-            }
-        };
-
-        fetchAllRevenueData();
+        // Only fetch 'month' initially - other modes will be fetched when user switches
+        fetchRevenueData('month');
     }, [fetchRevenueData]);
 
     const refetchRevenue = useCallback((mode: RevenueMode) => {
@@ -90,24 +78,18 @@ export function useDashboardData() {
 
     const hotCoursesTotal = hotCoursesData.total;
 
+    // Fetch dashboard summary (students, instructors, courses, today's orders)
     const {
-        data: totalCourses = 0,
-        isLoading: isLoadingTotalCourses,
-        isError: isTotalCoursesError
-    } = useQuery<number>({
-        queryKey: ['courses', 'count'],
-        queryFn: async () => {
-            const response = await courseService.getCourses();
-            // Get total items from pagination
-            return response?.pagination?.totalItems || 0;
-        },
+        data: summaryData,
+        isLoading: isLoadingSummary,
+        isError: isSummaryError
+    } = useQuery({
+        queryKey: ['dashboard', 'summary'],
+        queryFn: () => statService.getDashboardSummary(),
         staleTime: 5 * 60 * 1000,
         refetchOnWindowFocus: false,
         retry: 2
     });
-
-    const isLoadingCourses = isLoadingHotCourses || isLoadingTotalCourses;
-    const isCoursesError = isHotCoursesError || isTotalCoursesError;
 
     // Fetch top students
     const {
@@ -118,6 +100,7 @@ export function useDashboardData() {
         queryKey: ['dashboard', 'top-students'],
         queryFn: () => statService.getTopStudents({ limit: 5, sortBy: 'totalSpent' }),
         staleTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
         retry: 2
     });
 
@@ -130,48 +113,24 @@ export function useDashboardData() {
         queryKey: ['dashboard', 'top-instructors'],
         queryFn: () => statService.getTopInstructors({ limit: 5, sortBy: 'rating' }),
         staleTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
         retry: 2
     });
 
-    // Fetch total number of students with error handling
+    // Fetch top courses by revenue
     const {
-        data: studentsCount = 0,
-        isLoading: isLoadingStudentsCount,
-        isError: isStudentsCountError
-    } = useQuery<number>({
-        queryKey: ['dashboard', 'students', 'count'],
-        queryFn: async () => {
-            try {
-                const response = await userService.getUsersByRole('user', { page: 1, limit: 1 });
-                return response?.data?.data?.pagination?.totalItems || 0;
-            } catch (error) {
-                console.error('Error fetching students count:', error);
-                return 0;
-            }
-        },
-        staleTime: 5 * 60 * 1000,
+        data: topCoursesByRevenueData,
+        isLoading: isLoadingTopCoursesByRevenue,
+        isError: isTopCoursesByRevenueError
+    } = useQuery({
+        queryKey: ['dashboard', 'top-courses-by-revenue'],
+        queryFn: () => statService.getTopCoursesByRevenue(5),
+        staleTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
         retry: 2
     });
 
-    // Fetch total number of instructors with error handling
-    const {
-        data: instructorsCount = 0,
-        isLoading: isLoadingInstructorsCount,
-        isError: isInstructorsCountError
-    } = useQuery<number>({
-        queryKey: ['dashboard', 'instructors', 'count'],
-        queryFn: async () => {
-            try {
-                const response = await userService.getUsersByRole('instructor', { page: 1, limit: 1 });
-                return response?.data?.data?.pagination?.totalItems || 0;
-            } catch (error) {
-                console.error('Error fetching instructors count:', error);
-                return 0;
-            }
-        },
-        staleTime: 5 * 60 * 1000,
-        retry: 2
-    });
+
 
     // Memoize refetch functions to prevent unnecessary re-renders
     const refetchFns = useMemo(() => ({
@@ -179,30 +138,24 @@ export function useDashboardData() {
         hotCourses: () => {
             return queryClient.invalidateQueries({ queryKey: ['hot-courses'] });
         },
-        courses: () => {
-            queryClient.invalidateQueries({ queryKey: ['hot-courses'] });
-            queryClient.invalidateQueries({ queryKey: ['courses', 'count'] });
+        summary: () => {
+            queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] });
         },
         users: () => {
-            queryClient.invalidateQueries({ queryKey: ['dashboard', 'students', 'count'] });
-            queryClient.invalidateQueries({ queryKey: ['dashboard', 'instructors', 'count'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard', 'top-students'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard', 'top-instructors'] });
         }
     }), [queryClient, refetchRevenue]);
 
-    // Calculate total revenue from the latest data (using month as default)
-    const totalRevenue = revenueData.month?.totalRevenue || 0;
-    const growthRate = revenueData.month?.growthRate || 0;
-
     return {
-        // Total statistics with default values
+        // Total statistics from summary API
         totalStats: {
-            totalStudents: studentsCount,
-            totalInstructors: instructorsCount,
-            totalCourses: totalCourses,
-            totalRevenue: totalRevenue || 0,
-            growthRate: growthRate || 0,
+            totalStudents: summaryData?.totalStudents || 0,
+            totalInstructors: summaryData?.totalInstructors || 0,
+            totalCourses: summaryData?.totalCourses || 0,
+            todayOrders: summaryData?.todayOrders || 0,
+            todayRevenue: summaryData?.todayRevenue || 0,
         },
 
         // Chart data
@@ -218,15 +171,11 @@ export function useDashboardData() {
         // Other data
         hotCourses: hotCoursesData,
         hotCoursesTotal,
-        totalCourses,
         topStudents: topStudentsData?.data || [],
         topInstructors: topInstructorsData?.data || [],
-        totalStudents: studentsCount,
-        totalInstructors: instructorsCount,
-        totalRevenue: totalRevenue,
-        totalEnrollments: 0,
-        isLoading: isLoadingHotCourses || isLoadingTotalCourses || revenueData.loading || isLoadingStudentsCount || isLoadingInstructorsCount || isLoadingTopStudents || isLoadingTopInstructors,
-        isError: isHotCoursesError || isTotalCoursesError || !!revenueData.error || isStudentsCountError || isInstructorsCountError || isTopStudentsError || isTopInstructorsError,
+        topCoursesByRevenue: topCoursesByRevenueData?.data || [],
+        isLoading: isLoadingHotCourses || isLoadingSummary || revenueData.loading || isLoadingTopStudents || isLoadingTopInstructors || isLoadingTopCoursesByRevenue,
+        isError: isHotCoursesError || isSummaryError || !!revenueData.error || isTopStudentsError || isTopInstructorsError || isTopCoursesByRevenueError,
         refetch: refetchFns,
     };
 }
