@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { categoryBlogService, CategoryBlogListResponse } from "@/services/category-blog"
+import { categoryBlogService, CategoryBlogListResponse, CategoryBlog } from "@/services/category-blog"
 
 const ENDPOINT = "category-blogs"
 
@@ -17,3 +17,4 @@ export const useCategoryBlogList = (params?: any) => {
         }
     })
 }
+export type { CategoryBlog }

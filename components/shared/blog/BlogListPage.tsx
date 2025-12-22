@@ -9,12 +9,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, ArrowRight, TrendingUp, Filter, Check } from "lucide-react"
+import { ChevronLeft, ChevronRight, Clock, ArrowRight, TrendingUp, Filter, Check } from "lucide-react"
 import BlogCard from "./BlogCard"
 import { usePostList } from "../post/usePost"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
-import { useCategoryBlogList } from "./useCategoryBlog"
+import { useCategoryBlogList, type CategoryBlog } from "./useCategoryBlog"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,6 +26,7 @@ import {
 import Link from "next/link"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 const ITEMS_PER_PAGE = 8
 
@@ -34,6 +35,9 @@ interface BlogListPageProps {
 }
 
 export const BlogListPage = ({ limit }: BlogListPageProps) => {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { queryParams, replaceParams } = useControlParams()
   const currentPage = Math.max(1, parseInt(queryParams.pPage || '1', 10))
   const selectedCategoryId = queryParams.pCategoryId || ""
@@ -41,7 +45,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
   // Fetch Categories
   const { data: categoryData } = useCategoryBlogList({ limit: 100 })
   const categories = categoryData?.items || []
-  const currentCategoryName = categories.find(c => c.id === selectedCategoryId)?.name || "Tất cả";
+  const currentCategoryName = categories.find((c: CategoryBlog) => c.id === selectedCategoryId)?.name || "Tất cả";
 
   // 1. Global Data for Hero & Trending (Always static/latest) & Unfiltered
   const { data: globalData } = usePostList({
@@ -71,8 +75,9 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      replaceParams({ page: newPage.toString() })
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', newPage.toString())
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
     }
   }
 
@@ -97,7 +102,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
         key={pageNum}
         variant={currentPage === pageNum ? "default" : "outline"}
         size="sm"
-        className={`min - w - 10 h - 10 p - 0 ${currentPage === pageNum ? 'font-bold' : ''} `}
+        className={`min-w-10 h-10 p-0 ${currentPage === pageNum ? 'font-bold' : ''}`}
         onClick={() => handlePageChange(pageNum)}
       >
         {pageNum}
@@ -125,7 +130,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
         </Breadcrumb>
 
         {/* Hero Section (Featured Post) - Only on first page */}
-        {(queryParams.pPage === undefined || queryParams.pPage === '1') ? (
+        {(!queryParams.pPage || queryParams.pPage === '1') ? (
           featuredBlog && (
             <div className="relative rounded-2xl overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
@@ -152,7 +157,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
                 </p>
                 <div className="pt-4">
                   <Button asChild size="lg" className="rounded-full">
-                    <Link href={`/ blog / ${featuredBlog.id} `}>
+                    <Link href={`/blog/${featuredBlog.id}`}>
                       Đọc ngay <ArrowRight className="ml-2 w-4 h-4" />
                     </Link>
                   </Button>
@@ -175,7 +180,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {mostViewedBlogs.slice(0, 3).map((blog) => (
-                <Link href={`/ blog / ${blog.id} `} key={blog.id} className="group flex gap-4 items-start md:block md:space-y-3">
+                <Link href={`/blog/${blog.id}`} key={blog.id} className="group flex gap-4 items-start md:block md:space-y-3">
                   <div className="relative w-24 h-20 md:w-full md:h-40 shrink-0 overflow-hidden rounded-xl bg-muted">
                     {blog.image && (
                       <Image
@@ -230,7 +235,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
                       {selectedCategoryId === "" && <Check className="w-4 h-4" />}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    {categories.map((cat) => (
+                    {categories.map((cat: CategoryBlog) => (
                       <DropdownMenuItem
                         key={cat.id}
                         onClick={() => replaceParams({ category: cat.id, page: "1" })}
@@ -281,7 +286,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
                     disabled={currentPage === 1}
                     onClick={() => handlePageChange(1)}
                   >
-                    <ChevronsLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -308,7 +313,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
                     disabled={currentPage >= totalPages}
                     onClick={() => handlePageChange(totalPages)}
                   >
-                    <ChevronsRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
