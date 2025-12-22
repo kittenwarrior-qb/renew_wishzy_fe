@@ -26,40 +26,9 @@ import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateToolt
 import { LoginModal } from "@/components/shared/auth/LoginModal";
 
 // Mock Data for Top Selling Courses
-const TOP_SELLING_COURSES = [
-  {
-    id: 1,
-    title: "Master ReactJS & Next.js Pro",
-    image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=2670&auto=format&fit=crop",
-    price: "1.299.000đ",
-    rating: 4.8,
-    students: 1540,
-  },
-  {
-    id: 2,
-    title: "Fullstack Web Development 2024",
-    image: "https://images.unsplash.com/photo-1547658719-da2b51169166?q=80&w=2564&auto=format&fit=crop",
-    price: "2.499.000đ",
-    rating: 4.9,
-    students: 2100,
-  },
-  {
-    id: 3,
-    title: "UI/UX Design Masterclass",
-    image: "https://images.unsplash.com/photo-1586717791821-3f44a5638d48?q=80&w=2670&auto=format&fit=crop",
-    price: "899.000đ",
-    rating: 4.7,
-    students: 850,
-  },
-  {
-    id: 4,
-    title: "DevOps Zero to Hero",
-    image: "https://images.unsplash.com/photo-1667372393119-c81c0e86a9f9?q=80&w=2670&auto=format&fit=crop",
-    price: "1.599.000đ",
-    rating: 4.9,
-    students: 1200,
-  },
-];
+import { useCourseList } from "@/hooks/useCourseList";
+import { formatVND } from "@/lib/format";
+
 
 interface BlogDetailPageProps {
   params: Promise<{
@@ -72,6 +41,9 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
   const { blogId } = React.use(params);
 
   const { data: blog, isLoading } = usePostDetail(blogId)
+  const { data: coursesData } = useCourseList({ limit: 5 });
+  const courses = coursesData?.items || [];
+
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>
 
@@ -196,7 +168,7 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
                 Khóa học bán chạy
               </h3>
               <div className="space-y-6">
-                {TOP_SELLING_COURSES.map((course, index) => (
+                {courses.map((course, index) => (
                   <Link href={`/course-detail/${course.id}`} key={course.id} className="group block relative pl-4">
                     {/* Ranking Number */}
                     <span
@@ -211,8 +183,8 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
                     <div className="flex gap-4 items-start relative z-10 pl-2">
                       <div className="relative w-20 h-16 shrink-0 rounded-lg overflow-hidden bg-muted shadow-sm">
                         <Image
-                          src={course.image}
-                          alt={course.title}
+                          src={course.thumbnail || "/images/course-placeholder.jpg"}
+                          alt={course.name}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                         />
@@ -220,18 +192,18 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
                       <div className="flex-1 min-w-0">
                         <TruncateTooltipWrapper lineClamp={2} contentClassName="!bg-primary !text-primary-foreground">
                           <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors leading-snug mb-1">
-                            {course.title}
+                            {course.name}
                           </h4>
                         </TruncateTooltipWrapper>
 
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                           <div className="flex items-center text-yellow-500 font-bold bg-yellow-500/10 px-1.5 py-0.5 rounded-md">
-                            {course.rating} ★
+                            {course.averageRating ? Number(course.averageRating).toFixed(1) : 5.0} ★
                           </div>
-                          <span>{course.students} học viên</span>
+                          <span>{course.numberOfStudents || 0} học viên</span>
                         </div>
                         <div className="text-primary font-bold text-sm">
-                          {course.price}
+                          {typeof course.price === 'number' ? formatVND(course.price) : course.price}
                         </div>
                       </div>
                     </div>
@@ -249,7 +221,7 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
         {/* Bottom: Related Posts */}
         <div className="mt-16">
           <Separator className="mb-10" />
-          <RelatedPosts currentPostId={blog.id} limit={5} />
+          <RelatedPosts currentPostId={blog.id} categoryId={blog.category?.id} limit={5} />
         </div>
 
       </div>
