@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { MessageSquare, Heart, Reply, Send } from "lucide-react";
+import { MessageSquare, Heart, MessageCircle as Reply, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
@@ -230,19 +230,59 @@ const CommentItem: React.FC<{
     onCancelReply,
     depth = 0,
 }) => {
-        const [sessionLikes, setSessionLikes] = useState<Set<string>>(new Set());
+        // Track local "active" state. If null, we haven't interacted yet.
+        const [isLocalActive, setIsLocalActive] = useState<boolean | null>(null);
+
+        // Persistent check: has this user EVER liked this comment?
+        const checkPreviouslyLiked = React.useCallback(() => {
+            if (typeof window === "undefined") return false;
+            const userId = currentUser?.fullName || "guest";
+            try {
+                const stored = localStorage.getItem(`wishzy_likes_${userId}`);
+                if (!stored) return false;
+                const likedMap = JSON.parse(stored);
+                return !!likedMap[comment.id];
+            } catch (e) {
+                return false;
+            }
+        }, [currentUser, comment.id]);
 
         const toggleLike = (id: string) => {
-            onToggleLike(id);
-            setSessionLikes(prev => {
-                const next = new Set(prev);
-                if (next.has(id)) next.delete(id);
-                else next.add(id);
-                return next;
-            });
+            const previouslyLiked = checkPreviouslyLiked();
+            const currentActive = isLocalActive ?? previouslyLiked;
+
+            if (!previouslyLiked) {
+                // First time liking: call backend and record in storage
+                onToggleLike(id);
+                const userId = currentUser?.fullName || "guest";
+                const storageKey = `wishzy_likes_${userId}`;
+                try {
+                    const stored = localStorage.getItem(storageKey);
+                    const likedMap = stored ? JSON.parse(stored) : {};
+                    likedMap[id] = true;
+                    localStorage.setItem(storageKey, JSON.stringify(likedMap));
+                } catch (e) { }
+                setIsLocalActive(true);
+            } else {
+                // Already liked before, just toggle UI (backend only increments)
+                setIsLocalActive(!currentActive);
+            }
         };
 
-        const hasLiked = sessionLikes.has(comment.id) || (comment.likes || 0) > 0;
+        const previouslyLiked = checkPreviouslyLiked();
+        const active = isLocalActive ?? previouslyLiked;
+
+        // Display logic:
+        // If we previously liked it, serverCount already includes our like.
+        // If we then "unlike" (active=false), we subtract 1.
+        // If we never liked it and just did (active=true), we add 1 (until re-fetch).
+        const serverCount = comment.likes || 0;
+        let displayCount = serverCount;
+        if (isLocalActive !== null) {
+            if (isLocalActive === true && !previouslyLiked) displayCount += 1;
+            if (isLocalActive === false && previouslyLiked) displayCount -= 1;
+        }
+        displayCount = Math.max(0, displayCount);
 
         return (
             <div className={cn("relative", depth === 1 && "ml-12 md:ml-12 mt-2")}>
@@ -288,13 +328,13 @@ const CommentItem: React.FC<{
                             </div>
 
                             {/* Minimalist Reactions */}
-                            {((comment.likes || 0) + (sessionLikes.has(comment.id) ? 1 : 0)) > 0 && (
+                            {displayCount > 0 && (
                                 <div className="flex items-center gap-0.5 ml-2 bg-slate-50 dark:bg-slate-800 rounded-full px-1.5 py-0.5 shadow-sm border border-slate-100 dark:border-slate-700 animate-in fade-in zoom-in-75 duration-200">
                                     <div className="bg-[#EE2339] rounded-full p-0.5">
                                         <Heart className="w-2 h-2 fill-white text-white" />
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                                        {(comment.likes || 0) + (sessionLikes.has(comment.id) ? 1 : 0)}
+                                        {displayCount}
                                     </span>
                                 </div>
                             )}
@@ -303,7 +343,7 @@ const CommentItem: React.FC<{
                         <div className="flex items-center gap-3 mt-1.5 text-[12px] font-bold text-muted-foreground/60 transition-colors">
                             <button
                                 onClick={() => toggleLike(comment.id)}
-                                className={cn("hover:text-slate-900 dark:hover:text-slate-100", hasLiked && "text-[#EE2339]")}
+                                className={cn("hover:text-slate-900 dark:hover:text-slate-100", active && "text-[#EE2339]")}
                             >
                                 Thích
                             </button>

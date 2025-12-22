@@ -68,16 +68,21 @@ export function PostEditor({ value, onChange }: Props) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="text-xs px-2 py-1 rounded border bg-background hover:bg-accent"
+            className="text-xs font-bold px-3 py-1.5 rounded-lg border-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-all flex items-center gap-1.5"
             disabled={uploading}
           >
-            {uploading ? "Đang tải ảnh..." : "Chèn ảnh"}
+            {uploading ? "Đang tải ảnh..." : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-image"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+                Chèn ảnh vào bài
+              </>
+            )}
           </button>
           <input
             ref={fileInputRef}
@@ -91,30 +96,71 @@ export function PostEditor({ value, onChange }: Props) {
             }}
           />
         </div>
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+          <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+          Sẵn sàng soạn thảo
+        </div>
       </div>
 
-      <CKEditor
-        editor={ClassicEditor}
-        data={value}
-        onReady={(editor: any) => {
-          editorRef.current = editor
-          try {
-            // Thêm min-height cho vùng editable của CKEditor
-            setTimeout(() => {
-              const nodes = document.querySelectorAll<HTMLElement>(".ck-editor__editable")
-              nodes.forEach((el) => {
-                el.style.minHeight = "400px"
-              })
-            }, 0)
-          } catch {
-            // ignore height errors
-          }
-        }}
-        onChange={(_evt: any, editor: any) => {
-          const data = editor.getData()
-          onChange(data)
-        }}
-      />
+      <div className="w-full overflow-hidden rounded-xl border shadow-inner bg-background relative group">
+        <style dangerouslySetInnerHTML={{
+          __html: `
+                    .ck-editor__editable {
+                        min-height: 500px !important;
+                        max-height: 1000px !important;
+                        overflow-y: auto !important;
+                        resize: vertical !important;
+                        padding: 2rem !important;
+                        line-height: 1.8 !important;
+                        font-family: inherit !important;
+                    }
+                    .ck.ck-editor__main>.ck-editor__editable:focus {
+                        box-shadow: none !important;
+                        border: none !important;
+                    }
+                    .ck.ck-editor__top {
+                        border-bottom: 1px solidhsl(var(--border)) !important;
+                    }
+                    .ck.ck-toolbar {
+                        border: none !important;
+                        background:hsl(var(--muted)/0.3) !important;
+                        padding: 0.5rem !important;
+                    }
+                    .ck-content {
+                        font-size: 16px !important;
+                    }
+                    /* Tùy chỉnh thanh cuộn cho editor */
+                    .ck-editor__editable::-webkit-scrollbar {
+                        width: 8px;
+                    }
+                    .ck-editor__editable::-webkit-scrollbar-track {
+                        background: transparent;
+                    }
+                    .ck-editor__editable::-webkit-scrollbar-thumb {
+                        background:hsl(var(--muted-foreground)/0.2);
+                        border-radius: 10px;
+                    }
+                    .ck-editor__editable::-webkit-scrollbar-thumb:hover {
+                        background:hsl(var(--muted-foreground)/0.4);
+                    }
+                    /* Cho phép cuộn ngang nếu nội dung quá rộng */
+                    .ck.ck-editor__main {
+                        overflow-x: auto !important;
+                        max-width: 100%;
+                    }
+                ` }} />
+        <CKEditor
+          editor={ClassicEditor}
+          data={value}
+          onReady={(editor: any) => {
+            editorRef.current = editor
+          }}
+          onChange={(_evt: any, editor: any) => {
+            const data = editor.getData()
+            onChange(data)
+          }}
+        />
+      </div>
     </div>
   )
 }

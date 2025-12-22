@@ -8,7 +8,7 @@ import {
   Calendar,
   Clock,
   ExternalLink,
-  Tag,
+  LayoutGrid,
   Star,
   Users,
 } from "lucide-react";
@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import Comments from "@/components/shared/blog/Comments";
 import { RelatedPosts } from "@/components/shared/blog/RelatedPosts";
+import { PostNavigation } from "@/components/shared/post/PostNavigation";
 import { TruncateTooltipWrapper } from "@/components/shared/common/TruncateTooltipWrapper";
 import { LoginModal } from "@/components/shared/auth/LoginModal";
 
@@ -96,7 +97,7 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
 
               <div className="p-6 md:p-10 pt-4 md:pt-6">
                 <Badge variant="secondary" className="gap-1.5 mb-4 bg-primary/10 text-primary-dark hover:bg-primary/20">
-                  <Tag className="w-3.5 h-3.5" />
+                  <LayoutGrid className="w-3.5 h-3.5" />
                   {blog.category?.name || "Chưa phân loại"}
                 </Badge>
 
@@ -153,6 +154,8 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
                             prose-code:bg-muted prose-code:text-primary-dark prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none"
                   dangerouslySetInnerHTML={{ __html: blog.content }}
                 />
+
+                <PostNavigation currentPostId={blog.id} categoryId={blog.category?.id} />
               </div>
 
               <div className="p-6 md:p-10 border-t bg-muted/20">
@@ -221,7 +224,12 @@ const BlogDetailPage = ({ params }: BlogDetailPageProps) => {
         {/* Bottom: Related Posts */}
         <div className="mt-16">
           <Separator className="mb-10" />
-          <RelatedPosts currentPostId={blog.id} categoryId={blog.category?.id} limit={5} />
+          <RelatedPosts
+            currentPostId={blog.id}
+            categoryId={blog.category?.id}
+            authorId={blog.author?.id}
+            limit={5}
+          />
         </div>
 
       </div>
