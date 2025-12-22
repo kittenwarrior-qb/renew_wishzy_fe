@@ -2,11 +2,19 @@
 
 import { useControlParams } from "@/hooks/useControlParams"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock, ArrowRight, TrendingUp } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import { ChevronLeft, ChevronRight, Clock, ArrowRight, TrendingUp, Filter, Check } from "lucide-react"
 import BlogCard from "./BlogCard"
 import { usePostList } from "../post/usePost"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import { useCategoryBlogList, type CategoryBlog } from "./useCategoryBlog"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,6 +26,7 @@ import {
 import Link from "next/link"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 const ITEMS_PER_PAGE = 8
 
@@ -26,31 +35,49 @@ interface BlogListPageProps {
 }
 
 export const BlogListPage = ({ limit }: BlogListPageProps) => {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { queryParams, replaceParams } = useControlParams()
-  const currentPage = Math.max(1, parseInt(queryParams.page || '1', 10))
+  const currentPage = Math.max(1, parseInt(queryParams.pPage || '1', 10))
+  const selectedCategoryId = queryParams.pCategoryId || ""
 
-  const { data, isLoading } = usePostList({
+  // Fetch Categories
+  const { data: categoryData } = useCategoryBlogList({ limit: 100 })
+  const categories = categoryData?.items || []
+  const currentCategoryName = categories.find((c: CategoryBlog) => c.id === selectedCategoryId)?.name || "Tất cả";
+
+  // 1. Global Data for Hero & Trending (Always static/latest) & Unfiltered
+  const { data: globalData } = usePostList({
+    page: 1,
+    limit: 6, // 1 for Hero + 5 for Trending
+    isActive: true,
+  })
+  const globalBlogs = globalData?.items || []
+
+  // Featured Post (First of global)
+  const featuredBlog = globalBlogs[0];
+
+  // Trending (Next 5 of global)
+  const mostViewedBlogs = globalBlogs.slice(0, 5);
+
+  // 2. Filtered Data for "Bài viết" Section
+  const { data: filteredData, isLoading } = usePostList({
     page: currentPage,
     limit: limit || ITEMS_PER_PAGE,
-    isActive: true
+    isActive: true,
+    categoryId: selectedCategoryId || undefined,
   })
 
-  const blogs = data?.items || []
-  const totalPages = data?.totalPages || 0
-
-  // Featured Post is the first one on the first page
-  const featuredBlog = currentPage === 1 ? blogs[0] : null;
-
-  // The rest of the blogs on this page
-  const listBlogs = currentPage === 1 ? blogs.slice(1) : blogs;
-
-  // Simulate "Most Viewed" using real data (first 5)
-  const mostViewedBlogs = blogs.slice(0, 5)
+  // Grid shows the filtered results
+  const listBlogs = filteredData?.items || [];
+  const totalPages = filteredData?.totalPages || 0;
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      replaceParams({ page: newPage.toString() })
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', newPage.toString())
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
     }
   }
 
@@ -103,40 +130,41 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
         </Breadcrumb>
 
         {/* Hero Section (Featured Post) - Only on first page */}
-        {currentPage === 1 && featuredBlog && (
-          <div className="relative rounded-2xl overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
-            <div className="relative h-[400px] md:h-[500px] w-full">
-              {featuredBlog.image && (
-                <Image
-                  src={featuredBlog.image}
-                  alt={featuredBlog.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                  priority
-                />
-              )}
-            </div>
-            <div className="absolute bottom-0 left-0 p-6 md:p-10 z-20 max-w-3xl text-white space-y-4">
-              <Badge variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 pointer-events-none mb-2">
-                Mới nhất
-              </Badge>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-                {featuredBlog.title}
-              </h1>
-              <p className="text-gray-200 line-clamp-2 md:text-lg">
-                {featuredBlog.description}
-              </p>
-              <div className="pt-4">
-                <Button asChild size="lg" className="rounded-full">
-                  <Link href={`/blog/${featuredBlog.id}`}>
-                    Đọc ngay <ArrowRight className="ml-2 w-4 h-4" />
-                  </Link>
-                </Button>
+        {(!queryParams.pPage || queryParams.pPage === '1') ? (
+          featuredBlog && (
+            <div className="relative rounded-2xl overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
+              <div className="relative h-[400px] md:h-[500px] w-full">
+                {featuredBlog.image && (
+                  <Image
+                    src={featuredBlog.image}
+                    alt={featuredBlog.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    priority
+                  />
+                )}
+              </div>
+              <div className="absolute bottom-0 left-0 p-6 md:p-10 z-20 max-w-3xl text-white space-y-4">
+                <Badge variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 pointer-events-none mb-2">
+                  Mới nhất
+                </Badge>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+                  {featuredBlog.title}
+                </h1>
+                <p className="text-gray-200 line-clamp-2 md:text-lg">
+                  {featuredBlog.description}
+                </p>
+                <div className="pt-4">
+                  <Button asChild size="lg" className="rounded-full">
+                    <Link href={`/blog/${featuredBlog.id}`}>
+                      Đọc ngay <ArrowRight className="ml-2 w-4 h-4" />
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )) : null}
 
         {/* Blog Content Layout - Single Column */}
         <div className="space-y-16">
@@ -179,11 +207,50 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
 
           {/* Main Content: Blog List */}
           <div className="space-y-10">
-            <div className="flex items-center justify-between border-b pb-4">
-              <h2 className="text-2xl font-bold tracking-tight">Bài viết mới</h2>
+            {/* Sticky Header for "Bài viết" Section */}
+            <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b transition-all duration-200">
+              <div className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-bold tracking-tight shrink-0">Bài viết</h2>
+                  <span className="text-muted-foreground text-sm font-medium hidden sm:inline-block">
+                    / {currentCategoryName}
+                  </span>
+                </div>
+
+                {/* Dropdown Filter */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 rounded-full h-9">
+                      <Filter className="w-4 h-4" />
+                      <span className="hidden xs:inline">{currentCategoryName}</span>
+                      <span className="inline xs:hidden">Lọc</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[200px]">
+                    <DropdownMenuItem
+                      onClick={() => replaceParams({ category: "", categoryId: "", page: "1" })}
+                      className="justify-between"
+                    >
+                      Tất cả
+                      {selectedCategoryId === "" && <Check className="w-4 h-4" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {categories.map((cat: CategoryBlog) => (
+                      <DropdownMenuItem
+                        key={cat.id}
+                        onClick={() => replaceParams({ category: cat.id, page: "1" })}
+                        className="justify-between"
+                      >
+                        {cat.name}
+                        {selectedCategoryId === cat.id && <Check className="w-4 h-4" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {isLoading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="h-[350px] bg-muted animate-pulse rounded-xl" />
@@ -199,6 +266,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
                       category={blog.category?.name}
                       description={blog.description || ""}
                       date={format(new Date(blog.createdAt), "dd/MM/yyyy", { locale: vi })}
+                      views={blog.views}
                     />
                   </div>
                 ))
@@ -218,7 +286,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
                     disabled={currentPage === 1}
                     onClick={() => handlePageChange(1)}
                   >
-                    <ChevronsLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -245,7 +313,7 @@ export const BlogListPage = ({ limit }: BlogListPageProps) => {
                     disabled={currentPage >= totalPages}
                     onClick={() => handlePageChange(totalPages)}
                   >
-                    <ChevronsRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

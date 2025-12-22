@@ -15,7 +15,7 @@ import { AdminDataErrorState } from "@/components/shared/admin/AdminDataErrorSta
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
+import Switch from "@/components/ui/switch"
 
 interface FaqFormValue {
   question: string
