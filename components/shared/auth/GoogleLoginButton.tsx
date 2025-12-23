@@ -2,7 +2,7 @@
 
 import { useGoogleLogin as useGoogleLoginMutation } from "./useAuth";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 
 interface GoogleLoginButtonProps {
   text?: string;
@@ -11,6 +11,12 @@ interface GoogleLoginButtonProps {
 export function GoogleLoginButton({ text = "Google" }: GoogleLoginButtonProps) {
   const googleLoginMutation = useGoogleLoginMutation();
   const isInitialized = useRef(false);
+  const mutateRef = useRef(googleLoginMutation.mutate);
+
+  // Keep mutate ref updated
+  useEffect(() => {
+    mutateRef.current = googleLoginMutation.mutate;
+  }, [googleLoginMutation.mutate]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.google && !isInitialized.current) {
@@ -18,14 +24,14 @@ export function GoogleLoginButton({ text = "Google" }: GoogleLoginButtonProps) {
         client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
         callback: (response: any) => {
           if (response.credential) {
-            googleLoginMutation.mutate(response.credential);
+            mutateRef.current(response.credential);
           }
         },
         use_fedcm_for_prompt: false,
       } as any);
       isInitialized.current = true;
     }
-  }, [googleLoginMutation]);
+  }, []); // Empty dependency - only run once
 
   const handleGoogleLogin = () => {
     if (typeof window !== "undefined" && window.google && isInitialized.current) {

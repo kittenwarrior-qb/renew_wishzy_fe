@@ -12,6 +12,24 @@ const TokenManager = {
   remove: () => localStorage.removeItem('accessToken'),
 };
 
+// Flag to prevent multiple refresh attempts
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token!);
+    }
+  });
+  failedQueue = [];
+};
+
 const api: AxiosInstance = axios.create({
   ...API_CONFIG,
   headers: {
@@ -41,20 +59,37 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as any;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
+    // Skip refresh for auth endpoints to prevent loops
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/');
+    
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       // Only try to refresh token if we have a token
       const currentToken = TokenManager.get();
       if (!currentToken) {
         return Promise.reject(error);
       }
 
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
       try {
         const refreshResponse = await api.post('/auth/refresh-token');
         const { accessToken } = refreshResponse.data;
         
         TokenManager.set(accessToken);
+        processQueue(null, accessToken);
         
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
@@ -62,6 +97,7 @@ api.interceptors.response.use(
         
         return api(originalRequest);
       } catch (refreshError) {
+        processQueue(refreshError, null);
         TokenManager.remove();
         
         // Only redirect to login if user was trying to access protected routes
@@ -76,6 +112,8 @@ api.interceptors.response.use(
         }
         
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
