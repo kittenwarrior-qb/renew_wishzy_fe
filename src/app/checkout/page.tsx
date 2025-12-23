@@ -12,9 +12,7 @@ import { Input } from "@/components/ui/input"
 import { useApiPost } from "@/src/hooks/useApi"
 import { CreateOrderRequest, CreateOrderResponse } from "@/src/types/order.types"
 import { toast } from "sonner"
-import momoLogo from '@/public/images/momo.png'
 import vnpayLogo from '@/public/images/vnpay.jpg'
-import zalopayLogo from '@/public/images/zalopay.png'
 import { formatPrice } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { voucherService, Voucher } from "@/src/services/voucher"
@@ -219,30 +217,6 @@ const CheckoutPage = () => {
                   label="VNPay"
                   description="Thanh toán qua VNPay"
                   logo={vnpayLogo}
-                />
-                
-                <PaymentMethodItem 
-                  value="zalopay"
-                  id="zalopay"
-                  label="ZaloPay"
-                  description="Thanh toán qua ZaloPay"
-                  logo={zalopayLogo}
-                />
-
-                <PaymentMethodItem 
-                  value="momo"
-                  id="momo"
-                  label="MoMo"
-                  description="Thanh toán qua ví MoMo"
-                  logo={momoLogo}
-                />
-
-                <PaymentMethodItem 
-                  value="banking"
-                  id="banking"
-                  label="Chuyển khoản ngân hàng"
-                  description="Chuyển khoản qua Internet Banking"
-                  emoji="🏦"
                 />
               </RadioGroup>
             </CardContent>

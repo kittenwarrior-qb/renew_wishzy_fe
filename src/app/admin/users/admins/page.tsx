@@ -216,7 +216,7 @@ export default function Page() {
 
   return (
     <div className="relative p-4 md:p-6">
-      {(isPending || isFetching) && (
+      {isPending && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
             <img
