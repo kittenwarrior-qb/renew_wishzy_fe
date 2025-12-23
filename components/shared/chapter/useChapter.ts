@@ -14,6 +14,11 @@ export type ChapterLecture = {
   orderIndex: number;
   fileUrl?: string | null;
   requiresQuiz?: boolean;
+  quizzes?: Array<{
+    id: string;
+    title: string;
+    creatorId: string;
+  }>;
 };
 
 export type Chapter = {

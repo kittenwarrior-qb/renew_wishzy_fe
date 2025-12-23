@@ -24,4 +24,10 @@ export interface Lecture {
   isPreview: boolean
   orderIndex: number
   fileUrl?: string
+  requiresQuiz?: boolean
+  quizzes?: Array<{
+    id: string;
+    title: string;
+    creatorId: string;
+  }>;
 }

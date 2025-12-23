@@ -215,9 +215,10 @@ const BestSellerCourseCard = ({ course }: BestSellerCourseCardProps) => {
                 {course?.name || 'Khóa học'}
               </h3>
               
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {course?.description || 'Mô tả khóa học'}
-              </p>
+              <div 
+                className="text-sm text-muted-foreground line-clamp-2"
+                dangerouslySetInnerHTML={{ __html: course?.description || 'Mô tả khóa học' }}
+              />
 
               <p className="text-sm font-medium">
                 {course?.creator?.fullName || 'Giảng viên'}
@@ -272,9 +273,10 @@ const BestSellerCourseCard = ({ course }: BestSellerCourseCardProps) => {
               {course?.name || "Khóa học"}
             </h3>
 
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {course?.description || "Mô tả khóa học"}
-            </p>
+            <div 
+              className="text-sm text-muted-foreground line-clamp-2"
+              dangerouslySetInnerHTML={{ __html: course?.description || 'Mô tả khóa học' }}
+            />
 
             {course?.category?.name && (
               <p className="text-xs text-muted-foreground">

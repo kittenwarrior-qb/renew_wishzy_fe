@@ -5,7 +5,7 @@ import {
     AccordionItem,
 } from "@/components/ui/accordion"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
-import { ChevronDownIcon, Play, Eye } from "lucide-react"
+import { ChevronDownIcon, Play, Eye, FileQuestion } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ChapterType } from "@/src/types/chapter/chapter.types";
 import { formatDuration } from "@/lib/format-duration";
@@ -76,9 +76,20 @@ export function CourseChapter({ chapters }: { chapters: ChapterType[] }) {
                                     .map((lecture) => (
                                         <div key={lecture.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group hover:bg-gray-50/50 transition-colors px-2 -mx-2 rounded">
                                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                <Play className="w-4 h-4 text-muted-foreground shrink-0" />
+                                                {lecture.requiresQuiz ? (
+                                                    <FileQuestion className="w-4 h-4 text-blue-600 shrink-0" />
+                                                ) : (
+                                                    <Play className="w-4 h-4 text-muted-foreground shrink-0" />
+                                                )}
                                                 <div className="flex flex-col flex-1 min-w-0">
-                                                    <span className="text-sm font-medium truncate">{lecture.name}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-medium truncate">{lecture.name}</span>
+                                                        {lecture.requiresQuiz && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                                Bài kiểm tra
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     {lecture.isPreview && lecture.fileUrl && (
                                                         <Button
                                                             variant="ghost"
@@ -99,7 +110,7 @@ export function CourseChapter({ chapters }: { chapters: ChapterType[] }) {
                                                 </div>
                                             </div>
                                             <span className="text-sm text-muted-foreground shrink-0 ml-2">
-                                                {formatDuration(lecture.duration, 'time')}
+                                                {lecture.requiresQuiz ? 'Bài kiểm tra' : formatDuration(lecture.duration, 'time')}
                                             </span>
                                         </div>
                                     ))
