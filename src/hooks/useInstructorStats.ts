@@ -30,6 +30,7 @@ interface RevenueDataPoint {
   startDate?: string;
   endDate?: string;
   revenue: number;
+  grossRevenue?: number;
   orderCount: number;
   courseSoldCount: number;
 }
@@ -37,6 +38,7 @@ interface RevenueDataPoint {
 interface RevenueStats {
   mode: 'day' | 'week' | 'month' | 'year';
   totalRevenue: number;
+  grossRevenue?: number;
   monthlyRevenue: number;
   totalOrders: number;
   totalStudents: number;

@@ -57,7 +57,7 @@ const InstructorDashboard = () => {
     if (!revenueStats?.details) return [];
     return revenueStats.details.map(item => ({
       period: item.period,
-      revenue: item.revenue || 0,
+      revenue: item.grossRevenue || item.revenue || 0, // Use gross revenue for chart
       orderCount: item.orderCount || 0,
     }));
   }, [revenueStats]);
@@ -89,8 +89,8 @@ const InstructorDashboard = () => {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {[
-          { label: "Tổng doanh thu", val: formatCurrency(revenueStats?.totalRevenue || 0), sub: `Theo ${revenueMode}`, icon: BarChart3 },
-          { label: "TB/Khoá học", val: formatCurrency((stats?.totalRevenue || 0) / (stats?.totalCourses || 1)), sub: "Doanh thu TB", icon: BarChart3 },
+          { label: "Tổng doanh thu", val: formatCurrency(revenueStats?.grossRevenue || 0), sub: `Theo ${revenueMode} (100%)`, icon: BarChart3 },
+          { label: "TB NET/Khóa học", val: formatCurrency((stats?.totalRevenue || 0) / (stats?.totalCourses || 1)), sub: "Doanh thu TB sau chia", icon: BarChart3 },
           { label: "Tổng học viên", val: stats?.totalStudents || 0, sub: "Đã đăng ký", icon: Users },
           { label: "Tổng đơn hàng", val: revenueStats?.totalOrders?.toLocaleString() || 0, sub: "Đã hoàn thành", icon: TrendingUp },
           { label: "Tổng khoá học", val: stats?.totalCourses || 0, sub: "Đã tạo", icon: BookOpen },
@@ -133,15 +133,17 @@ const InstructorDashboard = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
                 <div>
                   <p className="text-xs text-muted-foreground">Tổng doanh thu</p>
-                  <p className="text-lg font-bold">{formatCurrency(revenueStats.totalRevenue)}</p>
+                  <p className="text-lg font-bold">{formatCurrency(revenueStats.grossRevenue || revenueStats.totalRevenue)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Doanh số bán hàng (100%)</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Thu nhập thực</p>
+                  <p className="text-lg font-bold text-green-600">{formatCurrency(revenueStats.totalRevenue)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Instructor nhận ({revenueStats.instructorPercentage}%)</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Đơn hàng</p>
                   <p className="text-lg font-bold">{revenueStats.totalOrders.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Khóa học bán</p>
-                  <p className="text-lg font-bold">{revenueStats.totalCourses.toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Tăng trưởng</p>
