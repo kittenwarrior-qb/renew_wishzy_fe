@@ -78,6 +78,7 @@ const BlogCard = ({
                     alt={author}
                     width={24}
                     height={24}
+                    unoptimized
                     className="w-full h-full object-cover"
                   />
                 </div>

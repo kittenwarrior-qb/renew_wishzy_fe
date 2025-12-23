@@ -67,9 +67,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-dvh">
       <SidebarProvider style={{ ["--sidebar-width"]: "20rem", ["--sidebar-width-icon"]: "3.75rem" } as React.CSSProperties}>
         <AdminAppSidebar />
-        <SidebarInset className="md:!m-0 md:!ml-0 md:!rounded-none md:!shadow-none flex flex-col min-h-dvh">
+        <SidebarInset className="md:!m-0 md:!ml-0 md:!rounded-none md:!shadow-none flex flex-col min-h-dvh min-w-0">
           <HeaderAdmin />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto min-w-0">
             {children}
           </main>
         </SidebarInset>
