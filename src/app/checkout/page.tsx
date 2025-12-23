@@ -18,7 +18,7 @@ import zalopayLogo from '@/public/images/zalopay.png'
 import { formatPrice } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { voucherService, Voucher } from "@/src/services/voucher"
-import { TicketPercent, X, Loader2, ChevronDown, ChevronUp, Check } from "lucide-react"
+import { TicketPercent, X, Loader2, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const CheckoutPage = () => {
@@ -30,7 +30,6 @@ const CheckoutPage = () => {
   const [isValidatingVoucher, setIsValidatingVoucher] = useState(false)
   const [availableVouchers, setAvailableVouchers] = useState<Voucher[]>([])
   const [isLoadingVouchers, setIsLoadingVouchers] = useState(false)
-  const [showVoucherList, setShowVoucherList] = useState(false)
   const router = useRouter()
 
   // Check authentication on mount
@@ -305,111 +304,109 @@ const CheckoutPage = () => {
               </div>
             )}
 
-            {/* Input voucher code */}
-            <div className="flex gap-2 mb-3">
-              <Input
-                placeholder="Nhập mã giảm giá"
-                value={voucherCode}
-                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                onKeyDown={(e) => e.key === 'Enter' && handleApplyVoucher()}
-                className="flex-1"
-              />
-              <Button
-                variant="outline"
-                onClick={() => handleApplyVoucher()}
-                disabled={isValidatingVoucher || !voucherCode.trim()}
-              >
-                {isValidatingVoucher ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  'Áp dụng'
-                )}
-              </Button>
-            </div>
-
-            {/* Available Vouchers List */}
-            {availableVouchers.length > 0 && (
-              <div className="border-t pt-3">
-                <button
-                  onClick={() => setShowVoucherList(!showVoucherList)}
-                  className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <TicketPercent className="w-4 h-4" />
-                    {availableVouchers.length} mã giảm giá có thể áp dụng
-                  </span>
-                  {showVoucherList ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
-                </button>
-
-                {showVoucherList && (
-                  <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
-                    {isLoadingVouchers ? (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : (
-                      availableVouchers.map(voucher => {
-                        const isApplied = isVoucherApplied(voucher)
-                        return (
-                          <div
-                            key={voucher.id}
-                            className={cn(
-                              "p-3 border rounded-lg cursor-pointer transition-all",
-                              isApplied
-                                ? "bg-green-50 border-green-300"
-                                : "hover:border-primary hover:bg-primary/5"
+            {/* Available Vouchers List - Always visible */}
+            {isLoadingVouchers ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">Đang tải voucher...</span>
+              </div>
+            ) : availableVouchers.length > 0 ? (
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Chọn mã giảm giá ({availableVouchers.length} mã có thể áp dụng)
+                </p>
+                {availableVouchers.map(voucher => {
+                  const isApplied = isVoucherApplied(voucher)
+                  return (
+                    <div
+                      key={voucher.id}
+                      className={cn(
+                        "p-3 border rounded-lg cursor-pointer transition-all",
+                        isApplied
+                          ? "bg-green-50 border-green-300 cursor-default"
+                          : "hover:border-primary hover:bg-primary/5"
+                      )}
+                      onClick={() => !isApplied && !isValidatingVoucher && handleApplyVoucher(voucher)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-primary">{voucher.code}</span>
+                            {isApplied && (
+                              <span className="flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                                <Check className="w-3 h-3" />
+                                Đã chọn
+                              </span>
                             )}
-                            onClick={() => !isApplied && handleApplyVoucher(voucher)}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-bold text-primary">{voucher.code}</span>
-                                  {isApplied && (
-                                    <span className="flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-                                      <Check className="w-3 h-3" />
-                                      Đã áp dụng
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-1">{voucher.name}</p>
-                                <p className="text-xs text-primary font-medium mt-1">
-                                  Giảm {voucher.discountType === 'percent' 
-                                    ? `${voucher.discountValue}%` 
-                                    : formatPrice(voucher.discountValue)}
-                                  {voucher.maxDiscountAmount && voucher.discountType === 'percent' && (
-                                    <span className="text-muted-foreground"> (tối đa {formatPrice(voucher.maxDiscountAmount)})</span>
-                                  )}
-                                </p>
-                                {voucher.minOrderAmount && voucher.minOrderAmount > 0 && (
-                                  <p className="text-xs text-muted-foreground mt-0.5">
-                                    Đơn tối thiểu: {formatPrice(voucher.minOrderAmount)}
-                                  </p>
-                                )}
-                              </div>
-                              {!isApplied && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="shrink-0"
-                                  disabled={isValidatingVoucher}
-                                >
-                                  Chọn
-                                </Button>
-                              )}
-                            </div>
                           </div>
-                        )
-                      })
-                    )}
-                  </div>
-                )}
+                          <p className="text-sm text-muted-foreground mt-1">{voucher.name}</p>
+                          <p className="text-xs text-primary font-medium mt-1">
+                            Giảm {voucher.discountType === 'percent' 
+                              ? `${voucher.discountValue}%` 
+                              : formatPrice(voucher.discountValue)}
+                            {voucher.maxDiscountAmount && voucher.discountType === 'percent' && (
+                              <span className="text-muted-foreground"> (tối đa {formatPrice(voucher.maxDiscountAmount)})</span>
+                            )}
+                          </p>
+                          {voucher.minOrderAmount && Number(voucher.minOrderAmount) > 0 && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Đơn tối thiểu: {formatPrice(Number(voucher.minOrderAmount))}
+                            </p>
+                          )}
+                        </div>
+                        {!isApplied && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="shrink-0"
+                            disabled={isValidatingVoucher}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleApplyVoucher(voucher)
+                            }}
+                          >
+                            {isValidatingVoucher ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              'Chọn'
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-4 text-muted-foreground text-sm">
+                Không có mã giảm giá nào khả dụng
               </div>
             )}
+
+            {/* Manual input voucher code */}
+            <div className="border-t mt-3 pt-3">
+              <p className="text-sm text-muted-foreground mb-2">Hoặc nhập mã giảm giá</p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Nhập mã giảm giá"
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === 'Enter' && handleApplyVoucher()}
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => handleApplyVoucher()}
+                  disabled={isValidatingVoucher || !voucherCode.trim()}
+                >
+                  {isValidatingVoucher ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    'Áp dụng'
+                  )}
+                </Button>
+              </div>
+            </div>
           </Card>
 
           {/* Order Summary */}

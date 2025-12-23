@@ -60,20 +60,51 @@ export const voucherService = {
     discount?: number
     message?: string
   }> {
-    const response = await api.post<any>(`${VOUCHER_ENDPOINTS.base}/validate`, {
-      code,
-      orderTotal,
-      courseIds,
-    })
-    const root = response?.data ?? {}
-    return root?.data ?? root
+    try {
+      const response = await api.post<any>(`${VOUCHER_ENDPOINTS.base}/validate`, {
+        code,
+        orderTotal,
+        courseIds,
+      })
+      console.log('Validate response:', response)
+      const root = response?.data ?? {}
+      console.log('Validate root:', root)
+      const data = root?.data ?? root
+      console.log('Validate data:', data)
+      
+      // Handle nested data structure
+      if (data?.data) {
+        return data.data
+      }
+      return data
+    } catch (error) {
+      console.error('Validate error:', error)
+      return {
+        valid: false,
+        message: 'Có lỗi xảy ra khi kiểm tra mã giảm giá',
+      }
+    }
   },
 
   async getAvailable(courseIds: string[]): Promise<Voucher[]> {
-    const response = await api.post<any>(`${VOUCHER_ENDPOINTS.base}/available`, {
-      courseIds,
-    })
-    const root = response?.data ?? {}
-    return root?.data ?? []
+    try {
+      const response = await api.post<any>(`${VOUCHER_ENDPOINTS.base}/available`, {
+        courseIds,
+      })
+      const root = response?.data ?? {}
+      const data = root?.data ?? root
+      
+      // Handle nested data structure from backend
+      if (Array.isArray(data)) {
+        return data as Voucher[]
+      }
+      if (data?.data && Array.isArray(data.data)) {
+        return data.data as Voucher[]
+      }
+      return []
+    } catch (error) {
+      console.error('Failed to load available vouchers:', error)
+      return []
+    }
   },
 }
