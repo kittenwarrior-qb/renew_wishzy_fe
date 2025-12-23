@@ -68,4 +68,12 @@ export const voucherService = {
     const root = response?.data ?? {}
     return root?.data ?? root
   },
+
+  async getAvailable(courseIds: string[]): Promise<Voucher[]> {
+    const response = await api.post<any>(`${VOUCHER_ENDPOINTS.base}/available`, {
+      courseIds,
+    })
+    const root = response?.data ?? {}
+    return root?.data ?? []
+  },
 }

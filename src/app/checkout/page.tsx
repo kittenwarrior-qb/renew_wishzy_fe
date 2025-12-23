@@ -18,15 +18,19 @@ import zalopayLogo from '@/public/images/zalopay.png'
 import { formatPrice } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { voucherService, Voucher } from "@/src/services/voucher"
-import { TicketPercent, X, Loader2 } from "lucide-react"
+import { TicketPercent, X, Loader2, ChevronDown, ChevronUp, Check } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const CheckoutPage = () => {
   const { user, orderListCourse } = useAppStore()
   const [paymentMethod, setPaymentMethod] = useState<'vnpay' | 'zalopay' | 'momo' | 'banking'>('vnpay')
   const [voucherCode, setVoucherCode] = useState('')
-  const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null)
-  const [voucherDiscount, setVoucherDiscount] = useState(0)
+  const [appliedVouchers, setAppliedVouchers] = useState<Voucher[]>([])
+  const [voucherDiscounts, setVoucherDiscounts] = useState<Record<string, number>>({})
   const [isValidatingVoucher, setIsValidatingVoucher] = useState(false)
+  const [availableVouchers, setAvailableVouchers] = useState<Voucher[]>([])
+  const [isLoadingVouchers, setIsLoadingVouchers] = useState(false)
+  const [showVoucherList, setShowVoucherList] = useState(false)
   const router = useRouter()
 
   // Check authentication on mount
@@ -37,28 +41,42 @@ const CheckoutPage = () => {
     }
   }, [user, router])
 
+  // Load available vouchers when courses change
+  useEffect(() => {
+    const loadAvailableVouchers = async () => {
+      if (orderListCourse.length === 0) {
+        setAvailableVouchers([])
+        return
+      }
+
+      setIsLoadingVouchers(true)
+      try {
+        const courseIds = orderListCourse.map(c => c.id)
+        const vouchers = await voucherService.getAvailable(courseIds)
+        setAvailableVouchers(vouchers)
+      } catch (error) {
+        console.error('Failed to load vouchers:', error)
+      } finally {
+        setIsLoadingVouchers(false)
+      }
+    }
+
+    loadAvailableVouchers()
+  }, [orderListCourse])
+
   const createOrderMutation = useApiPost<any, CreateOrderRequest>('/orders', {
     onSuccess: (response: any) => {
       console.log('=== ORDER RESPONSE ===', response)
       
       if (response.data?.paymentUrl) {
-        // Paid course - redirect to payment gateway
         window.location.href = response.data.paymentUrl
       } else {
-        // Free course - redirect to success page with orderId
         toast.success(response.message || 'Đăng ký khóa học thành công!')
-        
-        // Extract orderId from response - check multiple possible locations
         const orderId = response.data?.order?.id || response.data?.orderId || response.data?.id
         
-        console.log('=== EXTRACTED ORDER ID ===', orderId)
-        
         if (orderId) {
-          // Use router.push for client-side navigation (faster and preserves state)
           router.push(`/checkout/success?orderId=${orderId}`)
         } else {
-          console.error('No orderId found in response:', response)
-          toast.error('Không tìm thấy mã đơn hàng')
           router.push('/checkout/success')
         }
       }
@@ -106,23 +124,33 @@ const CheckoutPage = () => {
   }, 0)
 
   const courseDiscount = totalOriginal - totalSale
-  const finalTotal = Math.max(0, totalSale - voucherDiscount)
+  const totalVoucherDiscount = Object.values(voucherDiscounts).reduce((sum, d) => sum + d, 0)
+  const finalTotal = Math.max(0, totalSale - totalVoucherDiscount)
 
   // Handle voucher validation
-  const handleApplyVoucher = async () => {
-    if (!voucherCode.trim()) {
+  const handleApplyVoucher = async (voucher?: Voucher) => {
+    const codeToValidate = voucher?.code || voucherCode.trim()
+    
+    if (!codeToValidate) {
       toast.error('Vui lòng nhập mã giảm giá')
+      return
+    }
+
+    // Check if already applied
+    if (appliedVouchers.some(v => v.code.toUpperCase() === codeToValidate.toUpperCase())) {
+      toast.error('Mã giảm giá này đã được áp dụng')
       return
     }
 
     setIsValidatingVoucher(true)
     try {
       const courseIds = orderListCourse.map(c => c.id)
-      const result = await voucherService.validate(voucherCode.trim(), totalSale, courseIds)
+      const result = await voucherService.validate(codeToValidate, totalSale, courseIds)
       
       if (result.valid && result.voucher && result.discount !== undefined) {
-        setAppliedVoucher(result.voucher)
-        setVoucherDiscount(result.discount)
+        setAppliedVouchers(prev => [...prev, result.voucher!])
+        setVoucherDiscounts(prev => ({ ...prev, [result.voucher!.id]: result.discount! }))
+        setVoucherCode('')
         toast.success(result.message || 'Áp dụng mã giảm giá thành công!')
       } else {
         toast.error(result.message || 'Mã giảm giá không hợp lệ')
@@ -134,10 +162,13 @@ const CheckoutPage = () => {
     }
   }
 
-  const handleRemoveVoucher = () => {
-    setAppliedVoucher(null)
-    setVoucherDiscount(0)
-    setVoucherCode('')
+  const handleRemoveVoucher = (voucherId: string) => {
+    setAppliedVouchers(prev => prev.filter(v => v.id !== voucherId))
+    setVoucherDiscounts(prev => {
+      const newDiscounts = { ...prev }
+      delete newDiscounts[voucherId]
+      return newDiscounts
+    })
     toast.success('Đã xóa mã giảm giá')
   }
 
@@ -147,7 +178,6 @@ const CheckoutPage = () => {
       return
     }
 
-    // Check authentication
     if (!user) {
       toast.error('Vui lòng đăng nhập để tiếp tục')
       router.push('/auth/login')
@@ -163,24 +193,14 @@ const CheckoutPage = () => {
       totalPrice: finalTotal,
       paymentMethod,
       orderItems,
-      voucherId: appliedVoucher?.id,
+      voucherId: appliedVouchers.length > 0 ? appliedVouchers[0].id : undefined,
     }
 
-    // Debug logging
-    console.log('=== ORDER DEBUG ===')
-    console.log('Courses:', orderListCourse.map(c => ({ 
-      id: c.id, 
-      name: c.name, 
-      price: c.price,
-      finalPrice: calculateFinalPrice(c)
-    })))
-    console.log('Total Sale:', totalSale)
-    console.log('Order Data:', orderData)
-    console.log('==================')
-
-    // Call API for both free and paid courses
-    // Backend will auto-complete free courses and create enrollments
     createOrderMutation.mutate(orderData)
+  }
+
+  const isVoucherApplied = (voucher: Voucher) => {
+    return appliedVouchers.some(v => v.id === voucher.id)
   }
 
   return (
@@ -256,48 +276,138 @@ const CheckoutPage = () => {
               <span className="font-semibold">Mã giảm giá</span>
             </div>
             
-            {appliedVoucher ? (
-              <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div>
-                  <p className="font-semibold text-green-700">{appliedVoucher.code}</p>
-                  <p className="text-sm text-green-600">
-                    Giảm {appliedVoucher.discountType === 'percent' 
-                      ? `${appliedVoucher.discountValue}%` 
-                      : formatPrice(appliedVoucher.discountValue)}
-                    {appliedVoucher.maxDiscountAmount && appliedVoucher.discountType === 'percent' && (
-                      <span> (tối đa {formatPrice(appliedVoucher.maxDiscountAmount)})</span>
-                    )}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRemoveVoucher}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+            {/* Applied Vouchers */}
+            {appliedVouchers.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {appliedVouchers.map(voucher => (
+                  <div key={voucher.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div>
+                      <p className="font-semibold text-green-700">{voucher.code}</p>
+                      <p className="text-sm text-green-600">
+                        Giảm {voucher.discountType === 'percent' 
+                          ? `${voucher.discountValue}%` 
+                          : formatPrice(voucher.discountValue)}
+                        {voucher.maxDiscountAmount && voucher.discountType === 'percent' && (
+                          <span> (tối đa {formatPrice(voucher.maxDiscountAmount)})</span>
+                        )}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveVoucher(voucher.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Nhập mã giảm giá"
-                  value={voucherCode}
-                  onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => e.key === 'Enter' && handleApplyVoucher()}
-                  className="flex-1"
-                />
-                <Button
-                  variant="outline"
-                  onClick={handleApplyVoucher}
-                  disabled={isValidatingVoucher || !voucherCode.trim()}
+            )}
+
+            {/* Input voucher code */}
+            <div className="flex gap-2 mb-3">
+              <Input
+                placeholder="Nhập mã giảm giá"
+                value={voucherCode}
+                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === 'Enter' && handleApplyVoucher()}
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                onClick={() => handleApplyVoucher()}
+                disabled={isValidatingVoucher || !voucherCode.trim()}
+              >
+                {isValidatingVoucher ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Áp dụng'
+                )}
+              </Button>
+            </div>
+
+            {/* Available Vouchers List */}
+            {availableVouchers.length > 0 && (
+              <div className="border-t pt-3">
+                <button
+                  onClick={() => setShowVoucherList(!showVoucherList)}
+                  className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {isValidatingVoucher ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="flex items-center gap-2">
+                    <TicketPercent className="w-4 h-4" />
+                    {availableVouchers.length} mã giảm giá có thể áp dụng
+                  </span>
+                  {showVoucherList ? (
+                    <ChevronUp className="w-4 h-4" />
                   ) : (
-                    'Áp dụng'
+                    <ChevronDown className="w-4 h-4" />
                   )}
-                </Button>
+                </button>
+
+                {showVoucherList && (
+                  <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                    {isLoadingVouchers ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : (
+                      availableVouchers.map(voucher => {
+                        const isApplied = isVoucherApplied(voucher)
+                        return (
+                          <div
+                            key={voucher.id}
+                            className={cn(
+                              "p-3 border rounded-lg cursor-pointer transition-all",
+                              isApplied
+                                ? "bg-green-50 border-green-300"
+                                : "hover:border-primary hover:bg-primary/5"
+                            )}
+                            onClick={() => !isApplied && handleApplyVoucher(voucher)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-primary">{voucher.code}</span>
+                                  {isApplied && (
+                                    <span className="flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                                      <Check className="w-3 h-3" />
+                                      Đã áp dụng
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1">{voucher.name}</p>
+                                <p className="text-xs text-primary font-medium mt-1">
+                                  Giảm {voucher.discountType === 'percent' 
+                                    ? `${voucher.discountValue}%` 
+                                    : formatPrice(voucher.discountValue)}
+                                  {voucher.maxDiscountAmount && voucher.discountType === 'percent' && (
+                                    <span className="text-muted-foreground"> (tối đa {formatPrice(voucher.maxDiscountAmount)})</span>
+                                  )}
+                                </p>
+                                {voucher.minOrderAmount && voucher.minOrderAmount > 0 && (
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    Đơn tối thiểu: {formatPrice(voucher.minOrderAmount)}
+                                  </p>
+                                )}
+                              </div>
+                              {!isApplied && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="shrink-0"
+                                  disabled={isValidatingVoucher}
+                                >
+                                  Chọn
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </Card>
@@ -314,10 +424,10 @@ const CheckoutPage = () => {
                 <span className="text-red-500">-{formatPrice(courseDiscount)}</span>
               </div>
             )}
-            {voucherDiscount > 0 && (
+            {voucherDiscounts && totalVoucherDiscount > 0 && (
               <div className="flex items-center justify-between">
                 <span>Giảm giá voucher:</span>
-                <span className="text-red-500">-{formatPrice(voucherDiscount)}</span>
+                <span className="text-red-500">-{formatPrice(totalVoucherDiscount)}</span>
               </div>
             )}
             <hr className="my-2"/>
