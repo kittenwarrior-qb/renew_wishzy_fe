@@ -101,10 +101,11 @@ export const useCourseDetail = (id?: string) => {
 
 export const useBestSellerCourses = (limit: number = 3) => {
   return useQuery<CourseItemType[]>({
-    queryKey: [ENDPOINT, '', limit],
+    queryKey: [ENDPOINT, 'best-seller', limit],
     queryFn: async () => {
       const response = await courseService.list({ 
         limit,
+        status: true,
       });
       return response.data || [];
     },
