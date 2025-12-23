@@ -36,7 +36,10 @@ export const MyLearningTab = () => {
     }
 
     // Sắp xếp: ongoing lên đầu, completed xuống cuối, not_started ở giữa
-    const sortedEnrollments = [...enrollments].sort((a, b) => {
+    // Filter out enrollments without course data
+    const validEnrollments = enrollments.filter((e: Enrollment) => e.course != null);
+    
+    const sortedEnrollments = [...validEnrollments].sort((a, b) => {
         const statusOrder: Record<string, number> = { ongoing: 0, not_started: 1, completed: 2 };
         return (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
     });
@@ -45,7 +48,7 @@ export const MyLearningTab = () => {
         <div className="space-y-4">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold">
-                    Tất cả khóa học ({enrollments.length})
+                    Tất cả khóa học ({validEnrollments.length})
                 </h2>
             </div>
             

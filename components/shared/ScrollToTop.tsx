@@ -1,31 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { ArrowUp } from "lucide-react";
 
 const ScrollToTop = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const rafRef = useRef<number | undefined>(undefined);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     const toggleVisibility = () => {
-      const scrolled = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      const halfwayPoint = (documentHeight - windowHeight) / 2;
+      // Cancel any pending animation frame
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
 
-      setIsVisible(scrolled > halfwayPoint);
+      rafRef.current = requestAnimationFrame(() => {
+        const scrolled = window.scrollY;
+        
+        // Only update if scroll position changed significantly (more than 50px)
+        if (Math.abs(scrolled - lastScrollY.current) < 50) {
+          return;
+        }
+        
+        lastScrollY.current = scrolled;
+        
+        // Simple threshold - show after scrolling 500px
+        setIsVisible(scrolled > 500);
+      });
     };
 
-    window.addEventListener("scroll", toggleVisibility);
-    return () => window.removeEventListener("scroll", toggleVisibility);
+    window.addEventListener("scroll", toggleVisibility, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", toggleVisibility);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
   }, []);
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
-  };
+  }, []);
 
   return (
     <button

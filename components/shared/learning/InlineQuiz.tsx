@@ -30,6 +30,7 @@ interface InlineQuizProps {
   enrollmentId: string;
   lectureId: string;
   onQuizComplete?: (passed: boolean) => void;
+  allowRetry?: boolean;
 }
 
 interface QuestionResult {
@@ -41,6 +42,7 @@ export function InlineQuiz({
   quizId,
   enrollmentId,
   onQuizComplete,
+  allowRetry = false,
 }: InlineQuizProps) {
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -48,6 +50,10 @@ export function InlineQuiz({
   const [showResults, setShowResults] = useState(false);
   const [passed, setPassed] = useState(false);
   const [resultsMap, setResultsMap] = useState<Map<string, QuestionResult>>(new Map());
+  // Track which wrong answers have been changed for re-submit
+  const [wrongAnswersChanged, setWrongAnswersChanged] = useState(false);
+  // Track which questions have been re-answered (to hide icons)
+  const [reAnsweredQuestions, setReAnsweredQuestions] = useState<Set<string>>(new Set());
 
   const { data: quiz, isLoading: loadingQuiz } = useQuizForTaking(quizId, true);
   const startAttempt = useStartQuizAttempt();
@@ -68,7 +74,19 @@ export function InlineQuiz({
 
   // Handle answer selection - ONLY save locally, NO API call
   const handleSelectAnswer = (questionId: string, optionId: string) => {
-    if (showResults) return;
+    // If showing results and not passed, allow changing wrong answers
+    if (showResults && passed) return;
+    
+    // If changing a wrong answer, mark that we have changes to submit
+    if (showResults && !passed) {
+      const result = resultsMap.get(questionId);
+      if (result && !result.isCorrect) {
+        setWrongAnswersChanged(true);
+        // Mark this question as re-answered to hide icons
+        setReAnsweredQuestions((prev) => new Set(prev).add(questionId));
+      }
+    }
+    
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
   };
 
@@ -79,21 +97,29 @@ export function InlineQuiz({
     setIsSubmitting(true);
 
     try {
+      // If re-submitting after wrong answers, start a new attempt first
+      let currentAttemptId = attemptId;
+      if (showResults && !passed) {
+        const newAttempt = await startAttempt.mutateAsync(quizId);
+        currentAttemptId = newAttempt.id;
+        setAttemptId(newAttempt.id);
+      }
+
       // Submit all answers in one batch call
       const answerPromises = Object.entries(answers).map(([questionId, selectedOptionId]) =>
-        api.post(`/quiz-attempts/${attemptId}/answer`, { questionId, selectedOptionId })
+        api.post(`/quiz-attempts/${currentAttemptId}/answer`, { questionId, selectedOptionId })
           .catch(() => {})
       );
       await Promise.all(answerPromises);
 
       // Complete attempt and get results
       const completionResult = await completeAttempt.mutateAsync({
-        attemptId,
+        attemptId: currentAttemptId,
         enrollmentId,
       });
 
       // Fetch detailed results immediately
-      const detailedResults = await lectureQuizService.getAttemptResults(attemptId);
+      const detailedResults = await lectureQuizService.getAttemptResults(currentAttemptId);
       
       // Build results map from API response
       const newResultsMap = new Map<string, QuestionResult>();
@@ -112,6 +138,8 @@ export function InlineQuiz({
       setResultsMap(newResultsMap);
       setPassed(completionResult.passed);
       setShowResults(true);
+      setWrongAnswersChanged(false);
+      setReAnsweredQuestions(new Set());
 
       // Always call onQuizComplete when quiz is done (passed or not for progress tracking)
       if (completionResult.passed) {
@@ -125,7 +153,7 @@ export function InlineQuiz({
     } finally {
       setIsSubmitting(false);
     }
-  }, [attemptId, enrollmentId, completeAttempt, onQuizComplete, answers, quiz]);
+  }, [attemptId, enrollmentId, completeAttempt, onQuizComplete, answers, quiz, showResults, passed, quizId, startAttempt]);
 
   const handleRetry = async () => {
     setShowResults(false);
@@ -133,6 +161,8 @@ export function InlineQuiz({
     setResultsMap(new Map());
     setAttemptId(null);
     setPassed(false);
+    setWrongAnswersChanged(false);
+    setReAnsweredQuestions(new Set());
     
     try {
       const attempt = await startAttempt.mutateAsync(quizId);
@@ -188,7 +218,11 @@ export function InlineQuiz({
         {quiz.questions?.map((question, qIndex) => {
           const result = resultsMap.get(question.id);
           const isCorrect = result?.isCorrect;
-          const hasResult = showResults && result !== undefined;
+          const hasBeenReAnswered = reAnsweredQuestions.has(question.id);
+          // Only show result if not re-answered
+          const hasResult = showResults && result !== undefined && !hasBeenReAnswered;
+          // Allow editing wrong answers when not passed
+          const canEditQuestion = !showResults || (showResults && !passed && !isCorrect);
 
           return (
             <div
@@ -213,14 +247,14 @@ export function InlineQuiz({
                 value={answers[question.id] || ''}
                 onValueChange={(value) => handleSelectAnswer(question.id, value)}
                 className="space-y-2"
-                disabled={showResults}
+                disabled={!canEditQuestion}
               >
                 {question.answerOptions
                   .sort((a, b) => a.orderIndex - b.orderIndex)
                   .map((option) => {
                     const isSelected = answers[question.id] === option.id;
                     const isCorrectOption = result?.correctAnswer === option.optionText;
-                    // Only show styling when we have results
+                    // Only show styling when we have results and not re-answered
                     const showAsWrong = hasResult && isSelected && !isCorrect;
                     const showCorrectIcon = hasResult && isCorrectOption;
 
@@ -230,18 +264,18 @@ export function InlineQuiz({
                         className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
                           showAsWrong
                             ? 'border-red-500 bg-red-100 dark:bg-red-900/30'
-                            : isSelected && !showResults
+                            : isSelected && (!showResults || hasBeenReAnswered)
                             ? 'border-primary bg-primary/5'
                             : isSelected && hasResult && isCorrect
-                            ? 'border-primary bg-primary/5'
+                            ? 'border-green-500 bg-green-100 dark:bg-green-900/30'
                             : 'border-border'
-                        } ${showResults ? 'cursor-default' : 'cursor-pointer hover:bg-muted/50'}`}
+                        } ${canEditQuestion ? 'cursor-pointer hover:bg-muted/50' : 'cursor-default'}`}
                         onClick={() => handleSelectAnswer(question.id, option.id)}
                       >
-                        <RadioGroupItem value={option.id} id={option.id} disabled={showResults} />
+                        <RadioGroupItem value={option.id} id={option.id} disabled={!canEditQuestion} />
                         <Label
                           htmlFor={option.id}
-                          className={`flex-1 ${showResults ? 'cursor-default' : 'cursor-pointer'}`}
+                          className={`flex-1 ${canEditQuestion ? 'cursor-pointer' : 'cursor-default'}`}
                         >
                           {option.optionText}
                         </Label>
@@ -267,20 +301,34 @@ export function InlineQuiz({
                 ) : (
                   <>
                     <XCircle className="h-5 w-5 text-red-600" />
-                    <span className="font-medium text-red-600">Chưa đạt - Hãy thử lại</span>
+                    <span className="font-medium text-red-600">
+                      {wrongAnswersChanged ? 'Sửa câu sai và nộp lại' : 'Chưa đạt - Sửa câu sai hoặc làm lại'}
+                    </span>
                   </>
                 )}
               </div>
-              {!passed && (
-                <Button onClick={handleRetry} disabled={startAttempt.isPending}>
-                  {startAttempt.isPending ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                  )}
-                  Làm lại
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {!passed && wrongAnswersChanged && (
+                  <Button onClick={handleSubmitQuiz} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4 mr-2" />
+                    )}
+                    Nộp lại
+                  </Button>
+                )}
+                {(!passed || allowRetry) && (
+                  <Button variant="outline" onClick={handleRetry} disabled={startAttempt.isPending}>
+                    {startAttempt.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                    )}
+                    Làm lại từ đầu
+                  </Button>
+                )}
+              </div>
             </>
           ) : (
             <>

@@ -47,6 +47,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [scrollProgress, setScrollProgress] = React.useState(0);
   const rafRef = React.useRef<number | undefined>(undefined);
+  const lastScrollY = React.useRef(0);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -55,11 +56,21 @@ const Header = () => {
       }
 
       rafRef.current = requestAnimationFrame(() => {
-        setIsScrolled(window.scrollY > 0);
+        const currentScrollY = window.scrollY;
+        
+        // Only update isScrolled if it actually changed
+        const shouldBeScrolled = currentScrollY > 0;
+        if (shouldBeScrolled !== isScrolled) {
+          setIsScrolled(shouldBeScrolled);
+        }
 
-        const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        const scrolled = windowHeight > 0 ? (window.scrollY / windowHeight) * 100 : 0;
-        setScrollProgress(scrolled);
+        // Only update progress if scroll changed significantly (more than 20px)
+        if (Math.abs(currentScrollY - lastScrollY.current) > 20) {
+          lastScrollY.current = currentScrollY;
+          const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+          const scrolled = windowHeight > 0 ? (currentScrollY / windowHeight) * 100 : 0;
+          setScrollProgress(scrolled);
+        }
       });
     };
 
@@ -72,7 +83,7 @@ const Header = () => {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, []);
+  }, [isScrolled]);
 
   if (pathname?.includes('/admin') || pathname?.includes('/instructor')) {
     return null;

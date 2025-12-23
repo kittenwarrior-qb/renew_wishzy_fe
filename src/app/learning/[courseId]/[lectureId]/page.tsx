@@ -23,12 +23,22 @@ export default function LearningPage() {
   const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
   const [completedLectureIds, setCompletedLectureIds] = useState<string[]>([]);
   
+  // Track video and quiz completion separately for lectures with both
+  const [videoCompleted, setVideoCompleted] = useState(false);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  
   // Ref to track if we're navigating after completion (to skip lock check)
   const isNavigatingAfterCompletionRef = useRef(false);
   // Ref to store the latest completed lecture IDs (for immediate access in effects)
   const completedLectureIdsRef = useRef<string[]>([]);
   // Ref to track which lecture we last checked for lock (to prevent re-checking)
   const lastCheckedLectureIdRef = useRef<string | null>(null);
+
+  // Reset video/quiz completion state when lecture changes
+  useEffect(() => {
+    setVideoCompleted(false);
+    setQuizCompleted(false);
+  }, [lectureId]);
 
   // Prefetch data for better performance
   usePrefetchLearning(courseId);
@@ -179,6 +189,67 @@ export default function LearningPage() {
     completedLectureIdsRef.current = completedLectureIds;
   }, [completedLectureIds]);
 
+  // Check if lecture should be marked as complete
+  // For lectures with both video and quiz: both must be completed
+  // For video-only lectures: video must be completed
+  // For quiz-only lectures: quiz must be completed
+  useEffect(() => {
+    if (!lecture || !lectureId || completedLectureIds.includes(lectureId)) return;
+    
+    const hasVideo = !!lecture.videoUrl;
+    const hasQuiz = lecture.requiresQuiz;
+    
+    let shouldComplete = false;
+    
+    if (hasVideo && hasQuiz) {
+      // Both video and quiz required
+      shouldComplete = videoCompleted && quizCompleted;
+    } else if (hasVideo) {
+      // Video only
+      shouldComplete = videoCompleted;
+    } else if (hasQuiz) {
+      // Quiz only
+      shouldComplete = quizCompleted;
+    }
+    
+    if (shouldComplete) {
+      // Mark lecture as complete
+      const newCompletedLectures = [...completedLectureIds, lectureId];
+      setCompletedLectureIds(newCompletedLectures);
+      completedLectureIdsRef.current = newCompletedLectures;
+      
+      // Show toast notification for lecture completion
+      toast.success('Bài học hoàn thành! 🎉', {
+        description: lecture?.title || 'Tuyệt vời!',
+        duration: 2000,
+      });
+
+      // Check if all lectures are completed
+      const totalLectures = allLectures.length;
+      if (newCompletedLectures.length === totalLectures) {
+        toast.success('🎓 Chúc mừng! Bạn đã hoàn thành khóa học!', {
+          description: 'Chứng chỉ của bạn đã được tạo. Kiểm tra email hoặc xem trong trang học của tôi.',
+          duration: 5000,
+        });
+      } else {
+        // Find next lecture
+        const currentIndex = allLectures.findIndex(l => l.lecture.id === lectureId);
+        const nextLec = currentIndex >= 0 && currentIndex < allLectures.length - 1 
+          ? allLectures[currentIndex + 1] 
+          : null;
+        
+        if (nextLec) {
+          // Auto navigate to next lecture after a short delay
+          setTimeout(() => {
+            isNavigatingAfterCompletionRef.current = true;
+            lastCheckedLectureIdRef.current = nextLec.lecture.id;
+            router.push(`/learning/${courseId}/${nextLec.lecture.id}`);
+          }, 2000);
+        }
+      }
+    }
+  }, [videoCompleted, quizCompleted, lecture, lectureId, completedLectureIds, allLectures, courseId, router]);
+
   // Check if current lecture is locked and redirect if necessary
   useEffect(() => {
     // Skip if navigating after completion
@@ -277,40 +348,8 @@ export default function LearningPage() {
   };
 
   const handleComplete = async () => {
-    // Update completed lectures immediately for sidebar (đồng bộ với API call ở 90%)
-    if (lectureId && !completedLectureIds.includes(lectureId)) {
-      const newCompletedLectures = [...completedLectureIds, lectureId];
-      setCompletedLectureIds(newCompletedLectures);
-      // Also update ref for immediate access
-      completedLectureIdsRef.current = newCompletedLectures;
-      
-      // Show toast notification for lecture completion
-      toast.success('Bài học hoàn thành! 🎉', {
-        description: lecture?.title || 'Tuyệt vời!',
-        duration: 2000,
-      });
-
-      // Check if all lectures are completed
-      const totalLectures = allLectures.length;
-      if (newCompletedLectures.length === totalLectures) {
-        // All lectures completed - show certificate notification
-        toast.success('🎓 Chúc mừng! Bạn đã hoàn thành khóa học!', {
-          description: 'Chứng chỉ của bạn đã được tạo. Kiểm tra email hoặc xem trong trang học của tôi.',
-          duration: 5000,
-        });
-      } else {
-        // Auto navigate to next lecture after a short delay
-        setTimeout(() => {
-          if (nextLecture) {
-            // Set flag to skip lock check when navigating after completion
-            isNavigatingAfterCompletionRef.current = true;
-            // Pre-set the lastCheckedLectureId to the next lecture to prevent double-check
-            lastCheckedLectureIdRef.current = nextLecture.lecture.id;
-            router.push(`/learning/${courseId}/${nextLecture.lecture.id}`);
-          }
-        }, 2000); // Wait 2 seconds before auto-navigate
-      }
-    }
+    // Mark video as completed
+    setVideoCompleted(true);
     
     setProgress(prev => {
       if (!prev) return prev;
@@ -379,13 +418,12 @@ export default function LearningPage() {
                       <p className="text-sm text-gray-400">Please enroll in this course first</p>
                     </div>
                   </div>
-                ) : lecture && !lecture.requiresQuiz ? (
-                  <>
-                    <VideoPlayer
-                      enrollmentId={enrollmentId}
-                      lectureId={lectureId}
-                      videoUrl={lecture.videoUrl || ''}
-                      title={lecture.title}
+                ) : lecture && lecture.videoUrl ? (
+                  <VideoPlayer
+                    enrollmentId={enrollmentId}
+                    lectureId={lectureId}
+                    videoUrl={lecture.videoUrl}
+                    title={lecture.title}
                     initialProgress={progress}
                     onProgressUpdate={handleProgressUpdate}
                     onComplete={handleComplete}
@@ -394,7 +432,6 @@ export default function LearningPage() {
                     hasNext={!!nextLecture}
                     hasPrevious={!!prevLecture}
                   />
-                  </>
                 ) : null}
               </div>
             </div>
@@ -413,27 +450,8 @@ export default function LearningPage() {
                   enrollmentId={enrollmentId || undefined}
                   isQuizLecture={lecture.requiresQuiz}
                   onQuizComplete={(allPassed) => {
-                    if (allPassed && lectureId && !completedLectureIds.includes(lectureId)) {
-                      // Quiz completed - mark lecture as completed
-                      const newCompletedLectures = [...completedLectureIds, lectureId];
-                      setCompletedLectureIds(newCompletedLectures);
-                      completedLectureIdsRef.current = newCompletedLectures;
-                      
-                      // Check if all lectures are completed
-                      const totalLectures = allLectures.length;
-                      if (newCompletedLectures.length === totalLectures) {
-                        toast.success('🎓 Chúc mừng! Bạn đã hoàn thành khóa học!', {
-                          description: 'Chứng chỉ của bạn đã được tạo.',
-                          duration: 5000,
-                        });
-                      } else if (nextLecture) {
-                        // Auto navigate to next lecture
-                        setTimeout(() => {
-                          isNavigatingAfterCompletionRef.current = true;
-                          lastCheckedLectureIdRef.current = nextLecture.lecture.id;
-                          router.push(`/learning/${courseId}/${nextLecture.lecture.id}`);
-                        }, 2000);
-                      }
+                    if (allPassed) {
+                      setQuizCompleted(true);
                     }
                   }}
                 />

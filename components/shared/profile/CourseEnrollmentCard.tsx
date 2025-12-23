@@ -39,6 +39,11 @@ export const CourseEnrollmentCard = ({
   const router = useRouter();
   const [lectureName, setLectureName] = useState<string | null>(null);
 
+  // Early return if course is null
+  if (!course) {
+    return null;
+  }
+
   // Duration is already in seconds, format it correctly
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);

@@ -50,23 +50,39 @@ export function LectureQuizSection({
     }
   };
 
-  // If all quizzes passed, show success message
+  // If all quizzes passed, show success message with retry option
   if (quizStatus.allPassed) {
     return (
       <Card className="border-green-500/50">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950/30">
-              <Trophy className="h-5 w-5 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">Bài kiểm tra</CardTitle>
-              <CardDescription className="text-green-600">
-                Bạn đã hoàn thành tất cả bài kiểm tra!
-              </CardDescription>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950/30">
+                <Trophy className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Bài kiểm tra</CardTitle>
+                <CardDescription className="text-green-600">
+                  Bạn đã hoàn thành tất cả bài kiểm tra!
+                </CardDescription>
+              </div>
             </div>
           </div>
         </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {quizStatus.quizzes.map((quiz) => (
+              <InlineQuiz
+                key={quiz.id}
+                quizId={quiz.id}
+                enrollmentId={enrollmentId}
+                lectureId={lectureId}
+                onQuizComplete={handleQuizComplete}
+                allowRetry={true}
+              />
+            ))}
+          </div>
+        </CardContent>
       </Card>
     );
   }
