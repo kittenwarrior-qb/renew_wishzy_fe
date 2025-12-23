@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { useInstructorStats, useRevenueStats } from "@/hooks/useInstructorStats";
+import { useInstructorOrders } from "@/hooks/useInstructorOrders";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Users, TrendingUp, Star, BarChart3, Trophy } from "lucide-react";
+import { BookOpen, Users, TrendingUp, Star, BarChart3, Trophy, ShoppingCart, CreditCard, Clock, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,6 +16,7 @@ const InstructorDashboard = () => {
   const { data: stats, isLoading, isError, error } = useInstructorStats();
   const [revenueMode, setRevenueMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
   const { data: revenueStats, isLoading: loadingRevenue } = useRevenueStats({ mode: revenueMode });
+  const { data: ordersData, isLoading: loadingOrders } = useInstructorOrders({ limit: 5 });
 
   const { data: commentsData } = useInstructorComments({ page: 1, limit: 1 });
   const { data: feedbacksData } = useInstructorFeedbacks({ page: 1, limit: 1 });
@@ -315,6 +317,149 @@ const InstructorDashboard = () => {
               </tbody>
             </table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Orders Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5" /> 
+            Đơn hàng gần đây
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">5 đơn hàng mới nhất từ các khóa học của bạn</p>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-muted-foreground uppercase text-[10px] font-bold">
+                <tr>
+                  <th className="px-4 py-3 text-left">Mã đơn hàng</th>
+                  <th className="px-4 py-3 text-left">Khách hàng</th>
+                  <th className="px-4 py-3 text-left">Khóa học</th>
+                  <th className="px-4 py-3 text-center">Trạng thái</th>
+                  <th className="px-4 py-3 text-right">Giá trị</th>
+                  <th className="px-4 py-3 text-right">Thời gian</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {loadingOrders ? (
+                  // Loading skeleton
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      <td className="px-4 py-3"><div className="h-4 bg-muted rounded w-20 animate-pulse" /></td>
+                      <td className="px-4 py-3"><div className="h-4 bg-muted rounded w-32 animate-pulse" /></td>
+                      <td className="px-4 py-3"><div className="h-4 bg-muted rounded w-40 animate-pulse" /></td>
+                      <td className="px-4 py-3 text-center"><div className="h-6 bg-muted rounded w-16 mx-auto animate-pulse" /></td>
+                      <td className="px-4 py-3 text-right"><div className="h-4 bg-muted rounded w-20 ml-auto animate-pulse" /></td>
+                      <td className="px-4 py-3 text-right"><div className="h-4 bg-muted rounded w-24 ml-auto animate-pulse" /></td>
+                    </tr>
+                  ))
+                ) : ordersData?.items?.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                      Chưa có đơn hàng nào
+                    </td>
+                  </tr>
+                ) : (
+                  ordersData?.items?.map((order) => (
+                    <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs">
+                        #{String(order.id).slice(-8).toUpperCase()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-primary">
+                              {order.user?.fullName?.charAt(0) || 'U'}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-xs">{order.user?.fullName || 'Unknown'}</div>
+                            <div className="text-xs text-muted-foreground">{order.user?.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="max-w-[200px]">
+                          {order.orderDetails && order.orderDetails.length > 0 ? (
+                            order.orderDetails.map((detail, idx) => (
+                              <div key={detail.id} className="text-xs">
+                                {idx > 0 && <span className="text-muted-foreground">, </span>}
+                                <span className="line-clamp-1">{detail.course?.name || 'Unknown Course'}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Không có khóa học</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {order.status === 'completed' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Hoàn thành
+                          </span>
+                        )}
+                        {order.status === 'pending' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <Clock className="w-3 h-3 mr-1" />
+                            Chờ xử lý
+                          </span>
+                        )}
+                        {order.status === 'cancelled' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Đã hủy
+                          </span>
+                        )}
+                        {order.status === 'refunded' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            Hoàn tiền
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold">
+                        {formatCurrency(order.totalPrice || 0)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-muted-foreground">
+                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) : 'N/A'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Orders Summary */}
+          {ordersData?.statistics && (
+            <div className="mt-4 pt-4 border-t">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground">Tổng đơn hàng</div>
+                  <div className="text-lg font-bold">{ordersData.statistics.totalOrders}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground">Hoàn thành</div>
+                  <div className="text-lg font-bold text-green-600">{ordersData.statistics.completedOrders}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground">Chờ xử lý</div>
+                  <div className="text-lg font-bold text-yellow-600">{ordersData.statistics.pendingOrders}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground">Giá trị TB</div>
+                  <div className="text-lg font-bold">{formatCurrency(ordersData.statistics.averageOrderValue || 0)}</div>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
