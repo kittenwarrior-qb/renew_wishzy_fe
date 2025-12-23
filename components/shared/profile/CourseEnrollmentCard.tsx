@@ -6,12 +6,31 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { lectureService } from "@/src/services/lecture";
 
 interface CourseEnrollmentCardProps {
   enrollment: Enrollment;
 }
+
+// Strip HTML tags and decode HTML entities
+const stripHtml = (html: string): string => {
+  if (!html) return '';
+  // Remove HTML tags
+  let text = html.replace(/<[^>]*>/g, ' ');
+  // Decode common HTML entities
+  text = text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'");
+  // Collapse multiple spaces
+  text = text.replace(/\s+/g, ' ').trim();
+  return text;
+};
 
 export const CourseEnrollmentCard = ({
   enrollment,
@@ -103,6 +122,9 @@ export const CourseEnrollmentCard = ({
     ? Math.round((lectureOnlearning.currentTime / lectureOnlearning.duration) * 100)
     : 0;
 
+  // Strip HTML from description for display
+  const cleanDescription = useMemo(() => stripHtml(course.description || ''), [course.description]);
+
   useEffect(() => {
     const fetchLectureName = async () => {
       if (!lectureId) return;
@@ -164,7 +186,7 @@ export const CourseEnrollmentCard = ({
                 </div>
 
                 <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
-                  {course.description}
+                  {cleanDescription}
                 </p>
 
                 {/* Meta Info */}
