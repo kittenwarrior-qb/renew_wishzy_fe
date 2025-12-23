@@ -13,6 +13,25 @@ import { enrollmentService } from "@/src/services/enrollment";
 import { useQueryHook } from "@/src/hooks/useQueryHook";
 import { toast } from "sonner";
 
+// Strip HTML tags and decode HTML entities
+const stripHtml = (html: string): string => {
+  if (!html) return '';
+  // Remove HTML tags
+  let text = html.replace(/<[^>]*>/g, ' ');
+  // Decode common HTML entities
+  text = text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'");
+  // Collapse multiple spaces
+  text = text.replace(/\s+/g, ' ').trim();
+  return text;
+};
+
 interface CourseCardProps {
   course: CourseItemType;
 }
@@ -339,7 +358,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
             </h3>
 
             <p className="text-sm text-muted-foreground line-clamp-2">
-              {course?.description || "Mô tả khóa học sẽ được cập nhật sau"}
+              {stripHtml(course?.description) || "Mô tả khóa học sẽ được cập nhật sau"}
             </p>
 
             {/* Category */}
