@@ -8,6 +8,7 @@ import '@/styles/video-player.css';
 import { Button } from '@/components/ui/button';
 import { SkipBack, SkipForward, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDevToolsProtection } from '@/hooks/useDevToolsProtection';
 import type { 
   LectureProgress, 
   UpdateLectureProgressDto,
@@ -56,8 +57,20 @@ export function VideoPlayer({
   const isSavingRef = useRef(false);
   const hasTriggeredCompletionRef = useRef(false);
   const maxWatchedTimeRef = useRef<number>(0); // Track furthest point watched
-  const lastKnownTimeRef = useRef<number>(0); // Track last known position before seeking
   const isSeekingRef = useRef(false); // Track if currently seeking
+
+  // Protect video from DevTools inspection
+  useDevToolsProtection({
+    onDevToolsOpen: () => {
+      toast.warning('Vui lòng tắt DevTools để tiếp tục xem video', {
+        duration: 3000,
+      });
+      // Pause video when DevTools detected
+      if (playerRef.current && !playerRef.current.paused()) {
+        playerRef.current.pause();
+      }
+    },
+  });
 
   const saveProgressToAPI = async (progress: UpdateLectureProgressDto) => {
     try {
@@ -252,7 +265,7 @@ export function VideoPlayer({
         playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
         controlBar: {
           volumePanel: { inline: false },
-          pictureInPictureToggle: true,
+          pictureInPictureToggle: false,
         },
         userActions: {
           hotkeys: true,
@@ -521,11 +534,14 @@ export function VideoPlayer({
       </h3>
       
       <div className="relative bg-black rounded-lg overflow-hidden shadow-2xl">
-        <div data-vjs-player>
+        <div data-vjs-player onContextMenu={(e) => e.preventDefault()}>
           <video
             ref={videoRef}
             className="video-js vjs-big-play-centered vjs-theme-fantasy"
             playsInline
+            controlsList="nodownload noremoteplayback"
+            disablePictureInPicture
+            onContextMenu={(e) => e.preventDefault()}
           />
         </div>
 
